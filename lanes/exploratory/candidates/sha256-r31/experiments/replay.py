@@ -1,8 +1,9 @@
-"""Fixed witness transport; execute ONLY in the organizer Docker sandbox.
+"""Deterministic fixed-witness transport for organizer isolation.
 
-This source intentionally replays one public pair for every requested trial.
-It is evidence for the selected-target collision relation only. It does not
-reproduce the historical search or provide attack-cost or probability evidence.
+The HashSmash organizer runner evaluates this source in its isolated container.
+The source replays one public pair for every requested trial and provides
+evidence only for the selected-target collision relation. It does not reproduce
+the historical search or provide attack-cost or probability evidence.
 """
 
 import json
@@ -25,7 +26,7 @@ MESSAGE_B_HEX = (
 
 def validate_request(request):
     if type(request) is not dict:
-        raise ValueError("organizer request must be an object")
+        raise ValueError("organizer request object required")
     required = {
         "schema_version",
         "experiment_id",
@@ -47,21 +48,21 @@ def validate_request(request):
     if type(request["max_message_bytes"]) is not int or request["max_message_bytes"] < 128:
         raise ValueError("organizer message budget is too small")
     if type(request["trials"]) is not list:
-        raise ValueError("organizer trials must be a list")
+        raise ValueError("organizer trials list required")
     for index, trial in enumerate(request["trials"]):
         if type(trial) is not dict or set(trial) != {"trial", "seed"}:
             raise ValueError("unexpected organizer trial")
         if type(trial["trial"]) is not int or trial["trial"] != index:
-            raise ValueError("organizer trials must be ordered")
+            raise ValueError("organizer trial order invalid")
         seed = trial["seed"]
         if type(seed) is not str or len(seed) != 64:
-            raise ValueError("organizer seed must be 32-byte hex")
+            raise ValueError("32-byte organizer seed hex required")
         try:
             decoded = bytes.fromhex(seed)
         except ValueError as error:
-            raise ValueError("organizer seed must be valid hex") from error
+            raise ValueError("organizer seed hex invalid") from error
         if len(decoded) != 32 or seed != seed.lower():
-            raise ValueError("organizer seed must be lowercase 32-byte hex")
+            raise ValueError("lowercase 32-byte organizer seed hex required")
 
 
 def main():

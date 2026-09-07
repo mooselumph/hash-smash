@@ -6,17 +6,17 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 128,
+    "time_log2": 90,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 36,
-    "data_log2": 128,
-    "preprocessing_log2": 127,
+    "data_log2": 90,
+    "preprocessing_log2": 89,
     "success_probability": 1,
     "nonuniform_advice_log2_bytes": 9
   },
   "restrictions": [
     "The online algorithm is deterministic replay of exactly the two 128-byte messages in proof.md; it is not a submitted generator for new collisions.",
-    "Use the standard fixed SHA-256 IV, original round indices 0 through 30 on every padded block, full eight-word feed-forward, FIPS padding, and all 256 output bits.",
+    "The selected target has the standard fixed SHA-256 IV, original round indices 0 through 30 on every padded block, full eight-word feed-forward, FIPS padding, and all 256 output bits.",
     "All historical characteristic search, failed work, table generation, matching, construction, and checking are charged once as preprocessing and included in total time; no cross-target amortization is claimed.",
     "The score is conditional on H-HISTORICAL-TIME and H-HISTORICAL-MEMORY; neither bound has an authoritative organizer-model trace or resource receipt.",
     "The organizer experiment checks only the exact collision relation. Repeated replay rows do not measure success probability, expected work, preprocessing, memory, novelty, or generator reproducibility.",
@@ -26,14 +26,14 @@
   "heuristics": [
     {
       "id": "H-HISTORICAL-TIME",
-      "statement": "All computational work that led to the fixed witness, including differential-trail discovery, SAT/SMT and other tool runs, failed or abandoned trials, table construction, matching, message construction, and verification, is less than 2^127 collision-frontier-v3 charged units; total time after deterministic replay is less than 2^128 units.",
+      "statement": "All computational work that led to the fixed witness, including differential-trail discovery, SAT/SMT and other tool runs, failed or abandoned trials, table construction, matching, message construction, and verification, is less than 2^89 collision-frontier-v3 charged units; total time after deterministic replay is less than 2^90 units.",
       "role": "score-critical",
       "scope": "Exactly the fixed two-message 31-round-prefix SHA-256 collision in proof.md, with all one-time historical construction paid once and no amortization across targets or outputs.",
-      "extrapolation": "Translate the primary publication's reported practical run and complexity, plus predecessor estimates, into a deliberately looser upper cap in the organizer's 256-bit word-RAM model, including omitted discovery and failure work.",
+      "extrapolation": "Translate the primary publication's reported practical run and complexity, plus predecessor estimates, into a looser upper cap in the organizer's 256-bit word-RAM model. The cap retains 49.5 bits over 2^40.5, 40.2 bits over 2^49.8, and 24.5 bits over 2^65.5 for omitted discovery, conversion, and failure work.",
       "evidence_ids": [
         "proof:113-190"
       ],
-      "limitations": "The located public material has no complete job ledger, instruction trace, resource receipt, practical generator, or record of every unsuccessful development run. Publication complexity units are not organizer word-RAM units. The large margin supports exploratory plausibility but does not prove the cap."
+      "limitations": "The located public material has no complete job ledger, instruction trace, resource receipt, practical generator, or record of every unsuccessful development run. Publication complexity units are not organizer word-RAM units. The margin supports exploratory plausibility but does not prove the 2^89 preprocessing or 2^90 total-time caps."
     },
     {
       "id": "H-HISTORICAL-MEMORY",

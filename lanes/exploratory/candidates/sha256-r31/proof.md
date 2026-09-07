@@ -8,7 +8,7 @@ collision witness and a deterministic replay algorithm. It does not claim a new
 collision, a new differential trail, a reproducible implementation of the
 historical search, or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 128 + 36 = 164`. The witness
+The score is `time_log2 + memory_log2_bytes = 90 + 36 = 126`. The witness
 relation is exact and independently checkable. The historical time and peak
 memory translations are explicitly declared score-critical heuristics because
 the public material located for this submission does not include an
@@ -45,8 +45,8 @@ The submitted Python experiment is a bounded transport for this same pair. It
 does not implement or time the historical search. It deliberately ignores the
 organizer seeds, returns the same pair for every requested trial, and supplies
 no participant observations. The organizer's trusted target implementation
-must recompute the relation. Repeated successful rows prove neither independent
-trials nor the claimed historical cost.
+independently recomputes the relation. Repeated successful rows prove neither
+independent trials nor the claimed historical cost.
 
 ## 3. Exact 128-byte messages
 
@@ -101,7 +101,7 @@ so deterministic compression and feed-forward preserve equality. The complete
 ```
 
 These values are supplied to make the block boundary and padding conversion
-auditable; qualification must rely on independent recomputation, not on the
+auditable; independent recomputation is the authoritative check rather than the
 printed values. The relation is an ordinary collision for the organizer's
 complete target. It is not merely a collision of the second compression call.
 
@@ -153,16 +153,16 @@ heuristic, much looser accounting below.
 **H-HISTORICAL-TIME (score-critical).** The total computational work that led
 to this exact fixed pair—including differential-trail discovery, SAT/SMT and
 other tool runs, all failed or abandoned trials, table generation, matching,
-message construction, serialization, and verification—is less than `2^127`
+message construction, serialization, and verification—is less than `2^89`
 charged `collision-frontier-v3` units. Adding advice loading, two complete
 selected-target evaluations, checking, and return keeps total time below
-`2^128` units.
+`2^90` units.
 
-This bound has enormous numerical slack relative to the public figures: 87.5
-bits above the practical paper's reported `2^40.5` attack complexity, 78.2 bits
-above the predecessor's `2^49.8` estimate, and 62.5 bits above the 2013
+This bound has substantial numerical slack relative to the public figures: 49.5
+bits above the practical paper's reported `2^40.5` attack complexity, 40.2 bits
+above the predecessor's `2^49.8` estimate, and 24.5 bits above the 2013
 `2^65.5` estimate. The actual reported 1.2-hour, 64-thread collision run is also
-qualitatively consistent with a bound far below `2^128` machine operations.
+qualitatively consistent with a bound far below `2^90` machine operations.
 The slack is intended to pay for instruction-level expansion, non-target
 computations, trail search, failures, and conversions rather than treating those
 items as free.
@@ -173,20 +173,20 @@ energy-to-operation conversion, or all unsuccessful development runs. The
 figures are estimates in publication-specific units, not certified upper bounds
 in the organizer word-RAM. The practical generator was not located in the public
 snapshot. Therefore neither the runtime report nor the fixed witness proves the
-`2^127` preprocessing cap. If the aggregate omitted work reaches that cap,
-`preprocessing_log2=127`, `time_log2=128`, and the score all fail.
+`2^89` preprocessing cap. If the aggregate omitted work reaches that cap,
+`preprocessing_log2=89`, `time_log2=90`, and the score all fail.
 
-Under H-HISTORICAL-TIME, `preprocessing_log2=127` pays the entire historical
+Under H-HISTORICAL-TIME, `preprocessing_log2=89` pays the entire historical
 construction once. No cross-target or multi-collision amortization is taken.
 The online phase receives an additional factor-of-two envelope: it needs six
 selected-target compression calls total, fewer than `2^20` other word
 operations, and no randomness or retries. Consequently the claimed total is
-strictly less than `2^127 + 2^20 + 6 < 2^128`.
+strictly less than `2^89 + 2^20 + 6 < 2^90`.
 
-`data_log2=128` bounds all candidate blocks, tuple records, messages, and other
+`data_log2=90` bounds all candidate blocks, tuple records, messages, and other
 attack data generated or examined across preprocessing and replay. This follows
 under the same time premise because materializing or inspecting each separate
-item requires at least one charged operation; it is not a claim of `2^128`
+item requires at least one charged operation; it is not a claim of `2^90`
 external known pairs or free data.
 
 ## 7. Score-critical peak-memory premise
@@ -224,14 +224,14 @@ The resource vector is therefore
 
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
-| `time_log2` | 128 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
+| `time_log2` | 90 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
 | `memory_log2_bytes` | 36 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
-| `data_log2` | 128 | All materialized or inspected attack items under the time premise |
-| `preprocessing_log2` | 127 | Historical construction, paid once and included in total time |
+| `data_log2` | 90 | All materialized or inspected attack items under the time premise |
+| `preprocessing_log2` | 89 | Historical construction, paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-The normalized scalar is exactly `128 + 36 = 164`. The advice exponent is not
+The normalized scalar is exactly `90 + 36 = 126`. The advice exponent is not
 added again because advice is already included in peak memory. Preprocessing is
 not added again because it is already included in total time. There is no
 success amplification because the deterministic pair succeeds on every online
@@ -239,9 +239,9 @@ execution.
 
 Experiment `published-r31-witness-replay` tests only this statement: the two
 submitted distinct byte strings collide under the organizer's complete
-`sha256-r31-prefix-v1` implementation. The runner will execute the inert source
-in an organizer-owned isolated container, recompute both digests, flag repeated
-pairs, and label attack-cost inference as unavailable. Multiple identical
+`sha256-r31-prefix-v1` implementation. Organizer evidence consists of isolated
+source evaluation, independently recomputed digests, repeated-pair flags, and
+an explicit label that attack-cost inference is unavailable. Multiple identical
 success rows are reproducibility checks for transport and target verification;
 they are not samples from the historical attack and are not evidence for either
 score-critical heuristic.
@@ -251,7 +251,7 @@ cost claims. The publication and slides provide relevant evidence that a
 practical attack was performed and describe its high-level construction. The
 absence of a full generator, immutable build recipe, raw attempt ledger, and
 organizer-model resource receipt blocks any claim that this package has
-reproduced or rigorously certified the reported attack cost. The exploratory
-review must decide whether the disclosed margins and primary evidence make both
-heuristics plausible and not refuted. This package makes no novelty, full
-SHA-256, 32-round, security-lower-bound, or rigorous-lane claim.
+reproduced or rigorously certified the reported attack cost. Exploratory
+qualification therefore depends on whether the disclosed margins and primary
+evidence make both heuristics plausible and not refuted. This package makes no
+novelty, full-SHA-256, 32-round, security-lower-bound, or rigorous-lane claim.
