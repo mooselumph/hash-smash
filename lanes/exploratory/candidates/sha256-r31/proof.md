@@ -8,7 +8,7 @@ collision witness and a deterministic replay algorithm. It does not claim a new
 collision, a new differential trail, a reproducible implementation of the
 historical search, or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 90 + 36 = 126`. The witness
+The score is `time_log2 + memory_log2_bytes = 80 + 36 = 116`. The witness
 relation is exact and independently checkable. The historical time and peak
 memory translations are explicitly declared score-critical heuristics because
 the public material located for this submission does not include an
@@ -153,40 +153,39 @@ heuristic, much looser accounting below.
 **H-HISTORICAL-TIME (score-critical).** The total computational work that led
 to this exact fixed pair—including differential-trail discovery, SAT/SMT and
 other tool runs, all failed or abandoned trials, table generation, matching,
-message construction, serialization, and verification—is less than `2^89`
+message construction, serialization, and verification—is less than `2^79`
 charged `collision-frontier-v3` units. Adding advice loading, two complete
 selected-target evaluations, checking, and return keeps total time below
-`2^90` units.
+`2^80` units.
 
-This bound has substantial numerical slack relative to the public figures: 49.5
-bits above the practical paper's reported `2^40.5` attack complexity, 40.2 bits
-above the predecessor's `2^49.8` estimate, and 24.5 bits above the 2013
-`2^65.5` estimate. The actual reported 1.2-hour, 64-thread collision run is also
-qualitatively consistent with a bound far below `2^90` machine operations.
-The slack is intended to pay for instruction-level expansion, non-target
-computations, trail search, failures, and conversions rather than treating those
-items as free.
+This bound retains 39.5 bits over the practical paper's reported `2^40.5`
+attack complexity, 30.2 bits over the predecessor's `2^49.8` estimate, and
+14.5 bits over the 2013 `2^65.5` estimate. The reported 1.2-hour, 64-thread
+collision run is also qualitatively consistent with a bound far below `2^80`
+machine operations. The slack pays for instruction-level expansion,
+non-target computations, trail search, failures, and conversion work rather
+than treating them as free.
 
 Nevertheless, this remains a heuristic. The publication and public source
 snapshot do not expose a complete historical job ledger, instruction trace,
 energy-to-operation conversion, or all unsuccessful development runs. The
-figures are estimates in publication-specific units, not certified upper bounds
-in the organizer word-RAM. The practical generator was not located in the public
-snapshot. Therefore neither the runtime report nor the fixed witness proves the
-`2^89` preprocessing cap. If the aggregate omitted work reaches that cap,
-`preprocessing_log2=89`, `time_log2=90`, and the score all fail.
+figures are estimates in publication-specific units, not certified upper
+bounds in the organizer word-RAM. The practical generator was not located in
+the public snapshot. Therefore neither the runtime report nor the fixed
+witness proves the `2^79` preprocessing cap. If aggregate omitted work reaches
+that cap, `preprocessing_log2=79`, `time_log2=80`, and the score all fail.
 
-Under H-HISTORICAL-TIME, `preprocessing_log2=89` pays the entire historical
+Under H-HISTORICAL-TIME, `preprocessing_log2=79` pays the entire historical
 construction once. No cross-target or multi-collision amortization is taken.
 The online phase receives an additional factor-of-two envelope: it needs six
 selected-target compression calls total, fewer than `2^20` other word
 operations, and no randomness or retries. Consequently the claimed total is
-strictly less than `2^89 + 2^20 + 6 < 2^90`.
+strictly less than `2^79 + 2^20 + 6 < 2^80`.
 
-`data_log2=90` bounds all candidate blocks, tuple records, messages, and other
+`data_log2=80` bounds all candidate blocks, tuple records, messages, and other
 attack data generated or examined across preprocessing and replay. This follows
 under the same time premise because materializing or inspecting each separate
-item requires at least one charged operation; it is not a claim of `2^90`
+item requires at least one charged operation; it is not a claim of `2^80`
 external known pairs or free data.
 
 ## 7. Score-critical peak-memory premise
@@ -224,14 +223,14 @@ The resource vector is therefore
 
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
-| `time_log2` | 90 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
+| `time_log2` | 80 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
 | `memory_log2_bytes` | 36 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
-| `data_log2` | 90 | All materialized or inspected attack items under the time premise |
-| `preprocessing_log2` | 89 | Historical construction, paid once and included in total time |
+| `data_log2` | 80 | All materialized or inspected attack items under the time premise |
+| `preprocessing_log2` | 79 | Historical construction, paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-The normalized scalar is exactly `90 + 36 = 126`. The advice exponent is not
+The normalized scalar is exactly `80 + 36 = 116`. The advice exponent is not
 added again because advice is already included in peak memory. Preprocessing is
 not added again because it is already included in total time. There is no
 success amplification because the deterministic pair succeeds on every online
