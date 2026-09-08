@@ -8,7 +8,7 @@ collision witness and a deterministic replay algorithm. It does not claim a new
 collision, a new differential trail, a reproducible implementation of the
 historical search, or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 80 + 36 = 116`. The witness
+The score is `time_log2 + memory_log2_bytes = 41 + 26 = 67`. The witness
 relation is exact and independently checkable. The historical time and peak
 memory translations are explicitly declared score-critical heuristics because
 the public material located for this submission does not include an
@@ -134,6 +134,10 @@ of `W[13..15]`. Its improved 31-step estimate is time `2^49.8` and memory
 `2^48`, while it reports the older 2013 attack as time `2^65.5` and memory
 `2^34`: <https://eprint.iacr.org/2024/349>.
 
+Those older figures describe superseded attack routes. They are historical
+comparison points, not lower bounds, not the cost of the practical witness, and
+not support for imposing either older time figure on the 2024 practical route.
+
 A public source snapshot used only for cross-checking the word layout is commit
 `6a9f35fd8d8bdcc1a54dc6f170ed0038ebe5bb32` of
 <https://github.com/Peace9911/sha_2_attack>. Its collision record expresses one
@@ -146,70 +150,74 @@ run.
 The cited papers and slides use their own complexity conventions. This package
 does not copy `40.5`, `19.8`, `49.8`, or `48` directly into the HashSmash score.
 The translation into the organizer's 256-bit word-RAM model is the explicitly
-heuristic, much looser accounting below.
+heuristic and deliberately aggressive accounting below.
 
 ## 6. Score-critical historical time premise
 
-**H-HISTORICAL-TIME (score-critical).** The total computational work that led
-to this exact fixed pair—including differential-trail discovery, SAT/SMT and
-other tool runs, all failed or abandoned trials, table generation, matching,
-message construction, serialization, and verification—is less than `2^79`
-charged `collision-frontier-v3` units. Adding advice loading, two complete
-selected-target evaluations, checking, and return keeps total time below
-`2^80` units.
+**H-HISTORICAL-TIME (score-critical).** The computational work that led to this
+exact fixed pair—including differential-trail discovery, SAT/SMT and other tool
+runs, all failed or abandoned trials, table generation, matching, message
+construction, serialization, and verification—is less than `2^40.75` charged
+`collision-frontier-v3` units. Adding advice loading, two complete
+selected-target evaluations, checking, and return keeps total time below `2^41`
+units.
 
-This bound retains 39.5 bits over the practical paper's reported `2^40.5`
-attack complexity, 30.2 bits over the predecessor's `2^49.8` estimate, and
-14.5 bits over the 2013 `2^65.5` estimate. The reported 1.2-hour, 64-thread
-collision run is also qualitatively consistent with a bound far below `2^80`
-machine operations. The slack pays for instruction-level expansion,
-non-target computations, trail search, failures, and conversion work rather
-than treating them as free.
+The numerical support is the practical paper's reported `2^40.5` attack
+complexity and its 1.2-hour, 64-thread collision run. The preprocessing cap is
+only 0.25 bit above that headline, and the total cap is only 0.5 bit above it.
+The transfer therefore assumes that publication-specific operations plus every
+omitted discovery, conversion, construction, and failure cost fit within a
+factor `2^0.25` in the organizer's word-RAM preprocessing account. The older
+`2^49.8` and `2^65.5` time figures are superseded routes, not lower bounds or
+extra margins for this premise.
 
-Nevertheless, this remains a heuristic. The publication and public source
-snapshot do not expose a complete historical job ledger, instruction trace,
-energy-to-operation conversion, or all unsuccessful development runs. The
-figures are estimates in publication-specific units, not certified upper
-bounds in the organizer word-RAM. The practical generator was not located in
-the public snapshot. Therefore neither the runtime report nor the fixed
-witness proves the `2^79` preprocessing cap. If aggregate omitted work reaches
-that cap, `preprocessing_log2=79`, `time_log2=80`, and the score all fail.
+This remains a deliberately fragile heuristic. The publication and public
+source snapshot do not expose a complete historical job ledger, instruction
+trace, immutable practical-generator build, organizer-model conversion receipt,
+or record of all unsuccessful development runs. Publication complexity units
+are not certified organizer word-RAM units. Neither the runtime report nor the
+fixed replay proves the factor-`2^0.25` conversion or the `2^40.75` preprocessing
+cap. If preprocessing reaches `2^40.75` or total work reaches `2^41`,
+`preprocessing_log2=40.75`, `time_log2=41`, `data_log2=41`, and the score all
+fail.
 
-Under H-HISTORICAL-TIME, `preprocessing_log2=79` pays the entire historical
+Under H-HISTORICAL-TIME, `preprocessing_log2=40.75` pays the entire historical
 construction once. No cross-target or multi-collision amortization is taken.
-The online phase receives an additional factor-of-two envelope: it needs six
-selected-target compression calls total, fewer than `2^20` other word
-operations, and no randomness or retries. Consequently the claimed total is
-strictly less than `2^79 + 2^20 + 6 < 2^80`.
+The online phase needs six selected-target compression calls total, fewer than
+`2^20` other word operations, and no randomness or retries. Consequently the
+conditional total is strictly less than
+`2^40.75 + 2^20 + 6 < 2^41`.
 
-`data_log2=80` bounds all candidate blocks, tuple records, messages, and other
+`data_log2=41` bounds all candidate blocks, tuple records, messages, and other
 attack data generated or examined across preprocessing and replay. This follows
 under the same time premise because materializing or inspecting each separate
-item requires at least one charged operation; it is not a claim of `2^80`
+item requires at least one charged operation; it is not a claim of `2^41`
 external known pairs or free data.
 
 ## 7. Score-critical peak-memory premise
 
 **H-HISTORICAL-MEMORY (score-critical).** Peak simultaneously retained memory
-during all historical construction and the online replay is less than `2^36`
-bytes (64 GiB), including code, solver state, tuple tables and indices,
-messages, advice, thread state, constants, and working storage.
+during all historical construction and the online replay is less than `2^26 =
+67,108,864` bytes (64 MiB), including code, advice, tuple tables, indices,
+messages, thread state, constants, allocator overhead, solver and tool state,
+and all other working storage.
 
 The practical slides' table has approximately `2^19.8` entries. The listed
-tuple contains ten 32-bit words, so a tightly packed copy is 40 bytes per entry,
-less than `2^25.2` bytes total. Even 64 full copies would be less than
-`2^31.2` bytes before indices and runtime overhead. The submitted `2^36` cap is
-over 1,800 times the packed single-table estimate and over 27 times that
-deliberately pessimistic 64-copy estimate. The online phase is tiny relative to
-the cap.
+tuple contains ten 32-bit words, so a tightly packed representation takes 40
+bytes per entry. Using the reported approximate entry count, the raw table is
+approximately `2^19.8 * 40 = 2^25.121928095` bytes, or about 36.5 decimal MB.
+The submitted cap is only 0.878 bit, or about 1.838 times, above that raw
+representation. It leaves about 30.6 decimal MB for every index, executable
+page, allocator object, thread, message, and other retained byte.
 
 This memory translation is also heuristic. The public figures count entries,
-not bytes, and do not provide an authoritative peak-resident-set trace. Data
-structure overhead, allocator behavior, per-thread duplication, SAT/SMT solver
-state, characteristic search, and unsuccessful development runs are not fully
-documented. The large margin makes the cap plausible for an exploratory claim,
-but it does not make it a certified worst-case bound. If any included phase
-peaked at 64 GiB or more, `memory_log2_bytes=36` and the score fail.
+not bytes, and do not provide an authoritative peak-RSS trace. They do not prove
+that the practical implementation shared one tightly packed table or that
+indices, allocator behavior, executable code, per-thread state, SAT/SMT solver
+state, characteristic search, and unsuccessful development runs fit inside the
+remaining space. The cap is deliberately fragile, not a certified worst-case
+bound. If any included phase reaches `2^26` bytes,
+`memory_log2_bytes=26` and the score claims fail.
 
 The retained nonuniform advice needed by the online algorithm is only the two
 128-byte messages. Allowing their 256 raw bytes plus length and digest metadata
@@ -223,14 +231,15 @@ The resource vector is therefore
 
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
-| `time_log2` | 80 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
-| `memory_log2_bytes` | 36 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
-| `data_log2` | 80 | All materialized or inspected attack items under the time premise |
-| `preprocessing_log2` | 79 | Historical construction, paid once and included in total time |
+| `time_log2` | 41 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
+| `memory_log2_bytes` | 26 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
+| `data_log2` | 41 | All materialized or inspected attack items under the time premise |
+| `preprocessing_log2` | 40.75 | Historical construction, paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-The normalized scalar is exactly `80 + 36 = 116`. The advice exponent is not
+The six-field resource vector is `(41, 26, 41, 40.75, 1, 9)`, and the normalized
+scalar is exactly `41 + 26 = 67`. The advice exponent is not
 added again because advice is already included in peak memory. Preprocessing is
 not added again because it is already included in total time. There is no
 success amplification because the deterministic pair succeeds on every online
@@ -240,9 +249,11 @@ Experiment `published-r31-witness-replay` tests only this statement: the two
 submitted distinct byte strings collide under the organizer's complete
 `sha256-r31-prefix-v1` implementation. Organizer evidence consists of isolated
 source evaluation, independently recomputed digests, repeated-pair flags, and
-an explicit label that attack-cost inference is unavailable. Multiple identical
-success rows are reproducibility checks for transport and target verification;
-they are not samples from the historical attack and are not evidence for either
+an explicit label that attack-cost inference is unavailable. All 256 requested
+rows transport the same pair; the duplicate successful rows are reproducibility
+checks for transport and target verification, not independent samples from the
+historical attack. They provide no evidence for historical time, memory, data,
+preprocessing, generator reproducibility, historical success rate, or either
 score-critical heuristic.
 
 The witness establishes a real 31-round-prefix collision independently of the
@@ -251,6 +262,7 @@ practical attack was performed and describe its high-level construction. The
 absence of a full generator, immutable build recipe, raw attempt ledger, and
 organizer-model resource receipt blocks any claim that this package has
 reproduced or rigorously certified the reported attack cost. Exploratory
-qualification therefore depends on whether the disclosed margins and primary
-evidence make both heuristics plausible and not refuted. This package makes no
-novelty, full-SHA-256, 32-round, security-lower-bound, or rigorous-lane claim.
+qualification therefore depends on whether the disclosed edge premises and
+primary evidence make both heuristics plausible and not refuted. This package
+makes no novelty, full-SHA-256, 32-round, security-lower-bound, or rigorous-lane
+claim.
