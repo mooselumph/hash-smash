@@ -8,7 +8,7 @@
   "claim": {
     "time_log2": 41,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 26,
+    "memory_log2_bytes": 25.5,
     "data_log2": 41,
     "preprocessing_log2": 40.75,
     "success_probability": 1,
@@ -38,15 +38,15 @@
     },
     {
       "id": "H-HISTORICAL-MEMORY",
-      "statement": "Peak simultaneously retained storage over every historical construction phase and deterministic replay is less than 2^26 bytes, including code, advice, tables, indices, messages, thread state, constants, allocator overhead, solver and tool state, and other working storage.",
+      "statement": "Peak simultaneously retained storage over every historical construction phase and deterministic replay is less than 2^25.5 bytes, approximately 47,453,132.81 decimal bytes, including code, advice, tables, indices, messages, thread state, constants, allocator overhead, solver and tool state, and other working storage.",
       "role": "score-critical",
       "scope": "Exactly the construction history and replay of the fixed witness in proof.md, including characteristic search and all practical-attack phases rather than only the final online program.",
-      "extrapolation": "Convert the reported approximately 2^19.8 ten-word tuple table at ten 32-bit words per tuple into 2^19.8 * 40 = 2^25.121928095 packed bytes, about 36.5 decimal MB. The 2^26 = 67,108,864-byte cap is only 0.878 bit, or about 1.838 times, above that raw representation and leaves about 30.6 decimal MB for every index, executable page, allocator object, thread, message, and other retained byte.",
+      "extrapolation": "Convert the reported approximately 2^19.8 ten-word tuple table at ten 32-bit words per tuple into 2^19.8 * 40 = 2^25.121928095 packed bytes, approximately 36,513,537.10 decimal bytes. The 2^25.5 cap is approximately 47,453,132.81 decimal bytes, only 0.378071905 bit, or about 1.299604 times, above that raw representation and leaves approximately 10,939,595.71 decimal bytes for every index, executable page, allocator object, thread, message, constant, solver or tool state, advice byte, and other retained storage.",
       "evidence_ids": [
         "proof:120-128",
-        "proof:197-226"
+        "proof:197-228"
       ],
-      "limitations": "The public report counts table entries rather than measured peak bytes and supplies no peak-RSS trace. It does not prove that the practical implementation used one tightly packed shared table or that indexing, allocator, executable, solver/tool, and 64-thread overhead fit below the cap. If any charged phase reaches 2^26 bytes, the memory and score claims fail."
+      "limitations": "The public report counts table entries rather than measured peak bytes and supplies no peak-RSS trace. It does not prove that the practical implementation used one tightly packed shared table or that indexing, allocator, executable, solver/tool, advice, and 64-thread overhead fit inside the remaining approximately 10,939,595.71 decimal bytes. If any charged phase reaches 2^25.5 bytes, the memory and score claims fail."
     }
   ],
   "certificate_manifest": "certificates/manifest.json",
