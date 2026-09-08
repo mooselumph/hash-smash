@@ -8,7 +8,7 @@ collision witness and a deterministic replay algorithm. It does not claim a new
 collision, a new differential trail, a reproducible implementation of the
 historical search, or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 41 + 25.5 = 66.5`. The witness
+The score is `time_log2 + memory_log2_bytes = 41 + 25.25 = 66.25`. The witness
 relation is exact and independently checkable. The historical time and peak
 memory translations are explicitly declared score-critical heuristics because
 the public material located for this submission does not include an
@@ -197,8 +197,8 @@ external known pairs or free data.
 ## 7. Score-critical peak-memory premise
 
 **H-HISTORICAL-MEMORY (score-critical).** Peak simultaneously retained memory
-during all historical construction and the online replay is less than `2^25.5`
-bytes, approximately 47,453,132.81 decimal bytes, including code, advice, tuple
+during all historical construction and the online replay is less than `2^25.25`
+bytes, approximately 39,903,169.27 decimal bytes, including code, advice, tuple
 tables, indices, messages, thread state, constants, allocator overhead, solver
 and tool state, and all other working storage.
 
@@ -206,9 +206,9 @@ The practical slides' table has approximately `2^19.8` entries. The listed
 tuple contains ten 32-bit words, so a tightly packed representation takes 40
 bytes per entry. Using the reported approximate entry count, the raw table is
 approximately `2^19.8 * 40 = 2^25.121928095` bytes, or 36,513,537.10 decimal
-bytes. The submitted `2^25.5` cap is approximately 47,453,132.81 decimal bytes,
-only 0.378071905 bit, or about 1.299604 times, above that raw representation.
-It leaves approximately 10,939,595.71 decimal bytes for every index, executable
+bytes. The submitted `2^25.25` cap is approximately 39,903,169.27 decimal bytes,
+only 0.128071905 bit, or about 1.092832 times, above that raw representation.
+It leaves approximately 3,389,632.17 decimal bytes for every index, executable
 page, allocator object, thread, message, constant, solver or tool state, advice
 byte, and other retained storage.
 
@@ -218,8 +218,8 @@ that the practical implementation shared one tightly packed table or that
 indices, allocator behavior, executable code, per-thread state, SAT/SMT solver
 state, characteristic search, and unsuccessful development runs fit inside the
 remaining space. The cap is deliberately fragile, not a certified worst-case
-bound. If any included phase reaches `2^25.5` bytes,
-`memory_log2_bytes=25.5` and the score claims fail.
+bound. If any included phase reaches `2^25.25` bytes,
+`memory_log2_bytes=25.25` and the score claims fail.
 
 The retained nonuniform advice needed by the online algorithm is only the two
 128-byte messages. Allowing their 256 raw bytes plus length and digest metadata
@@ -234,14 +234,14 @@ The resource vector is therefore
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
 | `time_log2` | 41 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
-| `memory_log2_bytes` | 25.5 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
+| `memory_log2_bytes` | 25.25 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
 | `data_log2` | 41 | All materialized or inspected attack items under the time premise |
 | `preprocessing_log2` | 40.75 | Historical construction, paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-The six-field resource vector is `(41, 25.5, 41, 40.75, 1, 9)`, and the normalized
-scalar is exactly `41 + 25.5 = 66.5`. The advice exponent is not
+The six-field resource vector is `(41, 25.25, 41, 40.75, 1, 9)`, and the normalized
+scalar is exactly `41 + 25.25 = 66.25`. The advice exponent is not
 added again because advice is already included in peak memory. Preprocessing is
 not added again because it is already included in total time. There is no
 success amplification because the deterministic pair succeeds on every online
