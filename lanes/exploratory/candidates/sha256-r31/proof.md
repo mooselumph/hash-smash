@@ -8,7 +8,7 @@ collision witness and a deterministic replay algorithm. It does not claim a new
 collision, a new differential trail, a reproducible implementation of the
 historical search, or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 41 + 25.5 = 66.5`. The witness
+The proposed score is `time_log2 + memory_log2_bytes = 41 + 25.25 = 66.25`. The witness
 relation is exact and independently checkable. The historical time and peak
 memory translations are explicitly declared score-critical heuristics because
 the public material located for this submission does not include an
@@ -197,8 +197,8 @@ external known pairs or free data.
 ## 7. Score-critical peak-memory premise
 
 **H-HISTORICAL-MEMORY (score-critical).** Peak simultaneously retained memory
-during all historical construction and the online replay is less than `2^25.5`
-bytes, approximately 47,453,132.81 decimal bytes, including code, advice, tuple
+during all historical construction and the online replay is less than `2^25.25`
+bytes, approximately 39,903,169.27 decimal bytes, including code, advice, tuple
 tables, indices, messages, thread state, constants, allocator overhead, solver
 and tool state, and all other working storage.
 
@@ -206,9 +206,9 @@ The practical slides' table has approximately `2^19.8` entries. The listed
 tuple contains ten 32-bit words, so a tightly packed representation takes 40
 bytes per entry. Using the reported approximate entry count, the raw table is
 approximately `2^19.8 * 40 = 2^25.121928095` bytes, or 36,513,537.10 decimal
-bytes. The submitted `2^25.5` cap is approximately 47,453,132.81 decimal bytes,
-only 0.378071905 bit, or about 1.299604 times, above that raw representation.
-It leaves approximately 10,939,595.71 decimal bytes for every index, executable
+bytes. The submitted `2^25.25` cap is approximately 39,903,169.27 decimal bytes,
+only 0.128071905 bit, or about 1.092832 times, above that raw representation.
+It leaves approximately 3,389,632.17 decimal bytes for every index, executable
 page, allocator object, thread, message, constant, solver or tool state, advice
 byte, and other retained storage.
 
@@ -218,8 +218,10 @@ that the practical implementation shared one tightly packed table or that
 indices, allocator behavior, executable code, per-thread state, SAT/SMT solver
 state, characteristic search, and unsuccessful development runs fit inside the
 remaining space. The cap is deliberately fragile, not a certified worst-case
-bound. If any included phase reaches `2^25.5` bytes,
-`memory_log2_bytes=25.5` and the score claims fail.
+bound. If any included phase reaches `2^25.25` bytes,
+`memory_log2_bytes=25.25` and the score claims fail. Section 10 replaces the
+rounded headroom calculation with an integer allocation audit and explicit
+counterexamples to several common storage choices.
 
 The retained nonuniform advice needed by the online algorithm is only the two
 128-byte messages. Allowing their 256 raw bytes plus length and digest metadata
@@ -234,14 +236,14 @@ The resource vector is therefore
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
 | `time_log2` | 41 | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME |
-| `memory_log2_bytes` | 25.5 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
+| `memory_log2_bytes` | 25.25 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY |
 | `data_log2` | 41 | All materialized or inspected attack items under the time premise |
 | `preprocessing_log2` | 40.75 | Historical construction, paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-The six-field resource vector is `(41, 25.5, 41, 40.75, 1, 9)`, and the normalized
-scalar is exactly `41 + 25.5 = 66.5`. The advice exponent is not
+The six-field resource vector is `(41, 25.25, 41, 40.75, 1, 9)`, and the proposed
+scalar is exactly `41 + 25.25 = 66.25`. The advice exponent is not
 added again because advice is already included in peak memory. Preprocessing is
 not added again because it is already included in total time. There is no
 success amplification because the deterministic pair succeeds on every online
@@ -268,3 +270,202 @@ qualification therefore depends on whether the disclosed edge premises and
 primary evidence make both heuristics plausible and not refuted. This package
 makes no novelty, full-SHA-256, 32-round, security-lower-bound, or rigorous-lane
 claim.
+
+## 9. Revised evidence assessment
+
+This revision retains the fixed pair, algorithm and resource vector of the
+earlier unsuccessful 66.25 package. It adds an integer memory audit, a
+parameterized time-conversion budget, direct public-source anchors, and the
+negative limits of a separately developed reference implementation. These
+additions improve the specificity of the analysis; they do not convert either
+historical-resource premise into a measurement.
+
+The prior experimental findings were that historical construction was not
+executed and historical memory was not measured. Those observations remain
+true. A new review must assess the relevant source support together with the
+unresolved transfer below. No inference here depends on a previous score being
+accepted, a majority of reviewers, or repeatedly rerunning the same package.
+
+The source support is localized as follows:
+
+| Source location | Relevant observation | Limit on its use |
+| --- | --- | --- |
+| Authors' ASIACRYPT slides, page 7 | Their contribution focuses on message-pair construction after choosing a differential trail | Earlier trail discovery is not thereby measured or free |
+| Slides, pages 10-13 | Starting points, inverse-round relations, stored states and first-block matching provide a concrete construction outline | They do not disclose an allocator or a complete operation ledger |
+| Slides, page 14 | Approximately `2^19.8` ten-word table entries, complexity `2^40.5`, and a 1.2-hour run using 64 threads | Entries are not peak bytes; runtime is not organizer RAM units |
+| Slides, page 15 | The public two-block message pair | Establishes a concrete target for independent digest recomputation |
+| Publisher abstract and note 3 | The runtime is corroborated; an unusually fast initial success was followed by further experiments and another pair | The number and total cost of those experiments are not given |
+
+The public publisher page is
+<https://link.springer.com/chapter/10.1007/978-981-96-0941-3_8>.
+The slides URL is given in section 5; the locally inspected 17-page file has
+SHA-256 `6a7247c13503511934c60ea38869d13318d35c6c3c10376ff2c8523e77014e29`.
+The publisher's public abstract and notes were inspected; access to the full
+subscription chapter is not claimed. No source file is redistributed here.
+The source summaries and arithmetic needed for this assessment are included
+in this proof, so following external links is not necessary to read the claim.
+
+The additional reported experiments are relevant contrary pressure on a narrow
+all-history time budget. They cannot be silently replaced by the single
+1.2-hour run. Nor does the witness's deterministic replay success establish a
+success distribution for the original search.
+
+## 10. Integer memory audit and implementation sensitivity
+
+For a concrete sensitivity calculation, round the reported approximate table
+size upward to `N0 = ceil(2^19.8) = 912839`. This is an illustrative cardinality,
+not a measurement or an upper bound on the authors' actual table. The largest
+integer byte count strictly below the submitted cap is
+`B = floor(2^25.25) = 39903169`.
+
+At `N = N0`, a single contiguous array of ten unsigned 32-bit words per record
+uses exactly `40*N = 36513560` bytes. Thus all other simultaneously live storage
+must fit in `B - 40*N = 3389609` bytes. This includes any allocator metadata and
+code; neither the public tuple count nor the following arithmetic hides it.
+
+| Storage choice at N0 | Bytes before other working storage | Within B? |
+| --- | ---: | --- |
+| One packed 40-byte array | 36513560 | Only if other storage is at most 3389609 |
+| Array plus a 4-byte index for every record | 40164916 | No |
+| Array plus an 8-byte pointer for every record | 43816272 | No |
+| Records individually padded to 64 bytes | 58421696 | No |
+| Two simultaneously live packed arrays | 73027120 | No |
+
+An index-free layout is possible at the representation level: store `A[-1]`
+as the first word of each record, order the single array by that unsigned key,
+locate the lower and upper bounds of a matching key by binary search, and visit
+every matching record. Duplicates remain separate records. In-place heapsort
+permits ordering without a second N-record array. Accessing a 40-byte record in
+the organizer's 256-bit RAM takes more than one word access; sorting, lookup,
+packing, boundary handling and regeneration must all be charged to time.
+This describes a feasible layout choice, not the authors' observed code or a
+substitute collision generator.
+
+For a shared table with 64 workers, write the peak at the table-heavy phase as
+
+```text
+M_table_phase = 40*N + F + 64*S + I + Q,
+```
+
+where `F` is all other shared storage, `S` bounds each worker's live state,
+`I` is any separately allocated index, and `Q` is any additional simultaneously
+retained data, including sorting/checkpoint buffers. For example, the allowances
+`F = 2097152`, `S = 16384`, `I = Q = 0` give `39659288` bytes at N0, leaving
+`243881` bytes below B. These are explicit hypothetical allowances. There is
+no evidence that historical code, allocator and thread state met them, that
+checkpointing needed zero extra bytes, or that an OS runtime fits them. They
+show the arithmetic constraint has a solution, not that history realized it.
+
+More generally, for actual non-table overhead H, the necessary cardinality
+condition is `N <= floor((B-H)/40)`. Every extra record consumes another 40
+bytes of the finite headroom. Approximate `2^19.8` reporting cannot establish
+that inequality. For disjoint phases the overall peak is the maximum of their
+individual peaks; for overlapping phases all simultaneously retained state
+must be added. Every historical solver or trail-search phase independently has
+to respect B as well. The table audit supplies no bound on those phases.
+
+This sharpens H-HISTORICAL-MEMORY: it requires an implementation at least as
+space-efficient as a suitable single-table layout, modest aggregate overhead,
+a compatible actual cardinality, and no larger peak elsewhere. The four
+over-budget layouts in the table are explicit failure cases. The premise is
+still unmeasured and remains score-critical.
+
+## 11. Time conversion and omitted-work sensitivity
+
+Let `C = 2^40.5` denote the reported publication-scale complexity. Define `c`
+as the conversion from one unit of that reported work into charged organizer
+units, and `D >= 0` as all charged work omitted by that accounting. D includes
+trail discovery, additional experiments, abandoned trials, setup, data
+conversion, tooling and verification to the extent those costs are not already
+included in c*C. Nothing is counted twice, and nothing is silently discarded.
+
+H-HISTORICAL-TIME then requires
+
+```text
+T_pre = c*C + D < 2^40.75
+c + D/C < 2^0.25 = 1.189207115002721...
+```
+
+| Assumed conversion c | Remaining budget D, approximately |
+| --- | ---: |
+| 1.0 | less than 294206516665 charged units |
+| 1.1 | less than 138712091067 charged units |
+| at least 1.189207115002721... | No nonnegative D can satisfy the preprocessing cap |
+
+These rows are sensitivity calculations, not estimates of c or D. No precise
+conversion follows from counting a SHA-256 compression as one organizer unit:
+partial-round algebra, table accesses, comparisons, branches and random draws
+are separately charged. The sources inspected do not bind c or D at the
+required values. The new reference prototype also does not supply that
+conversion, since it follows a different exhaustive enumeration.
+
+The 64-thread 1.2-hour report corresponds to 276480 nominal thread-seconds.
+Dividing `2^40.75` by that figure gives about 6688190 charged units per
+thread-second, but neither utilization nor the mapping from processor
+instructions to organizer units is known. That quotient is not a benchmark or
+calibration. In particular, the publisher's report of additional experiments
+prevents treating this one runtime as the complete historical ledger.
+
+For the online phase retain the deliberately generous bound
+`T_online < 2^20 + 6` from section 6. Conditional on the preprocessing premise,
+`T_pre + T_online < 2^40.75 + 2^20 + 6 < 2^41`.
+Preprocessing is included once in total time. A violated preprocessing
+bound invalidates the submitted vector even if the looser total cap happens
+to hold. This analysis supplies exact failure thresholds, not a new measured
+historical time result.
+
+## 12. What the separate reference work actually adds
+
+A separate reference implementation was developed after the earlier rejection.
+Its source checkpoint is `5636b363af4be025e73a762c9c7ac3d60251e7b4`;
+the tested executable SHA-256 is
+`98ed0b2a2e34f2380a772c9f62786fa57681d3653df2fde4d71bc75a8d480e40`.
+The retained R6 campaign summary SHA-256 is
+`b95841d22116038948f47d2f8fb29a8cd4df82f7c0ab75342c19fe07011c8a08`.
+These identifiers identify local research records, not organizer certificates;
+the full source and traces are not part of this submitted package.
+
+Nine recorded pilot attempts exercised direct execution, deliberate midpoint
+interruption, and checkpoint resumption at each of three domain sizes. The
+summary reports matching counters and digests for direct versus resumed runs
+and native cgroup-v2 peak measurements. Direct runs reported:
+
+| Raw assignments | Accepted table records | New collision candidates | Peak bytes |
+| ---: | ---: | ---: | ---: |
+| 4096 | 0 | 0 | 104464384 |
+| 65536 | 0 | 0 | 104517632 |
+| 1048576 | 0 | 0 | 104730624 |
+
+The largest measured peak is about `2^26.642108` bytes, exceeding B. The tested
+domain varied only the first starting-point axis; the remaining axes were
+singletons. Empty tables mean no measured bytes-per-accepted-record slope,
+no successful matching or fulfillment sample, and no collision-probability
+estimate. The summary explicitly has probability and score authority false.
+The interrupted attempts are retained; they are not silently dropped successes.
+
+Thus the prototype demonstrates parts of execution and measurement machinery
+but does not support either historical-resource cap. No subtraction of runtime
+overhead is used to bring its peak under B. Its larger peak concerns a different
+implementation and cannot by itself establish the authors' historical peak.
+Conversely, semantic conformance and checkpoint correctness do not establish
+that the prototype reproduces the authors' practical generator or complexity.
+
+All nine pilots are research diagnostics, not runs of the claimed historical
+construction or repetitions supplying the deterministic online success value.
+Were this prototype to become the submitted construction, its work and memory
+would require their own fully charged claim; the present bounds could not
+simply be attached to it. The advanced work is retained for that later route.
+
+## 13. Result of this analytical revision
+
+The exact witness remains independently verifiable. The proposed 66.25 vector
+remains conditional on both named historical-resource heuristics. This revision
+provides concrete compatible and incompatible storage choices, exact conversion
+and omitted-work inequalities, and adverse diagnostic observations. It does
+not claim the prior experimental objections have been experimentally resolved.
+
+No fresh historical peak trace, complete historical attempt ledger, calibrated
+organizer conversion, or new generated collision is supplied. Accordingly this
+is a revised exploratory proposal for assessment of the explicitly bounded
+premises, with a real possibility of another `not_evaluable` result. The measured
+prototype is not presented as evidence that 66.25 has already been achieved.
