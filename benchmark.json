@@ -7,6 +7,7 @@
       "description": "md5-s63 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/md5-s63"
       ],
@@ -34,6 +35,7 @@
       "description": "md5-s63 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/md5-s63"
       ],
@@ -61,6 +63,7 @@
       "description": "md5-s64 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/md5-s64"
       ],
@@ -88,6 +91,7 @@
       "description": "md5-s64 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/md5-s64"
       ],
@@ -115,6 +119,7 @@
       "description": "sha1-r79 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha1-r79"
       ],
@@ -142,6 +147,7 @@
       "description": "sha1-r79 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha1-r79"
       ],
@@ -169,6 +175,7 @@
       "description": "sha1-r80 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha1-r80"
       ],
@@ -196,6 +203,7 @@
       "description": "sha1-r80 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha1-r80"
       ],
@@ -223,6 +231,7 @@
       "description": "sha256-r31 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha256-r31"
       ],
@@ -250,6 +259,7 @@
       "description": "sha256-r31 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha256-r31"
       ],
@@ -277,6 +287,7 @@
       "description": "sha256-r32 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha256-r32"
       ],
@@ -304,6 +315,7 @@
       "description": "sha256-r32 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha256-r32"
       ],
@@ -331,6 +343,7 @@
       "description": "sha3-256-r5 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha3-256-r5"
       ],
@@ -358,6 +371,7 @@
       "description": "sha3-256-r5 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha3-256-r5"
       ],
@@ -385,6 +399,7 @@
       "description": "sha3-256-r6 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/exploratory/candidates/sha3-256-r6"
       ],
@@ -412,6 +427,7 @@
       "description": "sha3-256-r6 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
+      "promotionMode": "manual",
       "editablePaths": [
         "lanes/rigorous/candidates/sha3-256-r6"
       ],

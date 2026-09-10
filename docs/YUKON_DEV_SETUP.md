@@ -13,6 +13,7 @@ include both review lanes; do not create a second import for the other lane.
 | Challenge manifest name | `hashsmash` |
 | Manifest / import root | Repository-root `benchmark.json`; omit `rootDir` |
 | Schema / current tracks | 2 / 16 (eight exploratory, eight rigorous) |
+| Promotion mode | `manual` on every track; owner review before promotion |
 | Yukon and organizer track ID | `<target>-<lane>`, such as `sha1-r80-rigorous` |
 | Required exploratory / rigorous outcome | `plausible_not_refuted` / `ai_rigor_qualified` |
 | Editable path, relative to repository root | `lanes/<lane>/candidates/<target>` |
@@ -162,10 +163,13 @@ Suggested UI wording:
 > Follow its linked instructions and apply its challenge-specific exceptions to
 > the generic Yukon workflow.
 
-Test a legitimate candidate change, a non-editable-path rejection through Yukon,
-and promotion. Confirm that a promotion preserves all sibling tracks, including
-the other lane's candidates, and the harness. Save the before/after commit and
-path hashes; local surface-check tests alone do not establish this platform result.
+Test a legitimate improving candidate change and a non-editable-path rejection
+through Yukon. The improving submission must enter `review` without merging or
+changing the promoted best. After the owner inspects and accepts that exact
+candidate SHA through the review API below, verify promotion. Confirm that it
+preserves all sibling tracks, including the other lane's candidates, and the
+harness. Save the before/after commit and path hashes; local surface-check tests
+alone do not establish this platform result.
 
 Humans review and merge harness PRs. Humans must **not** merge Yukon submission
 PRs; Yukon promotes the content it scored. Use the `yukon-unsafe` label on harness
@@ -173,3 +177,64 @@ PRs that invalidate pending scores, so Yukon blocks promotion of stale scored
 submissions after that PR merges. Avoid the label for unrelated safe documentation
 changes. Changing the label, workflow, or score packaging does not authorize
 changing scientific acceptance thresholds.
+
+## Convert an existing registration to manual review
+
+The root manifest sets `"promotionMode": "manual"` on all sixteen track entries.
+Yukon defaults omitted modes to `automatic`; editing this file alone does not
+change existing registrations. Follow the released
+[manual submission review contract](https://github.com/Layr-Labs/yukon/blob/v2026.09.10-1/docs/manual-submission-review.md).
+Confirm the API, worker, and promotion workflow all support that release before
+starting. The deployed `/doc.json` must expose `promotionMode` on benchmark PATCH
+and `POST /api/submissions/{id}/review`.
+
+Use the registered repository, source branch, challenge, and track IDs from the
+owner API. Do not assume the GitHub namespace is the Yukon setter namespace. For
+each of the sixteen existing track benchmarks, authenticated as its owner:
+
+1. Record its ID, source reference, baseline, promoted best, and submission history.
+   Pause new submissions with `POST /api/benchmarks/:id/pause`.
+2. Let queued/running validation and promotion jobs finish. Inspect submission
+   status and promotion status as well as Actions; the public benchmark jobs
+   endpoint lists baseline jobs only. Resolve any pending manual reviews before
+   another configuration edit.
+3. Land the manifest and its generator update through a human-reviewed harness PR.
+4. Send `PATCH /api/benchmarks/:id` with JSON `{"promotionMode":"manual"}`.
+   Read back every track and verify its mode, ID, baseline, and promoted best.
+5. Resume the previously open tracks with `POST /api/benchmarks/:id/resume`.
+6. Use a legitimate improvement to verify `review`, no queued promotion, an
+   unmerged candidate PR, and an unchanged promoted best. Do not invent an improved
+   resource claim merely to test the lifecycle.
+
+Changing promotion mode preserves the registration and history. It needs no new
+import, repository, App installation, or baseline rerun. If a mutation's response
+is uncertain, read the current state before retrying. Record the actual conversion
+and verification results separately; a manifest declaration is not evidence that
+an existing deployment has been converted.
+
+## Owner decisions
+
+Inspect the submission's recorded candidate commit, lane review, evidence, and
+numeric score. Send the decision as the benchmark owner to
+`POST /api/submissions/:id/review` with `Content-Type: application/json` and a bearer
+credential kept out of logs and notes:
+
+```json
+{
+  "decision": "accept",
+  "expectedCommitSha": "<full inspected candidate commit SHA>"
+}
+```
+
+Use `"decision": "reject"` to reject, optionally adding a public `reason`.
+Acceptance queues promotion only if the score still meets the improvement
+threshold. Check `promotionStatus` afterward: acceptance alone does not establish
+publication. A changed candidate SHA or a target branch that moved since validation
+requires revalidation and a new review; manually approved candidates are not
+rebased. GitHub merge/close actions alone do not update Yukon's review state.
+
+Manual mode adds an owner decision after the existing lane qualification. It
+does not admit every passing result, support scoreless acceptance, or replace
+HashSmash's scientific policy. The existing score metrics describe the AI review;
+do not rewrite historical `humanAccepted` or other score fields to represent a
+later Yukon decision. Leaderboards and solver sync continue to use promoted results.
