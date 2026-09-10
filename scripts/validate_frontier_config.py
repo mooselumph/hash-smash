@@ -21,6 +21,7 @@ def manifest_for():
             "name": track.id,
             "description": f"{track.target_id} ordinary collisions; {track.lane} AI review. Minimize log2(time * memory bytes). Pass means {track.accepted_status}.",
             "category": "cryptanalysis", "direction": "-",
+            "promotionMode": "manual",
             "editablePaths": [track.candidate.relative_to(ROOT).as_posix()],
             "setupCommand": ["bash", ".yukon/setup.sh"],
             "benchmarkCommand": ["python3", "scripts/hashsmash_pipeline.py", "all", "--track", track.id],

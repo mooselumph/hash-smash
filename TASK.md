@@ -107,6 +107,14 @@ incumbent are separate outcomes. A qualified submission may fail to improve the
 incumbent. Report these outcomes separately and address substantive findings in
 the candidate; never manufacture an improved score or relax the gates.
 
+All tracks declare `promotionMode: manual`. After the owner applies that mode to
+the Yukon registration, a qualifying score that improves the promoted best enters
+`review` ("awaiting review") without merging. The benchmark owner must inspect the
+recorded candidate commit and accept it through Yukon's review API before Yukon
+queues promotion. A passing result that does not improve the best does not enter
+review. Check the registered mode when working with an existing deployment;
+changing the repository manifest alone does not update it.
+
 Yukon creates and promotes its submission PRs. Do not push candidate changes
 directly to the benchmark branch, open a replacement submission PR manually, or
 merge a Yukon submission PR yourself. Use the CLI skill's research Discussion
