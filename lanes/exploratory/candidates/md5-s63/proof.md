@@ -1,535 +1,292 @@
-# MD5-s63: exploratory low-memory generic collision search
+# Published single-block collision transferred to MD5-s63
 
-This package fixes `md5-s63-prefix-v1`, 63 steps, ordinary collisions,
-`collision-frontier-v3`, and the exploratory lane. It replaces the stored-sample
-birthday batch of the initial candidate with a distinguished-point collision
-search over trajectories of a fixed iteration function, in the style of the
-van Oorschot-Wiener collision search, specialized to one walk with restarts.
-All resource fields are deterministic upper bounds enforced by a hard
-per-evaluation budget check and hard table caps. All empirical content is
-isolated in two explicitly declared heuristics, H1 and H2, about the iteration
-statistics of the fixed target function; the success probability is conditional
-on them and is derived below, including an explicit cycle-occupancy analysis of
-the post-repeat regime. The required `baseline_improved` value
-`md5-s63-nominal-v2` is an organizer identifier only: its nominal exponent 64
-is not an established attack, qualified baseline, or security bound, and this
-submission does not claim to improve it. An eventual AI qualification is
-distinct from mathematical or human acceptance, and an exploratory
-qualification does not qualify the rigorous sibling lane.
+This package targets `md5-s63-prefix-v1`: complete finite byte strings,
+the standard MD5 IV, RFC 1321 padding, steps 0 through 62 on every padded
+block, feed-forward after every reduced compression, and all 128 output bits.
+It retains a published 64-byte single-block MD5 collision and asks the
+organizer to recompute it under the selected 63-step target. It does not claim
+a new collision attack, a fresh generator, rigorous qualification, or human
+acceptance.
 
-## 1. Exact message family and complete hash
+The required `baseline_improved` value `md5-s63-nominal-v2` is an organizer
+reference identifier. It is not an implemented attack, a security bound, or
+evidence that this package improves a qualified baseline. The submitted scalar
+is `60 + 32 = 92`, emitted only if exploratory review qualifies the evidence.
 
-Let N = 2^128. For a 128-bit word w, let m(w) be its 16-byte little-endian
-encoding, including leading zero bytes. This encoding is injective. Every m(w)
-has exactly 128 bits, within the profile's bit-length limit 2^64. The input
-domain of the iteration function below has N elements. No IV is chosen by the
-algorithm.
+## 1. Exact target and retained messages
 
-Every m(w) receives the mandatory complete-message MD5 padding: append byte
-0x80, then 39 zero bytes, then the eight-byte little-endian integer 128. Thus
-there is exactly one 64-byte block. Split into sixteen 32-bit little-endian
-words M[0], ..., M[15], this block is M[j] = (w >> (32*j)) AND 0xffffffff for
-0 <= j < 4, M[4] = 0x80, M[5] through M[13] = 0, M[14] = 128, and M[15] = 0.
+For a finite byte string `m`, define `MD5-63(m)` as follows. Start from the
+standard four-word MD5 IV. Append byte `80`, then the minimum number of zero
+bytes that makes the length 56 modulo 64, then the original bit length as an
+eight-byte little-endian integer. On every resulting 64-byte block execute the
+original MD5 steps with indices 0 through 62, without renumbering the message
+schedule or constants, and add all four working words to the incoming state.
+Serialize the final state as little-endian A, B, C, D. Equality means equality
+of all 16 output bytes.
 
-Here is the exact compression and output definition. All intermediate MD5 state
-values are reduced modulo 2^32, NOT means the 32-bit complement, and ROL32(v,s)
-is ((v << s) OR (v >> (32-s))) AND 0xffffffff after masking v to 32 bits.
-Start (a,b,c,d) = (A0,B0,C0,D0) =
-(0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476).
-For i = 0,1,...,62 in that order, use these original-index rules:
+The retained messages are the pair in Table 5 of Marc Stevens,
+*Single-block collision attack on MD5* (2012). Each is exactly 64 bytes.
 
-| Index i | F | g | rotation s, repeating every four steps |
-| --- | --- | --- | --- |
-| 0..15 | (b AND c) OR ((NOT b) AND d) | i | 7,12,17,22 |
-| 16..31 | (d AND b) OR ((NOT d) AND c) | (5*i+1) mod 16 | 5,9,14,20 |
-| 32..47 | b XOR c XOR d | (3*i+5) mod 16 | 4,11,16,23 |
-| 48..62 | c XOR (b OR (NOT d)) | (7*i) mod 16 | 6,10,15,21 |
-
-Perform the simultaneous assignment
-(a,b,c,d) := (d, b + ROL32(a+F+K[i]+M[g],s), b, c), modulo 2^32.
-The 63 constants K[0] through K[62], in index order, are the following
-literal hexadecimal integers. They are public program constants, with storage
-and loading charged below; there is no run-time trigonometric computation.
+Message A:
 
 ```text
-d76aa478 e8c7b756 242070db c1bdceee f57c0faf 4787c62a a8304613 fd469501
-698098d8 8b44f7af ffff5bb1 895cd7be 6b901122 fd987193 a679438e 49b40821
-f61e2562 c040b340 265e5a51 e9b6c7aa d62f105d 02441453 d8a1e681 e7d3fbc8
-21e1cde6 c33707d6 f4d50d87 455a14ed a9e3e905 fcefa3f8 676f02d9 8d2a4c8a
-fffa3942 8771f681 6d9d6122 fde5380c a4beea44 4bdecfa9 f6bb4b60 bebfbc70
-289b7ec6 eaa127fa d4ef3085 04881d05 d9d4d039 e6db99e5 1fa27cf8 c4ac5665
-f4292244 432aff97 ab9423a7 fc93a039 655b59c3 8f0ccc92 ffeff47d 85845dd1
-6fa87e4f fe2ce6e0 a3014314 4e0811a1 f7537e82 bd3af235 2ad7d2bb
+4d c9 68 ff 0e e3 5c 20 95 72 d4 77 7b 72 15 87
+d3 6f a7 b2 1b dc 56 b7 4a 3d c0 78 3e 7b 95 18
+af bf a2 00 a8 28 4b f3 6e 8e 4b 55 b3 5f 42 75
+93 d8 49 67 6d a0 d1 55 5d 83 60 fb 5f 07 fe a2
 ```
 
-After step 62, feed forward every word: (A,B,C,D) =
-(A0+a, B0+b, C0+c, D0+d), modulo 2^32. The digest is the 16-byte concatenation
-LE32(A) || LE32(B) || LE32(C) || LE32(D). Write H(w) for its injective numeric
-encoding A + (B << 32) + (C << 64) + (D << 96), stored in one 256-bit RAM word
-with upper 128 bits zero. Numeric equality of H values is equality of all 16
-digest bytes. There is no truncation or omitted padding block. This definition
-matches the selected profile and its organizer digest reference
-(`verifier/hash_functions.py:digest` with algorithm md5 and rounds 63). In
-particular, step 63 of full MD5 is not executed; MD5-s64 is a different target.
+Message B:
 
-## 2. The iteration function
+```text
+4d c9 68 ff 0e e3 5c 20 95 72 d4 77 7b 72 15 87
+d3 6f a7 b2 1b dc 56 b7 4a 3d c0 78 3e 7b 95 18
+af bf a2 02 a8 28 4b f3 6e 8e 4b 55 b3 5f 42 75
+93 d8 49 67 6d a0 d1 d5 5d 83 60 fb 5f 07 fe a2
+```
 
-Define f(w) = H(w) on {0,1}^128. By Section 1, one evaluation of f is exactly
-one evaluation of the complete md5-s63 hash of the one-block message m(w), which
-uses exactly one selected 63-step target compression. The charged wrapper around
-that compression is ledgered in Section 6. A collision of f, meaning words u,v
-with u != v and f(u) = f(v), yields messages m(u) != m(v) by injectivity of the
-encoding, both in the message domain, with byte-equal complete md5-s63 digests:
-precisely the target relation of the profile. The algorithm below only ever
-outputs such verified pairs.
+They differ at two bytes, so the ordinary-collision distinctness precondition
+holds. Organizer reference evaluation of the selected target gives, for both,
 
-## 3. Algorithm: one distinguished-point walk with restarts
+```text
+01cf5206724db1753a8bc3518e21a51b
+```
 
-Parameters, all fixed public constants:
+The two 64-byte binaries downloaded from the author's result page have SHA-256
+hashes `54bcb9a4fda31e4f254303e3959acd5e420ad18a80949d56a3000c3716fbd1a0`
+and `90774a6455a2bdb7d106e533923ecbefe81392ca55bed0ce81cfab2c1a7f0afe`,
+respectively. Their bytes match the constants in the replay source exactly.
 
-| Symbol | Value | Meaning |
-| --- | --- | --- |
-| N | 2^128 | digest space size |
-| d | 56 | distinguished-point prefix length |
-| D(v) | v < 2^72 | distinguished predicate (top 56 bits zero) |
-| G | 2^60 | inactivity limit: abandon a walk after G steps with no distinguished point |
-| C | 2^14 | hard cap on stored table records |
-| E | 2^20 | hard cap on processed distinguished-point events |
-| Q | 2^66.1 | hard cap on total f evaluations, including recovery and verification |
+The deterministic experiment recomputes that equality from the retained bytes;
+the participant does not supply a trusted digest or success flag.
 
-State: a table T implemented as an unordered array of at most C records, each
-occupying two 256-bit words: the first word packs the 128-bit distinguished
-value in its lower half and the 128-bit walk start in its upper half, and the
-second word holds the walk length ell at which the value was stored. There is
-no hashing and no probing: lookup is a linear scan, insertion is an append, so
-table behavior has no distributional premise. Further state: the current point
-w, the current walk's start s and length ell, the number g of steps since the
-walk's last distinguished-point hit, the global evaluation counter t, and the
-distinguished-point event counter e.
+## 2. Why a full-MD5 single-block result solves this target
 
-Evaluation guard. Every evaluation of f, in every phase, is preceded by the
-check t < Q; if t = Q the algorithm halts with failure immediately, including
-inside RECOVER and inside the final verification. This makes Q a deterministic
-cap on total evaluations, not merely a main-loop condition.
+The paper writes the cyclic MD5 working variables as `Q_t`. With identical
+incoming chaining states, a 64-step compression returns
 
-Initialization (before the main loop). Draw one fresh independent uniform
-256-bit word using the cost-model primitive, mask it to its lower 128 bits, and
-set s := w := that value, ell := 0, g := 0, t := 0, e := 0, T empty. The first
-walk therefore starts uniformly at random, which is what the success analysis
-of Section 5 requires.
+```text
+(a + Q_61, b + Q_64, c + Q_63, d + Q_62) mod 2^32.
+```
 
-Main loop. Repeat forever (every f evaluation guarded as above):
+After only 63 steps, indices 0 through 62, the same state convention returns
 
-1. w := f(w); t := t+1; ell := ell+1; g := g+1.
-2. If g > G, abandon the walk: draw one fresh independent uniform 256-bit
-   word, mask it to its lower 128 bits, set s := w := that value, ell := 0,
-   g := 0, and continue. Table records of abandoned walks are retained.
-3. Else if D(w): set g := 0. If e = E, continue (event cap reached; table work
-   is skipped). Otherwise e := e+1 and scan T for a record with value w.
-   a. If a record (w, s', ell') is found, run RECOVER (below) on
-      (s, ell, s', ell'). If RECOVER returns a pair (u,v), evaluate f(u) and
-      f(v) directly (guarded, charged in t), check u != v and f(u) == f(v),
-      and on success output (m(u), m(v)) and halt. If RECOVER reports
-      degenerate, abandon the walk as in step 2 and continue. Verification
-      cannot fail on a non-degenerate RECOVER pair; the check is defensive.
-   b. Else, if T holds fewer than C records, append (w, s, ell).
-   c. Else (table full), continue.
+```text
+(a + Q_60, b + Q_63, c + Q_62, d + Q_61) mod 2^32.
+```
 
-If the evaluation guard ever fires, the algorithm has already returned failure.
-There is one batch, no restart of the whole search, no amplification, and no
-early stop before success or budget exhaustion. Walk restarts after abandonment
-are part of the loop and draw their randomness from the charged primitive.
-Because lookup is a complete scan, a value already in T is always found, so no
-duplicate records arise.
+The published partial differential path gives zero difference in every late
+state word `Q_60`, `Q_61`, `Q_62`, `Q_63`, and `Q_64` for the displayed
+single-block collision. Its only input-word differences are
+`delta m_8 = 2^25` and `delta m_13 = 2^31`; all other words are equal.
+Consequently, after the first 64-byte block the two MD5-s63 chaining states are
+equal. This is not an inference from final full-MD5 digest equality alone; it
+uses the published late-state differential and is independently checked on the
+exact bytes by the selected-target verifier.
 
-RECOVER(s1, ell1, s2, ell2). Both trajectories reached the same distinguished
-value: the trajectory from s1 at length ell1 equals the trajectory from s2 at
-length ell2. Assume ell1 <= ell2 (else swap) and write delta = ell2 - ell1.
-Walk A starts at s1 and walk B starts at s2. Advance B by delta evaluations
-(each guarded, charged in t). Then step A and B in lockstep for
-t' = 0,1,...,ell1, keeping the previous values pa,pb: one lockstep step
-evaluates both f(A) and f(B) (two guarded evaluations, charged in t). At the
-first t' with A_{t'} == B_{t'}, stop. If t' = 0, report degenerate. Otherwise
-return (pa, pb) = (A_{t'-1}, B_{t'-1}).
+Because both unpadded messages have the same 64-byte length, RFC 1321 appends
+the same second block to both: byte `80`, 55 zero bytes, and the little-endian
+bit length 512. That identical padding block starts from equal MD5-s63 chaining
+states. Determinism therefore preserves equality through its reduced
+compression and feed-forward. The resulting equality is a complete-message,
+standard-IV, all-128-bit ordinary collision, not a compression-only,
+free-start, near-collision, or truncated-output result.
 
-## 4. Correctness
+## 3. Published construction represented by the package
 
-The algorithm outputs only pairs that pass the explicit final check u != v and
-f(u) == f(v) evaluated directly from Section 1, so there are no false
-positives: any output is a verified ordinary collision of the exact target on
-two distinct 16-byte messages. It remains to show that RECOVER, whenever it is
-non-degenerate, returns a pair passing this check, and that a trajectory repeat
-is detected whenever one occurs, up to the bounded losses of Section 5.
+Stevens' construction searches for a pair of 512-bit blocks from the fixed MD5
+IV. It uses the two message differences above, a differential path with a low
+number of first-round conditions, a lookup precomputation, and the three known
+tunnels denoted T4, T9, and T14. Candidate blocks satisfying conditions through
+the early steps are completed and checked against the compression relation.
 
-Recovery lemma. Write the trajectory values from any start as x_0, x_1, ...
-with x_{i+1} = f(x_i), deterministic. RECOVER is invoked with
-x^1_{ell1} = x^2_{ell2} and ell1 <= ell2. With delta = ell2 - ell1, the
-lockstep compares A_{t'} = x^1_{t'} and B_{t'} = x^2_{t'+delta} for
-t' = 0,...,ell1. Agreement occurs at t' = ell1 at the latest, because
-x^1_{ell1} = x^2_{ell2} = x^2_{ell1+delta}. Let t* be the first agreement.
-If t* >= 1, then f(A_{t*-1}) = A_{t*} = B_{t*} = f(B_{t*-1}), and
-A_{t*-1} != B_{t*-1}, because equality would be an agreement at t*-1 < t*.
-So the returned pair is a genuine collision of f. If t* = 0, then
-x^1_0 = x^2_{delta}: for a single walk (s1 = s2) this means the trajectory
-returned to its exact start; for two walks it means one start lies on the
-other's trajectory at offset delta. Both are reported degenerate and the walk
-is abandoned. Hence every RECOVER call either yields a verified collision of
-distinct words or is detected as degenerate. No silent failure mode exists.
+The paper reports an experimentally determined average cost of `2^15.96` MD5
+compression equivalents to obtain a candidate pair satisfying its conditions
+through `Q_29`. It reports a conditional collision probability of `2^-33.85`
+for such a pair. Its stated average construction cost is therefore
 
-Detection. If any value repeats within the current walk, or between the current
-walk and a retained abandoned walk, consider the first such repeat in
-trajectory order. The repeated value lies on a cycle that the current walk then
-follows. The walk keeps iterating; the next distinguished point it reaches on
-that cycle was already stored during the first pass over the cycle (or by the
-other walk), so the scan in step 3a finds it and RECOVER is invoked. Detection
-fails only when (a) the cycle contains no distinguished value at all, or (b)
-the walk is abandoned (g > G) before reaching the next distinguished point on
-the cycle, or (c) the relevant record was never inserted (table full or event
-cap). All three losses are bounded in Section 5; loss (a) is the cycle-
-occupancy event analyzed there, not a geometric-gap event: after the repeat the
-trajectory is periodic, and this analysis does not assume otherwise.
+```text
+2^15.96 * 2^33.85 = 2^49.81
+```
 
-## 5. Probability analysis and declared heuristics
+full-MD5 compression equivalents. The paper says that the displayed Table 5
+pair was found by the implemented construction after three weeks, earlier than
+the five-week estimate. This package uses the reported average rather than
+discounting the claim to the favorable realized wall time.
 
-The probability space consists of the algorithm's fresh independent uniform
-random words (the initial start and each restart start), with f fixed and
-deterministic. No seeded PRNG or hash-distribution assumption is used for the
-coins. Two heuristic premises about the fixed f are declared in claim.json and
-supported here as far as current techniques allow; they are the entire
-empirical content of the success analysis.
+The author's published source exposes the main lookup as a mapping from two
+32-bit masks to vectors of records. Each record contains five 32-bit values
+(`Q3`, `Q6`, `Q7`, `Q13`, and `F15`). The implementation proceeds to its main
+loop only after at least `2^24` records have been accepted. It also states that
+independent instantiations can be freely parallelized.
 
-H1 (score-critical). Let T_f denote the joint distribution, under a uniform
-random start, of the trajectory statistics used in the analysis below - the
-first-repeat time, the cycle length and distinguished-value occupancy at the
-first repeat, and the pre-repeat distinguished-point gap sequence - for
-trajectories of length at most 2^66 of the fixed f of Section 2. Let T_RM
-denote the same joint distribution under a uniform random mapping on N
-points. H1 asserts that the total variation distance between T_f and T_RM is
-at most delta = 2^-30.
+The package does not execute that infeasible historical search. It represents
+the work as preprocessing that produced nonuniform advice. The online algorithm
+is finite and deterministic:
 
-H1 is deliberately stated in statistical-closeness form. The stronger
-pointwise form - "conditional on distinct x_0,...,x_{i-1}, x_i is exactly
-uniform" - would be self-contradictory for a fixed map on an equal-size
-domain and codomain: already at i = 1 it would force every output to have
-exactly one preimage, making f a permutation with no distinct-input
-collisions at all, contradicting the very success event this analysis
-establishes. Statistical closeness of the collision-relevant statistics
-constrains no single output's preimage count: a many-to-one fixed map can
-have trajectory statistics within delta of the ensemble, and only that is
-asserted. Whether it holds for this f is unproven; the supporting evidence is
-the exact ensemble derivation below, the declared small-scale experiment of
-Section 6, the premise's standard role in collision-search analysis, and the
-absence of any known mechanism that would suppress collisions in a
-compression-derived mapping (known MD5 differential attacks only make
-collisions easier to find). If f were permutation-like, every repeat would be
-a degenerate cycle closure and the algorithm would always fail; Section 4
-detects that case and abandons, so the failure is visible, not silent. The
-distribution-free birthday inequality for independent samples (uniform output
-is the worst case for collision probability) applies to iid sampling only; it
-does not transfer to iterated trajectories and is recorded as context, not as
-support for H1. H1 is the load-bearing unproven premise of this package.
+1. Load the two retained 64-byte messages.
+2. Check that their lengths are 64 bytes and that their bytes differ.
+3. Evaluate complete `MD5-63` on each message.
+4. Return the pair only if the full 16-byte digests agree; otherwise fail.
 
-Exact random-mapping derivation. For a uniform random mapping, given that
-x_0,...,x_{i-1} are distinct, the value f(x_{i-1}) has not been queried before
-and is uniform and independent of the trajectory so far, so
-Pr[x_i not in {x_0,...,x_{i-1}}] = 1 - i/N exactly. Multiplying,
+The canonical binary advice is below 256 bytes: the two messages use exactly
+128 bytes, and bounded lengths plus verification metadata fit in the remainder.
+The experiment's hexadecimal transport representation does not change the
+canonical advice; its source text and decoded buffers are charged to memory.
+Historical construction is not hidden by the replay; its work and storage are
+charged by the resource fields and explicit premises below.
 
-    Pr[no repeat in the first t steps] = product_{j=1}^{t} (1 - j/N)
-      <= exp(-t(t+1)/(2N)),
+## 4. Submitted resource envelope
 
-using 1-u <= exp(-u). This product formula is exact for a uniform random
-mapping; H1 transfers it to the fixed f up to the total variation slack delta
-on every event used below. With t0 = 2^64.4,
+The vector is `(60, 32, 60, 60, 1, 8)` for total time, peak memory bytes, data,
+preprocessing, success probability, and nonuniform advice bytes. The scalar is
+`60 + 32 = 92`.
 
-    t0*(t0-1)/(2N) >= 2^128.8/2^129 * (1 - 2^-64.4) >= 0.87,
+### Time and preprocessing
 
-so under the ensemble Pr[first repeat within t0 steps] >= 1 - exp(-0.87) >=
-0.581, where exp(-0.87) <= 0.4190 follows from bracketing the alternating
-series for exp(-0.87) between consecutive partial sums. Under H1 the fixed-f
-probability is at least 0.581 - delta.
+The published `2^49.81` value is an average expressed in full-MD5 compression
+equivalents. The claim allows fewer than `2^60` collision-frontier-v3 units, a
+factor of about `2^10.19` (more than one thousand) above that reported work.
+The margin covers conversion from measured compression equivalents to the v3
+256-bit word-RAM operations, differential-path preparation, lookup creation and
+access, condition tests, random choices, failed instantiations represented by
+the published average, message construction, target conversion, padding, and
+final verification.
 
-H2 (supporting, pre-repeat regime only). Before a trajectory's first repeat,
-distinguished-point hits behave as Bernoulli trials with probability 2^-56 per
-step, up to the H1 total variation slack: pre-repeat gaps between consecutive
-distinguished points are geometric with mean 2^56, and
-Pr[pre-repeat gap > 2^60] <= (1 - 2^-56)^(2^60) + delta <=
-exp(-16) + 2^-30 <= 1.2 * 10^-7. Derivation under the ensemble: given distinct
-pre-repeat values, each was uniform when drawn, so for any fixed set of G
-consecutive pre-repeat positions the probability that none is distinguished is
-C(N - 2^72, G)/C(N, G) <= (1 - 2^-56)^G, the without-replacement bound. H2 is
-used only for the pre-repeat abandonment rate and the expected table
-occupancy. H2 makes NO claim about the post-repeat regime: after the first
-repeat the trajectory is periodic, distinguished-point indicators are fixed by
-the cycle, and the detection analysis below uses cycle occupancy and an
-explicit distance budget instead of any geometric post-repeat gap model.
+The pair was produced before online replay, so this entire construction charge
+is also preprocessing: `preprocessing_log2 = time_log2 = 60`. The online loads,
+two complete target evaluations, comparisons, and output are included inside
+the same bound rather than treated as free.
 
-Success probability. The search succeeds whenever (i) the first walk's
-trajectory repeats within t0 = 2^64.4 steps; (ii) the cycle entered at that
-repeat contains at least one distinguished value; (iii) the walk is not
-abandoned before detection: no pre-repeat gap between distinguished points
-exceeds G = 2^60, and for the gap containing the repeat, a + b <= G, where a
-is the distance from the preceding distinguished point to the repeat and b is
-the post-repeat distance from the repeat point to the next distinguished value
-on the cycle (the inactivity counter g is not reset at the repeat, so both
-summands must be charged); (iv) the first RECOVER is non-degenerate; and (v)
-the table and event caps are not exceeded before detection. All ensemble
-probabilities below are transferred to the fixed f under H1 with at most
-delta = 2^-30 slack each, and fewer than eight events are used, so the total
-slack is below 10^-8. Under H1 and H2:
+This is a score-critical historical envelope, not a fresh instruction ledger.
+It depends on H-HISTORICAL-WORK. The paper does not enumerate every v3 word
+operation or every unsuccessful historical development run. If total work that
+must be attributed to constructing this pair reached `2^60` units, the time and
+preprocessing fields would fail.
 
-- (i) contributes Pr >= 0.581, derived above.
-- (ii) cycle occupancy. Conditional on the first repeat occurring at step j,
-  the repeated value x_j equals x_i with i uniform on [0, j-1] (under the
-  ensemble, x_j is uniform given the distinct trajectory so far), so the cycle
-  length lambda = j - i is uniform on [1, j]. The lambda cycle values are
-  distinct pre-repeat draws, so the probability that none is distinguished is
-  C(N - 2^72, lambda)/C(N, lambda) <= (1 - 2^-56)^lambda. Averaging over the
-  uniform lambda and summing over the first-repeat density
-  Pr[first repeat at j] = (j/N) * product_{i<j}(1 - i/N) <=
-  (j/N) * exp(-j(j-1)/(2N)):
+### Peak memory
 
-      Pr[repeat by t0 with a distinguished-free cycle]
-        <= sum_{j <= 2^56} (j/N) * 1
-           + sum_{2^56 < j <= t0} (j/N) * exp(-j(j-1)/(2N)) * (2^56/j)
-        <= 2^112/(2N) + (2^56/N) * (1 + integral_0^inf exp(-x^2/(2N)) dx)
-        = 2^-17 + (2^56/N) * (1 + sqrt(pi*N/2))
-        <= 7.6 * 10^-6 + 2^56 * 2^-128 * 1.2534 * 2^64
-        <= 7.6 * 10^-6 + 0.0049 <= 0.005.
+The claimed peak is below `2^32` bytes, or 4 GiB, for a serial schedule of the
+published construction. At the source's threshold of `2^24` accepted lookup
+records, five 32-bit payload words per record occupy about 320 MiB before
+container and allocator overhead. The 4-GiB envelope additionally includes map
+nodes, vector capacity, code, constants, differential-path data, random state,
+buffers, the retained messages, and output.
 
-  On this event the walk never detects the collision and is eventually
-  abandoned; later walks cannot detect it either, because the cycle's values
-  are never stored. The bound charges the full 0.005 as loss.
-- (iii) gap and abandonment losses. The number of distinguished-point hits
-  before step t0 exceeds 2^10 with probability below 10^-100 under the
-  ensemble (the hit count is dominated by a binomial with mean
-  t0/2^56 = 2^8.4; Chernoff). A union bound over at most 2^10 pre-repeat gaps
-  gives Pr[some pre-repeat gap > G] <= 2^10 * 1.2 * 10^-7 <= 1.3 * 10^-4.
-  For the gap containing the repeat, a + b > G = 2^60 requires a > 2^59 or
-  b > 2^59. For a: the repeat's position within its gap is uniform, and the
-  gap length L containing the repeat is size-biased,
-  Pr[L = ell] = ell * p^2 * (1 - p)^(ell-1) with p = 2^-56, so
-  Pr[a > 2^59] <= Pr[L > 2^59] <= (1 + 2^59/2^56) * exp(-8) <=
-  9 * 3.4 * 10^-4 <= 3.1 * 10^-3. For b, condition on event (ii) (the cycle
-  has k >= 1 distinguished values) and on lambda. If lambda <= 2^59 then
-  b <= lambda <= 2^59 and there is no loss. If lambda > 2^59, the k
-  distinguished positions are exchangeable on the cycle, so
-  Pr[b > 2^59 | lambda, k >= 1] = E[(1 - 2^59/lambda)^k | k >= 1] <=
-  E[(1 - 2^59/lambda)^k] / Pr[k >= 1] <= exp(-2^59/2^56) /
-  (1 - exp(-lambda/2^56)) <= 3.4 * 10^-4 / (1 - 3.4 * 10^-4), using
-  k ~ Binomial(lambda, 2^-56) up to the without-replacement adjustment.
-  Total (iii) <= 1.3 * 10^-4 + 3.1 * 10^-3 + 3.5 * 10^-4 <= 3.6 * 10^-3.
-- (iv) degeneracy requires x^1_0 = x^2_delta; for a single walk this means the
-  trajectory returns to its exact start, with probability at most
-  (t0 + G)/N <= 2^65.5/2^128 = 2^-62.5 under the ensemble; for two walks it
-  requires a start collision, probability at most 2^-127 per pair of starts,
-  with fewer than 2^7 starts in any run.
-- (v) cap overflows. Distinguished-point events before detection number at
-  most the distinguished hits in t0 + 2G steps, dominated by a binomial with
-  mean 2^9.5 under the ensemble; the entry cap C = 2^14 and event cap
-  E = 2^20 are exceeded with probability below 10^-1000 by Chernoff. On
-  overflow the algorithm skips table work, so overflow can only lose the
-  detection, which is charged here.
+Parallelism is not used to hide storage. Since the paper describes different
+instantiations as independently parallelizable, the same trials can be
+scheduled serially and their storage reused, retaining total charged work while
+bounding peak live state by one instantiation. Aggregate RAM installed across
+historical machines is not the memory claim.
 
-Combining, Pr[success] >= 0.581 - 0.005 - 3.6 * 10^-3 - 2^-62.5 - 10^-1000 -
-10^-8 >= 0.5724. The claim field `success_probability: 0.57` is this
-heuristic-conditional lower bound, not an exact success estimate, not reviewer
-confidence, and not a physical feasibility statement.
+The source does not impose a hard 4-GiB cap, and neither a peak-RSS trace nor the
+exact accepted-record count of the successful instantiation is retained here.
+The bound therefore depends on H-HISTORICAL-MEMORY. If a serial schedule needs
+`2^32` bytes or more at any point, the memory field and scalar fail.
 
-Budget consistency. On the success event, with the repeat at trajectory
-position rho <= t0 and detection at length ell2 <= rho + G (event (iii) bounds
-the post-repeat distance by G), the total number of f evaluations is at most
-ell2 (main loop) + (ell1 + ell2) (recovery: delta advance plus lockstep,
-delta + 2*t* <= ell1 + ell2) + 2 (verification) <= ell1 + 2*ell2 + 2 <=
-3*(t0 + G) + 2 = 3*(2^64.4 + 2^60) + 2 <= 2^65.99 + 2 < Q = 2^66.1, so the
-evaluation guard does not bind on the success event. Restarts occur only off
-the analyzed success path; each abandoned walk costs at most G evaluations and
-one random word, and the guard caps their total effect deterministically.
+### Data and advice
 
-Scope, extrapolation, and limitations. H1 and H2 are asserted only for the
-fixed f of Section 2, for trajectory lengths up to 2^66, and only as premises
-for this algorithm's success probability. The extrapolation is from the exact
-uniform-random-mapping statements to one fixed deterministic function; this is
-the standard premise of generic collision search, but it is unproven for this
-f. A pathological iteration structure could defeat the construction in two
-different ways: permutation-like behavior makes every repeat degenerate
-(Section 4 detects this and abandons; success would be zero), and an
-anomalously distinguished-point-free cycle cover defeats detection (bounded in
-expectation by event (ii) only under H1). Neither is known for MD5 variants;
-both are disclosed as exploratory-lane uncertainty. H1 and H2 are not asserted
-to rigorous-lane standards. One small-scale executable experiment supporting
-both premises is declared and specified in Section 6.
+`data_log2 = 60` is a deliberately broad cap. Every selected-target
+compression or complete-message evaluation costs at least one unit, so the
+`2^60` total-time premise also bounds their count below `2^60`. Internal
+candidate items and failed construction attempts are included rather than
+treated as free external data.
 
-## 6. Declared experiment: trajectory prefix-collision probe
+`nonuniform_advice_log2_bytes = 8` permits the retained advice envelope below
+256 bytes. The messages occupy 128 bytes; bounded length and digest metadata
+fit in the remaining space. Public algorithm code, MD5 constants, and path data
+are charged to construction time and peak memory, not hidden as advice.
 
-The package declares one small-scale executable experiment,
-`trajectory-prefix-collision-v1` (experiments/manifest.json), executed by the
-organizer's bounded, networkless Docker executor. The submitted Python source
-(experiments/probe.py) is inert, untrusted review material and runs only in
-that sandbox; it uses the standard library only, is deterministic in the
-organizer seeds, and retains no ambient state.
+### Success probability
 
-Design. For each of 256 organizer-seeded trials, the program iterates the
-claim's exact function f (Sections 1-2) from a SHAKE-256-derived start for at
-most K = 512 steps, tracking the leading 16 digest bits (digest bytes 0-1,
-the low half of the A word). On the first prefix match it returns the two
-distinct 16-byte messages whose digests share the prefix; otherwise it returns
-two nulls. The organizer independently recomputes both messages' complete
-md5-s63 digests with the trusted reference and checks the declared
-digest-xor-mask event (mask ffff00...00, expected zero) and message
-distinctness. Participant-internal counters are labeled untrusted by the
-runner; only the recomputed output predicate is checked.
+The online algorithm is deterministic after its retained advice is fixed. The
+organizer independently checks message distinctness and complete digest
+equality, so its success probability is one. This does not assert that a fresh
+random execution of the historical generator succeeds with probability one or
+finishes inside the submitted bound on every random tape. Expected failed work
+is represented by the paper's average and the historical-work premise.
 
-Prediction under H1 and H2. One trial evaluates K trajectory values, giving
-C(K,2) pairs; each pair shares the 16-bit prefix with probability 2^-16, so
-the model predicts per-trial success
-1 - exp(-K^2 / 2^17) = 1 - exp(-2) ~= 0.865, i.e. about 221 of 256 trials.
-The measured success frequency on the real fixed target is directly
-comparable to this prediction.
+## 5. Declared heuristics
 
-What it supports and what it does not. Agreement between the measured
-frequency and the prediction is relevant supporting evidence that H1 and H2
-describe the real f; material disagreement would refute them at this scale.
-The experiment does NOT establish full-size 128-bit trajectory behavior:
-small-scale prefix experiments do not prove independence or uniformity across
-the full digest space, per-trial success is not an iid probability estimate
-(the runner's own caveat), and the organizer seeds are public (the runner's
-selection-bias warning applies). It is supporting evidence only, disclosed
-under the review policy; the score-critical content of H1 remains the
-analytic premise of Section 5.
+### H-HISTORICAL-WORK
 
-Development rehearsal and official execution. A local rehearsal of the
-identical program with 256 non-organizer test seeds returned 218 of 256
-successful pairs (model prediction about 221), each returned pair verified
-against the organizer reference digest; this rehearsal is development
-context, not evidence. The organizer's seeded execution of this exact
-experiment in the review workflow observed 225 of 256 successful pairs
-(prediction about 221), with every returned pair recomputed by the trusted
-reference and the run repeated byte-identically in a fresh container; because
-the program is deterministic in the fixed organizer seed, the fresh execution
-for this package reproduces that result exactly. The measured frequency
-0.879 matches the model prediction 0.865 within a few percent, which is the
-supporting content; the runner expressly licenses no iid probability
-inference, and none is claimed.
+Statement: all work attributable to constructing the retained pair, including
+path preparation, lookup operations, failed instantiations represented by the
+published average, model conversion, assembly, and verification, fits below
+`2^60` v3 units, with fewer than `2^60` data or construction items.
 
-## 7. Explicit 256-bit word-RAM resource ledger
+Support: the primary publication reports an implemented average cost of
+`2^49.81` full-MD5 compression equivalents and binds its displayed pair to the
+run. The submitted exponent leaves about `2^10.19` of conversion and accounting
+margin and uses the average instead of the favorable three-week realization.
 
-Every primitive listed by `collision-frontier-v3` costs one unit, as does one
-selected 63-step target compression. One evaluation of f is one such
-compression plus the wrapper counted below. Padding, loading the IV and input,
-packing and unpacking, calls and returns, address arithmetic, loop counters,
-comparisons, branches, and storage outside that primitive are charged
-separately. No multiplication, unbounded integer, dynamic library, hash-table
-primitive, or unit-cost sort is used: the table is a plain array with linear
-scan and append. Every index, pointer, length, address, and counter is less
-than 2^80 and fits in a single 256-bit word. As in the initial candidate, use a
-direct RAM instruction encoding with an opcode and at most three operand or
-immediate words, at most four 256-bit words per instruction, and allow the
-five-operation scratch expansion of every simple statement (two operand loads,
-the primitive, one result store, one transfer of control), even where registers
-would avoid it.
+Limitation: no fresh full generator, historical instruction trace, complete job
+ledger, or accounting of every development attempt is available. The replay
+experiment measures none of these resources. Compression-equivalent work is
+not definitionally the v3 word-RAM cost. This premise is score-critical and
+suitable only for exploratory review.
 
-Per-iteration cost. One main-loop iteration executes, in expanded
-word-RAM operations: four word extractions M[j] = (w >> (32*j)) AND
-0xffffffff with stores (each a shift, an AND, and a store: 12 operations);
-one target compression (1 unit); packing H(w) from A,B,C,D (three shifts and
-three ORs: 6 operations); the distinguished test w < 2^72 with its branch
-(one compare, one branch: 2); the event-cap test e = E with its branch,
-executed whenever the distinguished test holds and therefore, in the worst
-case, in every iteration (2); increments of t, ell, g (each a load, an add,
-and a store: 9); the evaluation-guard test t < Q with branch (2); the
-abandonment test g > G with branch (2); loop control (2). That is at most 37
-expanded operations plus one compression per iteration, at most 38 units;
-even under the five-operation scratch expansion of each of 17 simple
-statements (85 operations plus one compression = 86 units), the charge of
-112 per iteration retains at least 23 percent margin. Because the
-distinguished test and the event-cap test are both charged in every
-iteration, distinguished-point hits after the event cap is reached carry no
-uncharged work: the only per-event work beyond this per-iteration charge is
-the table scan and append, performed at most E times. That per-event work is
-a linear scan of at most C = 2^14 records (per record: one word load, one
-half-word compare, one branch; at most 3 * 2^14 expanded operations) and at
-most one two-word append with a count update (at most 8 expanded
-operations): at most 2^15.6 units per event, hard-capped at E = 2^20 events,
-so at most 2^15.6 * 2^20 <= 2^35.6 units in the entire run, regardless of f.
-Walk abandonment costs one random word, one mask, and a few stores per
-restart; restarts number at most Q/G + 1 <= 2^7, contributing less than 2^11
-units. Recovery performs at most ell1 + ell2 evaluations, each charged the
-same 112 units through the shared counter t, and the final verification costs
-2 evaluations and a few comparisons. Static setup - installing fewer than
-4096 encoded instructions (at most 2^19 bytes of code: fewer than 256
-instructions for the main loop and walk state, fewer than 256 for recovery
-and verification, fewer than 512 for the f wrapper and table routines, and
-the remainder for initialization and the compression-primitive interface),
-the 63 K constants, rotations, IV, masks, the block template, and zeroing the
-table region (2^15 word stores with loop overhead) - costs at most 2^20
-operations.
+### H-HISTORICAL-MEMORY
 
-Total time. The evaluation guard caps all f evaluations, including recovery
-and verification, at Q = 2^66.1. Since log2(112) < 6.81,
+Statement: a serial schedule producing the retained pair has peak simultaneous
+algorithm memory below `2^32` bytes, including all lookup structures and
+overhead.
 
-    T <= 112 * Q + 2^35.6 + 2^11 + 2^20
-       <= 2^72.91 + 2^35.6 + 2^11 + 2^20
-       < 2^73.
+Support: the source identifies five-word lookup payloads, the `2^24`-record
+threshold, and independent instantiations. The raw threshold payload is about
+320 MiB; 4 GiB leaves more than an order of magnitude over that payload for
+container capacity, allocation overhead, code, constants, path data, working
+state, and output. Independent worker trials can reuse one allocation when
+serialized.
 
-All randomness draws, abandoned walks, scans, recovery, verification, and
-initialization are included; there is no restart of the whole search to average
-away. `time_log2: 73` is this deterministic upper bound on total charged work,
-not the exponent of the expected productive evaluations (which is about 2^64.4
-under H1).
+Limitation: there is no peak-RSS measurement, allocation ledger, exact record
+count for the successful trial, submitted hard memory guard, or retained seed
+schedule. Source structure makes the bound plausible but does not prove it.
+The replay consumes little memory and cannot establish construction memory.
+This premise is score-critical and exploratory only.
 
-Peak memory. The table holds at most C = 2^14 records of two words each:
-2^15 words = 2^20 bytes, including all retained walk starts and lengths. Code
-occupies at most 2^19 bytes; the constants, block template, walk state
-(w, s, ell, g, t, e), recovery registers, and the two output messages occupy at
-most 2^13 bytes. Thus M <= 2^20 + 2^19 + 2^13 < 2^21 bytes, justifying
-`memory_log2_bytes: 21`. No recursive stack, no retained random tapes, and no
-unbounded structure are used; the caps make this bound independent of H1 and
-H2. Byte addresses need at most 21 bits.
+### H-PUBLISHED-PAIR-BINDING
 
-Data. The number of complete input-message evaluations supplied to the fixed
-digest operation is at most Q + 2 <= 2^66.1 + 2 < 2^67, justifying
-`data_log2: 67`. Each evaluation hashes a 16-byte message padded to one 64-byte
-block; these volumes are generated and charged, not stored. No external corpus
-is provided.
+Statement: the paper's reported construction and resource regime apply to the
+exact Table 5 messages retained here.
 
-Preprocessing. Static setup plus table zeroing costs at most 2^20 < 2^21
-operations, justifying `preprocessing_log2: 21`; it is included in T. There is
-no hash search before the charged run and no input-dependent compilation or
-advice search.
+Support: the paper presents the method, complexity calculation, late-state
+differential, exact messages, common full-MD5 digest, and statement that its
+implemented search found the pair in the same result. The author's research
+page also publishes the source and the two binary messages. Organizer hashing
+independently verifies the selected s63 collision on those bytes.
 
-Advice. `nonuniform_advice_log2_bytes: 0` means an upper bound of one byte,
-consistent with actual zero bytes of nonuniform advice (the schema does not
-permit log(0)). Fixed public code and constants are counted in memory and
-setup even though they are uniform, not advice. No stored collision is given
-free of construction cost.
+Limitation: a fixed witness establishes collision existence and target
+compatibility, not historical work or peak memory. The package summarizes the
+generator rather than reproducing a `2^49.81` search. This premise is supporting
+and exploratory only.
 
-Scalar. The proposed scalar is 73 + 21 = 94, emitted only if the selected lane
-qualifies; it is not an already emitted score and does not by itself assert
-Pareto dominance or improvement over the nominal reference identifier.
+## 6. Experiment interpretation
 
-## 8. Evidence, applicability, and limitations
+Experiment `published-single-block-s63-replay` returns the same retained pair
+for every organizer trial. The organizer runs the source twice in fresh,
+networkless, read-only containers, requires byte-identical output, checks that
+the two 64-byte messages differ, and computes both complete MD5-s63 digests with
+its trusted reference.
 
-The analytic evidence consists of the exact target definition (Section 1), the
-concrete algorithm and its correctness lemma (Sections 3-4), the
-heuristic-conditional probability analysis including the post-repeat
-cycle-occupancy bound (Section 5), the declared small-scale experiment
-(Section 6), and the resource ledger (Section 7). The claim's heuristic list
-contains exactly H1 and H2; there are no further implicit premises: the
-resource bounds are deterministic, the table has no hashing or probing
-distribution to assume, and the success probability is conditional on H1 and
-H2 alone. The package contains an empty certificate manifest and declares one
-experiment manifest with one executable probe; no full-scale execution or
-concrete collision certificate is reported, so the heuristics rest on the
-stated analytic support plus the small-scale measured consistency of Section 6.
-Known
-MD5 cryptanalysis (practical differential collisions for the full 64-step
-function) is context showing the target family is weak; this construction uses
-no differential structure and remains correct without it. As a deterministic
-mechanics check, the packaged evidence was run through the organizer's
-paired-review pipeline with a stub client returning schema-valid reviews that
-cover the declared heuristic IDs: gating, binding, context validation,
-heuristic coverage, and lane aggregation all completed without infrastructure
-failures, so the package exercises no pipeline path that a heuristic-free
-package would not. An exploratory qualification of this package would be an AI
-review outcome under paired-lanes-v1, not mathematical proof, human
-acceptance, or a rigorous-lane result.
+Successful rows are duplicate transport and target checks. They are not
+independent collisions, a fresh-generation success sample, an estimate of
+expected runtime, or a construction-memory measurement. The participant source
+reports no trusted cost or success count. Its relevance is confined to the
+exact retained bytes, deterministic replay, and selected-target equality.
+
+## 7. Claim boundary and provenance
+
+The evidence supports an exploratory request with scalar 92 only if paired
+review finds the historical work, memory, and pair-binding premises plausible
+and not refuted. Mechanical validity and repeated checked rows do not by
+themselves qualify the score. A qualifying score would remain an AI review
+outcome, not a fresh collision-generation record, proof of the historical
+resource envelopes, rigorous-lane qualification, or human acceptance.
+
+Primary provenance is Marc Stevens, *Single-block collision attack on MD5*,
+Cryptology ePrint Archive Report 2012/040, especially its MD5 definition,
+Table 2 late-state path, Algorithm 1, Section 3.4 complexity analysis, and
+Table 5 retained messages. The corresponding author research page supplies
+the source archive and exact binaries. All facts needed for review are
+summarized above; the judge need not retrieve an external resource.

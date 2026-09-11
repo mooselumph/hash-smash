@@ -2,15 +2,13 @@
   "schema_version": 1,
   "experiments": [
     {
-      "id": "trajectory-prefix-collision-v1",
+      "id": "published-single-block-s63-replay",
       "kind": "python-message-pairs-v1",
-      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 16 digest bits (digest bytes 0-1).",
-      "hypothesis": "On the real fixed target, the seeded trajectory prefix search finds a 16-bit digest-prefix collision within 512 evaluations with per-trial frequency consistent with the random-mapping prediction 1 - exp(-512^2 / 2^17) = 1 - exp(-2) ~= 0.865, supporting the collision-search premises H1/H2 at 2^9-2^10 evaluation scale.",
-      "program": "experiments/probe.py",
+      "scope": "Deterministic replay of one published pair of distinct 64-byte messages against complete md5-s63-prefix-v1. The same pair is returned in every organizer trial; duplicate rows are expected and are not independent generator samples.",
+      "hypothesis": "The two pinned Table 5 messages have the same complete 128-bit digest when every padded block executes MD5 steps 0 through 62 with the standard IV and feed-forward.",
+      "program": "experiments/replay.py",
       "event": {
-        "kind": "digest-xor-mask",
-        "mask_hex": "ffff0000000000000000000000000000",
-        "expected_hex": "00000000000000000000000000000000"
+        "kind": "full-collision"
       }
     }
   ]

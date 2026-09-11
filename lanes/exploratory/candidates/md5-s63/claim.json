@@ -6,48 +6,61 @@
   "rounds": 63,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 73,
+    "time_log2": 60,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 21,
-    "data_log2": 67,
-    "preprocessing_log2": 21,
-    "success_probability": 0.57,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 32,
+    "data_log2": 60,
+    "preprocessing_log2": 60,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 8
   },
   "restrictions": [
-    "Only 16-byte messages m(w) encoded from 128-bit words; a single distinguished-point walk with restarts, with an explicit uniform random initial start and a hard per-evaluation budget guard at 2^66.1 total f evaluations that is also enforced inside recovery and final verification.",
-    "Exact md5-s63-prefix-v1 full-message hashing: fixed IV, required padding, steps 0 through 62, feed-forward, and all 128 digest bits.",
-    "Classical 256-bit word RAM with the charged ideal independent uniform random-word primitive for walk starts; no seeded PRNG or hash-distribution assumption for the coins.",
-    "The distinguished-point table is an unordered array with linear-scan lookup and append insertion (no hashing or probing distribution); time, memory, data, and preprocessing fields are deterministic upper bounds under the hard budget and caps; success_probability is conditional on the declared heuristics H1 and H2.",
-    "No nonuniform advice, precomputed collision, or external corpus. One declared small-scale experiment (trajectory-prefix-collision-v1) probes 16-bit digest-prefix collision frequency on the real target; it supports but does not establish the full-scale premises. The nominal reference identifier does not assert an established baseline or an improvement."
+    "The online algorithm only loads and verifies one pinned pair of distinct 64-byte messages. It has no fresh generator and makes no claim about historical wall time, fresh success frequency, or measured peak RSS.",
+    "Exact md5-s63-prefix-v1 complete-message hashing: standard IV, RFC 1321 padding, steps 0 through 62 on every padded block, feed-forward after every reduced compression, and all 128 digest bits.",
+    "The published attack targets a stronger full-MD5 single-block compression collision. Applicability to the selected 63-step complete-message target is established separately by the zero late-state difference and organizer recomputation of the retained bytes.",
+    "All construction work, failed instantiations represented by the published average, model conversion, table activity, verification, code, messages, and retained advice are charged through the stated resource envelope and explicit heuristics.",
+    "The retained pair is nonuniform advice produced before online replay. Construction is charged as preprocessing; repeated experiment rows are deterministic transport replays, not independent generator samples.",
+    "The baseline_improved value is the required nominal reference identifier; it does not assert novelty, rigorous qualification, human acceptance, or a new cryptanalytic record."
   ],
   "baseline_improved": "md5-s63-nominal-v2",
   "heuristics": [
     {
-      "id": "H1-random-mapping-trajectory",
-      "statement": "Statistical-closeness form: let T_f be the joint distribution, under a uniform random start, of the trajectory statistics used in the success analysis (first-repeat time, cycle length and distinguished-value occupancy at the first repeat, pre-repeat distinguished-point gap sequence) for trajectories of length at most 2^66 of the fixed f(w) = md5-s63(m(w)); let T_RM be the same under a uniform random mapping on N = 2^128 points. H1 asserts total variation distance at most delta = 2^-30 between T_f and T_RM. The stronger pointwise form (x_i exactly uniform given distinct predecessors) is deliberately NOT asserted: for a fixed map on an equal-size domain and codomain it would force a permutation and rule out collisions, contradicting the success event it would be used to prove.",
+      "id": "H-HISTORICAL-WORK",
+      "statement": "All work needed to produce the retained Table 5 pair, including differential-path preparation, failed instantiations represented by the published average, lookup-table work, message construction, conversion to collision-frontier-v3 operations, and final verification, fits below 2^60 charged units; consequently fewer than 2^60 complete target inputs or construction items are processed.",
       "role": "score-critical",
-      "scope": "Only the fixed f defined by the exact md5-s63-prefix-v1 target on 16-byte messages, trajectories of length at most 2^66, and only as the premise for this algorithm's success probability (including the cycle-occupancy bound for post-repeat detection). The resource bounds do not depend on H1.",
-      "extrapolation": "From the exact uniform-random-mapping statements (proved in the cited proof lines) to one fixed deterministic function, up to the declared total variation slack delta = 2^-30 on every event used. Supported by the declared organizer-executed small-scale experiment (16-bit prefix-collision frequency 225/256 on the real target versus model prediction about 221/256), by the premise's standard role in collision-search analysis, and by the absence of any known collision-suppressing mechanism in a compression-derived mapping (known MD5 differential attacks only make collisions easier). A many-to-one fixed map can satisfy statistical closeness; no injectivity is implied or required.",
+      "scope": "Only the historical construction of the exact retained pair and the submitted time_log2, preprocessing_log2, and data_log2 fields. Deterministic online replay and exact digest equality do not depend on this premise.",
+      "extrapolation": "The primary paper reports an average 2^49.81 full-MD5 compression equivalents for its implemented single-block attack and identifies the displayed pair as its output. The 2^60 envelope adds about 2^10.19 of margin for conversion to the v3 word-RAM model, path preparation, table operations, unsuccessful work represented by the average, assembly, padding, and verification.",
       "evidence_ids": [
-        "proof:201-250",
-        "proof:266-337",
-        "experiment:trajectory-prefix-collision-v1"
+        "proof:97-165",
+        "proof:211-227"
       ],
-      "limitations": "Unproven for the fixed f. If f were permutation-like, every repeat would be a degenerate cycle closure and the algorithm would always fail (detected and abandoned, not silent). A pathological cycle cover could reduce the success probability below the claimed 0.57. Neither is known for MD5 variants. The iid worst-case-uniformity birthday inequality applies to independent sampling only and is recorded as context, not as support. The experiment observes only 16-bit prefix events over at most 512 steps; it does not establish full-size 128-bit trajectory behavior. Exploratory-lane premise; not asserted to rigorous standards."
+      "limitations": "There is no fresh generator run, complete historical job ledger, instruction trace, or exact accounting of every unsuccessful development run. Compression-equivalent estimates are not definitionally identical to v3 units. If total construction work or data reached 2^60, the claim and score would fail. The fixed-witness experiment supplies no cost evidence. Exploratory premise only."
     },
     {
-      "id": "H2-distinguished-point-gaps",
-      "statement": "Pre-repeat regime only: before a trajectory's first repeat, distinguished-point hits (digest value < 2^72) behave as Bernoulli trials with probability 2^-56 per step, up to the H1 total variation slack: pre-repeat gaps are geometric with mean 2^56 and Pr[pre-repeat gap > 2^60] <= (1 - 2^-56)^(2^60) + delta <= exp(-16) + 2^-30 <= 1.2e-7. H2 makes no claim about the post-repeat regime, where the trajectory is periodic; post-repeat detection is analyzed separately via cycle occupancy and an explicit a + b <= G distance budget.",
-      "role": "supporting",
-      "scope": "Only the pre-repeat abandonment rate and the expected table occupancy of the declared algorithm. The memory bound is a hard cap independent of H2, and post-repeat detection does not use H2.",
-      "extrapolation": "Follows from H1's conditional uniformity of pre-repeat values via the without-replacement bound C(N - 2^72, G)/C(N, G) <= (1 - 2^-56)^G, plus the H1 total variation slack. The declared experiment does not observe the 2^-56 distinguished predicate or 2^60-scale gaps directly; it supports the underlying collision-statistics premise at 16-bit scale only.",
+      "id": "H-HISTORICAL-MEMORY",
+      "statement": "A serial schedule of the published construction that produced the retained pair has peak simultaneous algorithm memory below 2^32 bytes, including its lookup structures, code, constants, differential-path data, buffers, working state, allocator overhead, and retained output.",
+      "role": "score-critical",
+      "scope": "Only the peak-memory field for one serially scheduled implementation of the published construction. It is not a claim about aggregate installed RAM across historically parallel machines or the replay container limit.",
+      "extrapolation": "The published source's dominant lookup payload uses records of five 32-bit words and the implementation requires at least 2^24 accepted records before its main loop. The paper states that separate instantiations are freely parallelizable, so they may instead be scheduled serially with reusable storage. The 2^32-byte envelope allows substantial container, map, vector-capacity, code, and allocator overhead beyond the approximately 320 MiB payload at 2^24 records.",
       "evidence_ids": [
-        "proof:251-265",
-        "proof:266-337",
-        "experiment:trajectory-prefix-collision-v1"
+        "proof:117-121",
+        "proof:167-185",
+        "proof:229-246"
       ],
-      "limitations": "If digest values are biased, pre-repeat gaps lengthen and table occupancy grows; the success loss is bounded by the abandonment analysis, and the memory bound remains hard-capped. Post-repeat periodicity is handled by the cycle-occupancy and a+b bounds, not by H2. No direct measurement covers the distinguished-point rate at full scale; this is disclosed. Exploratory-lane premise; not asserted to rigorous standards."
+      "limitations": "Neither the paper nor the retained package supplies peak-RSS traces, an allocation ledger, the exact accepted-record count of the successful instantiation, or the historical worker seeds. The source has no submitted hard 2^32-byte allocation guard. If a serial schedule exceeded 2^32 live bytes, the memory field and score would fail. Exploratory premise only."
+    },
+    {
+      "id": "H-PUBLISHED-PAIR-BINDING",
+      "statement": "The paper's reported 2^49.81-compression construction applies to the exact 64-byte Table 5 pair retained here, rather than to an unrelated MD5 collision or target variant.",
+      "role": "supporting",
+      "scope": "Binding of the retained bytes to the published single-block attack and its resource regime. Exact collision under md5-s63-prefix-v1 is independently recomputed and does not rely on this premise.",
+      "extrapolation": "The primary paper presents the construction, complexity analysis, late-state differential, and exact pair together, states that the displayed pair was found by the implemented search, and publishes matching source and binary artifacts. The organizer independently checks the selected 63-step target on the retained bytes.",
+      "evidence_ids": [
+        "proof:27-137",
+        "proof:248-262",
+        "experiment:published-single-block-s63-replay"
+      ],
+      "limitations": "Fixed-witness agreement proves target compatibility and collision existence, not a replay of the generator or its historical costs. The package summarizes rather than reimplements the infeasible full search. Exploratory supporting premise only."
     }
   ],
   "certificate_manifest": "certificates/manifest.json",
