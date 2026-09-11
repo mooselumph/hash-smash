@@ -6,74 +6,22 @@
   "rounds": 63,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 73,
+    "time_log2": 79,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 21,
-    "data_log2": 67,
-    "preprocessing_log2": 21,
-    "success_probability": 0.57,
+    "memory_log2_bytes": 72,
+    "data_log2": 65,
+    "preprocessing_log2": 73,
+    "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Only 16-byte messages m(w) encoded from 128-bit words; a single distinguished-point walk with restarts, with an explicit uniform random initial start and a hard per-evaluation budget guard at 2^66.1 total f evaluations that is also enforced inside recovery and final verification.",
+    "Only 32-byte messages encoded from independently sampled uniform 256-bit words; q=2^64 fixed samples and no restart.",
     "Exact md5-s63-prefix-v1 full-message hashing: fixed IV, required padding, steps 0 through 62, feed-forward, and all 128 digest bits.",
-    "Classical 256-bit word RAM with the charged ideal independent uniform random-word primitive for walk starts; no seeded PRNG or hash-distribution assumption for the coins.",
-    "The distinguished-point table is an unordered array with linear-scan lookup and append insertion (no hashing or probing distribution); time, memory, data, and preprocessing fields are deterministic upper bounds under the hard budget and caps; success_probability is conditional on the declared heuristics H1 and H2.",
-    "No nonuniform advice, precomputed collision, or external corpus. One declared small-scale experiment (trajectory-prefix-collision-v1) probes 16-bit digest-prefix collision frequency on the real target; it supports but does not establish the full-scale premises. The nominal reference identifier does not assert an established baseline or an improvement."
+    "Classical 256-bit word RAM with charged ideal independent uniform random-word primitive; no seeded PRNG or hash-distribution heuristic.",
+    "Resource fields are conservative upper bounds: time and preprocessing in charged RAM/target-compression units, memory and advice in bytes, data in complete input-message evaluations.",
+    "No nonuniform advice, precomputed collision, external corpus, or empirical premise. The nominal reference identifier does not assert an established baseline or an improvement."
   ],
   "baseline_improved": "md5-s63-nominal-v2",
-  "heuristics": [
-    {
-      "id": "H1-random-mapping-trajectory",
-      "statement": "Statistical-closeness form: let T_f be the joint distribution, under a uniform random start, of the trajectory statistics used in the success analysis (first-repeat time, cycle length and distinguished-value occupancy at the first repeat, pre-repeat distinguished-point gap sequence) for trajectories of length at most 2^66 of the fixed f(w) = md5-s63(m(w)); let T_RM be the same under a uniform random mapping on N = 2^128 points. H1 asserts total variation distance at most delta = 2^-30 between T_f and T_RM. The stronger pointwise form (x_i exactly uniform given distinct predecessors) is deliberately NOT asserted: for a fixed map on an equal-size domain and codomain it would force a permutation and rule out collisions, contradicting the success event it would be used to prove.",
-      "role": "score-critical",
-      "scope": "Only the fixed f defined by the exact md5-s63-prefix-v1 target on 16-byte messages, trajectories of length at most 2^66, and only as the premise for this algorithm's success probability (including the cycle-occupancy bound for post-repeat detection). The resource bounds do not depend on H1.",
-      "extrapolation": "From the exact uniform-random-mapping statements (proved in the cited proof lines) to one fixed deterministic function, up to the declared total variation slack delta = 2^-30 on every event used. Supported by the declared organizer-executed small-scale experiment (16-bit prefix-collision frequency 225/256 on the real target versus model prediction about 221/256), by the premise's standard role in collision-search analysis, and by the absence of any known collision-suppressing mechanism in a compression-derived mapping (known MD5 differential attacks only make collisions easier). A many-to-one fixed map can satisfy statistical closeness; no injectivity is implied or required.",
-      "evidence_ids": [
-        "proof:201-250",
-        "proof:266-337",
-        "experiment:prefix-collision-b14",
-        "experiment:prefix-collision-b16",
-        "experiment:prefix-collision-b18",
-        "experiment:prefix-collision-b20",
-        "experiment:prefix-collision-b22"
-      ],
-      "limitations": "Unproven for the fixed f. If f were permutation-like, every repeat would be a degenerate cycle closure and the algorithm would always fail (detected and abandoned, not silent). A pathological cycle cover could reduce the success probability below the claimed 0.57. Neither is known for MD5 variants. The iid worst-case-uniformity birthday inequality applies to independent sampling only and is recorded as context, not as support. The experiment observes only 16-bit prefix events over at most 512 steps; it does not establish full-size 128-bit trajectory behavior. Exploratory-lane premise; not asserted to rigorous standards."
-    },
-    {
-      "id": "H2-distinguished-point-gaps",
-      "statement": "Pre-repeat regime only: before a trajectory's first repeat, distinguished-point hits (digest value < 2^72) behave as Bernoulli trials with probability 2^-56 per step, up to the H1 total variation slack: pre-repeat gaps are geometric with mean 2^56 and Pr[pre-repeat gap > 2^60] <= (1 - 2^-56)^(2^60) + delta <= exp(-16) + 2^-30 <= 1.2e-7. H2 makes no claim about the post-repeat regime, where the trajectory is periodic; post-repeat detection is analyzed separately via cycle occupancy and an explicit a + b <= G distance budget.",
-      "role": "supporting",
-      "scope": "Only the pre-repeat abandonment rate and the expected table occupancy of the declared algorithm. The memory bound is a hard cap independent of H2, and post-repeat detection does not use H2.",
-      "extrapolation": "Follows from H1's conditional uniformity of pre-repeat values via the without-replacement bound C(N - 2^72, G)/C(N, G) <= (1 - 2^-56)^G, plus the H1 total variation slack. The declared experiment does not observe the 2^-56 distinguished predicate or 2^60-scale gaps directly; it supports the underlying collision-statistics premise at 16-bit scale only.",
-      "evidence_ids": [
-        "proof:251-265",
-        "proof:266-337",
-        "experiment:prefix-collision-b14",
-        "experiment:prefix-collision-b16",
-        "experiment:prefix-collision-b18",
-        "experiment:prefix-collision-b20",
-        "experiment:prefix-collision-b22"
-      ],
-      "limitations": "If digest values are biased, pre-repeat gaps lengthen and table occupancy grows; the success loss is bounded by the abandonment analysis, and the memory bound remains hard-capped. Post-repeat periodicity is handled by the cycle-occupancy and a+b bounds, not by H2. No direct measurement covers the distinguished-point rate at full scale; this is disclosed. Exploratory-lane premise; not asserted to rigorous standards."
-    },
-    {
-      "id": "H3-prefix-probe-relevance",
-      "statement": "The prefix-collision statistics measured by the five declared experiments at digest projection widths 14-22 bits and trajectory lengths at most 512 steps are the same birthday-accumulation phenomenon as the full-width trajectory collision statistics asserted by H1 and H2, observed through projections: for each width b, the per-trial success frequency is predicted by the random-mapping law 1 - exp(-C(512,2)/2^b), and agreement of the five measured frequencies with that curve (spanning three orders of magnitude) is evidence that the real fixed f follows the same law at these scales.",
-      "role": "supporting",
-      "scope": "Only the relevance of the declared prefix-probe measurements to the collision statistics of the fixed md5-s63-prefix-v1 iteration function. The success probability claim rests on H1/H2 themselves; H3 concerns whether the probe evidence bears on them.",
-      "extrapolation": "The measurements cover widths 14-22 bits and at most 512 steps; extrapolation to 128-bit repeats, 2^66-step trajectories, the 2^-56 distinguished predicate, and the 2^-30 total-variation claim is NOT established by these experiments and remains heuristic. The probes test the scaling law across three orders of magnitude in event frequency, which is the feasible falsifiable content.",
-      "evidence_ids": [
-        "proof:362-428",
-        "experiment:prefix-collision-b14",
-        "experiment:prefix-collision-b16",
-        "experiment:prefix-collision-b18",
-        "experiment:prefix-collision-b20",
-        "experiment:prefix-collision-b22"
-      ],
-      "limitations": "Small-scale projected measurements cannot establish full-size trajectory statistics; per-trial success is not an iid probability estimate (the runner licenses none); the organizer seeds are public (selection-bias warning applies); no holdout nonce was used. A material disagreement between measured and predicted frequencies would have refuted H1/H2 at these scales; agreement is supporting evidence only. Exploratory-lane premise; not asserted to rigorous standards."
-    }
-  ],
-  "certificate_manifest": "certificates/manifest.json",
-  "experiment_manifest": "experiments/manifest.json"
+  "heuristics": [],
+  "certificate_manifest": "certificates/manifest.json"
 }
