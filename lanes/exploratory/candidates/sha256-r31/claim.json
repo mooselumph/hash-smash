@@ -6,22 +6,48 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 90,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.6,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 36,
+    "data_log2": 90,
+    "preprocessing_log2": 89,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 9
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "The online algorithm is deterministic replay of exactly the two 128-byte messages in proof.md; it is not a submitted generator for new collisions.",
+    "The selected target has the standard fixed SHA-256 IV, original round indices 0 through 30 on every padded block, full eight-word feed-forward, FIPS padding, and all 256 output bits.",
+    "All historical characteristic search, failed work, table generation, matching, construction, and checking are charged once as preprocessing and included in total time; no cross-target amortization is claimed.",
+    "The score is conditional on H-HISTORICAL-TIME and H-HISTORICAL-MEMORY; neither bound has an authoritative organizer-model trace or resource receipt.",
+    "The organizer experiment checks only the exact collision relation. Repeated replay rows do not measure success probability, expected work, preprocessing, memory, novelty, or generator reproducibility.",
+    "This exploratory package claims no new cryptanalysis, no full-SHA-256 or 32-round collision, no lower security bound, and no rigorous qualification."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-HISTORICAL-TIME",
+      "statement": "All computational work that led to the fixed witness, including differential-trail discovery, SAT/SMT and other tool runs, failed or abandoned trials, table construction, matching, message construction, and verification, is less than 2^89 collision-frontier-v3 charged units; total time after deterministic replay is less than 2^90 units.",
+      "role": "score-critical",
+      "scope": "Exactly the fixed two-message 31-round-prefix SHA-256 collision in proof.md, with all one-time historical construction paid once and no amortization across targets or outputs.",
+      "extrapolation": "Translate the primary publication's reported practical run and complexity, plus predecessor estimates, into a looser upper cap in the organizer's 256-bit word-RAM model. The cap retains 49.5 bits over 2^40.5, 40.2 bits over 2^49.8, and 24.5 bits over 2^65.5 for omitted discovery, conversion, and failure work.",
+      "evidence_ids": [
+        "proof:113-190"
+      ],
+      "limitations": "The located public material has no complete job ledger, instruction trace, resource receipt, practical generator, or record of every unsuccessful development run. Publication complexity units are not organizer word-RAM units. The margin supports exploratory plausibility but does not prove the 2^89 preprocessing or 2^90 total-time caps."
+    },
+    {
+      "id": "H-HISTORICAL-MEMORY",
+      "statement": "Peak simultaneously retained storage over every historical construction phase and deterministic replay is less than 2^36 bytes, including code, solver state, tables and indices, messages, advice, thread state, constants, and working storage.",
+      "role": "score-critical",
+      "scope": "Exactly the construction history and replay of the fixed witness in proof.md, including characteristic search and all practical-attack phases rather than only the final online program.",
+      "extrapolation": "Convert the reported 2^19.8 ten-word tuple table into packed bytes, allow even 64 full copies, and apply a further margin to cover indices, runtime, tools, and other retained state.",
+      "evidence_ids": [
+        "proof:120-149",
+        "proof:192-219"
+      ],
+      "limitations": "The public report counts table entries rather than measured peak bytes and supplies no peak-resident-set trace. Allocator overhead, thread duplication, SAT/SMT state, characteristic search, and failed development runs are incompletely documented, so the 64 GiB cap remains plausible rather than certified."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }
