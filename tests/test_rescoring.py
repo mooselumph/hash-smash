@@ -3,6 +3,7 @@
 from copy import deepcopy
 import json
 import math
+import shutil
 import unittest
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ from judge.provider_adapter import ReviewResult
 from scripts.archive_review import archive
 from scripts.reference_operation_costs import reference_costs
 from scripts import hashsmash_pipeline as pipeline
+from scripts import rescore_artifacts
 from tests import test_frontier_pipeline as fixtures
 from tests.test_frontier_pipeline import fake_provider, read_json
 from verifier.errors import VerificationError
@@ -59,7 +61,7 @@ class RescoringTests(unittest.TestCase):
         old["cost_model"] = read_json(ROOT / "cost-models/collision-frontier-v4.json")
         with patch.object(LaneTrack, "benchmark", return_value=old), fake_provider():
             self.assertEqual(pipeline.run_all(paths), 0)
-        self.archives = self.root / "archives"
+        self.archives = paths.rescore_archives
         self.plan = self.root / "plan.json"
         self.enterContext(patch.object(rescore, "ARCHIVES", self.archives))
         self.enterContext(patch.object(rescore, "PLAN", self.plan))
@@ -71,6 +73,89 @@ class RescoringTests(unittest.TestCase):
         with fake_provider(factory=lambda _: client), \
                 patch.object(pipeline, "execute_experiments", side_effect=AssertionError("must inherit experiments")):
             self.assertEqual(pipeline.run_all(paths), 0)
+
+    def review_artifact(self, paths, name):
+        downloaded = self.root / name
+        evidence = downloaded / "runs/fixture/judge-evidence.json"
+        evidence.parent.mkdir(parents=True)
+        shutil.copyfile(paths.evidence, evidence)
+        shutil.copyfile(paths.dossier, downloaded / "judge-dossier.json")
+        if paths.rescore_history.exists():
+            shutil.copyfile(paths.rescore_history, downloaded / "rescore-history.json")
+        return downloaded
+
+    def test_workflow_artifact_carries_history_after_original_expires(self):
+        paths, entry = self.source()
+        original = self.review_artifact(paths, "original")
+        shutil.rmtree(self.archives)
+        rescore_artifacts.restore(paths, original)
+        self.run_cost(paths, CostClient(ledger()))
+        self.assertEqual(set(read_json(paths.rescore_history)), {entry["source"]})
+        second = archive(paths.evidence, paths.dossier, self.archives)
+        latest = self.review_artifact(paths, "latest")
+        shutil.rmtree(original)
+        shutil.rmtree(self.archives)
+        repinned = archive(latest / "runs/fixture/judge-evidence.json", latest / "judge-dossier.json",
+                           self.root / "operator-cache")
+        self.assertEqual(repinned, second)
+        atomic_write_json(self.plan, {"entries": [second]})
+        rescore_artifacts.restore(paths, latest)
+        self.assertEqual({p.stem for p in self.archives.glob("*.json")}, {entry["source"], second["source"]})
+        client = CostClient(ledger())
+        self.run_cost(paths, client)
+        self.assertEqual([stage for stage, _ in client.calls], ["lane_rescore"])
+        self.assertEqual(len(client.calls[0][1]["review_context"]["cost_history"]), 1)
+        self.assertEqual(set(read_json(paths.rescore_history)), {entry["source"], second["source"]})
+
+    def test_missing_or_changed_workflow_artifact_fails_before_review(self):
+        paths, entry = self.source()
+        downloaded = self.review_artifact(paths, "downloaded")
+        shutil.rmtree(self.archives)
+        with self.assertRaisesRegex(VerificationError, "missing prior judgment"):
+            pipeline.run_intake(paths)
+        with self.assertRaisesRegex(VerificationError, "missing or oversized"):
+            rescore_artifacts.restore(paths, self.root / "expired")
+        evidence = downloaded / "runs/fixture/judge-evidence.json"
+        changed = read_json(evidence)
+        changed["submission"]["proof_markdown_line_numbered"] += "tampered"
+        atomic_write_json(evidence, changed)
+        with self.assertRaisesRegex(VerificationError, "pinned packet checksum"):
+            rescore_artifacts.restore(paths, downloaded)
+        self.assertFalse(self.archives.exists())
+
+    def test_latest_artifact_requires_its_complete_untampered_history(self):
+        paths, _ = self.source()
+        self.run_cost(paths, CostClient(ledger()))
+        second = archive(paths.evidence, paths.dossier, self.archives)
+        downloaded = self.review_artifact(paths, "downloaded")
+        atomic_write_json(self.plan, {"entries": [second]})
+        shutil.rmtree(self.archives)
+        history_file = downloaded / "rescore-history.json"
+        history = read_json(history_file)
+        history_file.unlink()
+        with self.assertRaisesRegex(VerificationError, "missing prior judgment"):
+            rescore_artifacts.restore(paths, downloaded)
+        next(iter(history.values()))["evidence"]["schema_version"] = "tampered"
+        atomic_write_json(history_file, history)
+        with self.assertRaisesRegex(VerificationError, "history checksum"):
+            rescore_artifacts.restore(paths, downloaded)
+        self.assertFalse(self.archives.exists())
+
+    def test_only_pinned_packages_select_positive_immutable_artifact_ids(self):
+        paths, entry = self.source()
+        references = self.root / "artifacts.json"
+        with patch.object(rescore_artifacts, "ARTIFACTS", references):
+            atomic_write_json(references, {entry["source"]: {"run_id": 42, "artifact_id": 73}})
+            self.assertEqual(rescore_artifacts.selection(paths), entry)
+            self.assertEqual(rescore_artifacts.artifact_reference(entry), {"run_id": 42, "artifact_id": 73})
+            for bad in ({}, {entry["source"]: {"run_id": 42, "artifact_id": "73\n"}},
+                        {entry["source"]: {"run_id": 42, "artifact_id": True}}):
+                atomic_write_json(references, bad)
+                with self.assertRaises(VerificationError):
+                    rescore_artifacts.artifact_reference(entry)
+            atomic_write_json(self.plan, {"entries": []})
+            references.unlink()
+            self.assertIsNone(rescore_artifacts.selection(paths))
 
     def test_migration_preserves_anchor_and_only_calls_cost_judge(self):
         paths, entry = self.source()

@@ -43,6 +43,17 @@ class YukonContractTests(unittest.TestCase):
         self.assertIn("if-no-files-found: error", score)
         self.assertNotIn("persist-credentials: true", workflow)
 
+    def test_prior_artifact_download_is_pinned_and_its_token_stays_in_the_action(self):
+        workflow = (ROOT / ".github/workflows/paired-review.yml").read_text()
+        prior = workflow.split("      - name: Download pinned prior judgment\n")[1].split("      - name:")[0]
+        self.assertIn("artifact-ids: ${{ steps.prior.outputs.artifact_id }}", prior)
+        self.assertIn("run-id: ${{ steps.prior.outputs.run_id }}", prior)
+        self.assertIn("github-token: ${{ github.token }}", prior)
+        self.assertNotIn("run:", prior)
+        self.assertEqual(workflow.count("${{ github.token }}"), 1)
+        self.assertLess(workflow.index("Verify prior judgment"), workflow.index("Prepare isolated experiment runtime"))
+        self.assertIn("actions: read", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

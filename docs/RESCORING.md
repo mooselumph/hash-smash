@@ -60,29 +60,37 @@ semantics cannot silently inherit an old qualification. The initial v4-to-v5 ent
 also explicitly authorizes the accounting-code migration; later v5 entries change
 only prices. A code change needs a reviewed configuration pin, not just a prompt.
 
-1. Download the trusted workflow's evidence and complete judge dossier before its
-   30-day artifact expiry. Preserve them durably in the protected repository:
+1. Download the trusted workflow's review artifact and verify its evidence/dossier:
 
    ```sh
-   python3 scripts/archive_review.py --evidence /path/judge-evidence.json \
+   python3 scripts/archive_review.py --evidence /path/runs/RUN/judge-evidence.json \
      --dossier /path/judge-dossier.json
    ```
 
-2. Review the emitted entry into `reorg/plan.json`'s `entries` array, along with the
-   content-addressed archive it names. Include baseline packages when those should
-   also be repriced. Keep every ancestor archive. Archive hashes authenticate
-   content; the organizer-reviewed plan establishes its trusted provenance.
+   This writes a local, ignored cache and imports any `rescore-history.json`
+   beside the dossier. Keep that bundled history when downloading a review.
+2. Review the emitted entry into `reorg/plan.json`. In `reorg/artifacts.json`, map
+   its `source` packet hash to the trusted workflow's `run_id` and `artifact_id`.
+   Include baselines that should also be repriced. Only IDs and hashes enter Git;
+   the organizer-reviewed pins establish provenance, not participant links.
 3. Merge the reviewed policy/plan and perform the usual managed Yukon reorg.
-   Intake rechecks the package and certificates; original experiment evidence is
-   inherited unchanged. Only the cost reviewer runs. It receives the original
-   evidence and full qualification anchor plus the compact history of cost reviews.
+   The workflow downloads that exact prior artifact using its existing
+   `actions: read` permission and verifies the packet checksum and full ancestry.
+   Intake rechecks the original submission and certificates; original experiment
+   evidence is inherited unchanged. Only the cost reviewer runs. It receives the
+   original evidence and full qualification anchor plus the history of cost reviews.
 4. The scorer verifies the chain, preserves qualification and success probability,
    and prices the new ledger deterministically. Memory, data and advice remain
    unchanged. Original time and preprocessing bounds appear as `declaredTimeLog2`
    and `declaredPreprocessingLog2`, with their original model and prices; the new
-   score records its ledger, weights and source archive.
-5. Before another reorg, archive the new evidence/dossier and point a new entry at
-   it. Earlier scalar scores are never interpreted as raw operation counts.
+   score records its ledger, weights and source packet.
+5. The new review artifact includes `rescore-history.json` with all required prior
+   packets. Pin this newest artifact for the next reorg; earlier artifacts need
+   not remain available. Earlier scalar scores are never treated as raw counts.
+
+Artifacts currently expire after 30 days. If the pinned artifact has expired or
+is missing, the reorg stops before review; it does not silently repeat qualification.
+An organizer must restore a trusted backup or explicitly choose a fresh full review.
 
 Unknown work B at original weights w is repriced conservatively as
 `B * max(new_weight / original_weight)`. Its original weights remain attached
@@ -92,5 +100,6 @@ Incomplete cost reviews emit no score and report that further evidence is needed
 The history is bounded to 32 records and 2 MiB of model input; exceeding either
 limit stops explicitly rather than silently dropping provenance.
 
-The checked-in plan starts empty. Prices apply to all active lanes, but this PR
-does not itself activate inheritance, run a reorg or alter historical artifacts.
+The initial dev plan pins 16 qualified baselines and 9 qualified submissions.
+The 8 previously failed submissions remain on the ordinary review path. A managed
+reorg is still required to apply these prices to stored scores.
