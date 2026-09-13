@@ -12,7 +12,7 @@ from .paired_review import aggregate_paired_reviews, evidence_binding, select_la
 from .schema_validation import _validate
 
 ROOT = Path(__file__).resolve().parents[1]
-ARCHIVES = ROOT / "reorg/archives"
+ARCHIVES = ROOT / ".yukon/work/rescore-archives"
 PLAN = ROOT / "reorg/plan.json"
 
 
@@ -79,12 +79,27 @@ def load_archive(source, archive_root=None):
     require_sha256(source, "rescore.source")
     root = ARCHIVES if archive_root is None else archive_root
     path = root / (source + ".json")
+    if not path.exists():
+        raise VerificationError("missing prior judgment; restore its pinned workflow artifact before rescoring")
     if path.is_symlink() or path.stat().st_size > 4 * 1024 * 1024:
         raise VerificationError("invalid rescore archive file")
     packet = load_json_bytes(path.read_bytes(), str(path))
     if not isinstance(packet, dict) or set(packet) != {"evidence", "dossier"} or digest(packet) != source:
         raise VerificationError("rescore archive checksum mismatch")
     return packet
+
+
+def history_packets(source, archive_root=None):
+    """Retain exactly the verified ancestry needed by the next workflow run."""
+    packet = load_archive(source, archive_root)
+    verify_packet(packet, archive_root)
+    packets = {}
+    while True:
+        packets[source] = packet
+        if "rescore" not in packet["dossier"]:
+            return packets
+        source = packet["evidence"]["rescore_source"]
+        packet = load_archive(source, archive_root)
 
 
 def _transition(current, previous, authorization):
@@ -197,8 +212,8 @@ def check_cost_review(review, evidence):
     return price_ledger(ledger, weights(evidence), rigorous=evidence["benchmark"]["lane"] == "rigorous")
 
 
-def run_review(evidence, authorization, client):
-    supplied = context(evidence, authorization)
+def run_review(evidence, authorization, client, archive_root=None):
+    supplied = context(evidence, authorization, archive_root)
     payload = {**deepcopy(evidence), "review_context": supplied}
     if len(canonical_json_bytes(payload)) > 2 * 1024 * 1024:
         raise VerificationError("cost-only review history exceeds the 2 MiB evidence budget")

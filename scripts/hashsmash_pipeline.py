@@ -54,10 +54,18 @@ class RunPaths:
     track: LaneTrack
 
     @property
+    def rescore_archives(self) -> Path:
+        return self.work / "rescore-archives"
+
+    @property
+    def rescore_history(self) -> Path:
+        return self.reports / "rescore-history.json"
+
+    @property
     def generated(self) -> tuple[Path, ...]:
         return (self.score, self.work / "intake-report.json", self.work / "proof-numbered.md",
                 self.work / "certificate-report.json", self.evidence, self.dossier, self.aggregate,
-                self.work / "experiment-report.json")
+                self.work / "experiment-report.json", self.rescore_history)
 
     @classmethod
     def for_track(cls, track: LaneTrack, *, state_root: Path | None = None, candidate: Path | None = None) -> "RunPaths":
@@ -117,7 +125,7 @@ def _build_evidence(
     authorization = rescore.find_source(p.track, intake_report["package_sha256"])
     if authorization is not None:
         evidence["rescore_source"] = authorization["source"]
-        rescore.context(evidence, authorization)
+        rescore.context(evidence, authorization, p.rescore_archives)
         return evidence
     report = _load_json(p.work / "experiment-report.json")
     if intake_report["submission_state"] == "ready":
@@ -230,7 +238,7 @@ def _check_current_evidence(p: RunPaths, evidence: Mapping[str, Any]) -> None:
 
 def run_judge(paths: RunPaths) -> int:
     p = paths
-    _remove_known_outputs((p.score, p.dossier, p.aggregate))
+    _remove_known_outputs((p.score, p.dossier, p.aggregate, p.rescore_history))
     evidence = _load_json(p.evidence)
     _check_current_evidence(p, evidence)
     try:
@@ -243,7 +251,8 @@ def run_judge(paths: RunPaths) -> int:
                        "role_committee": committee_record}
         if "rescore_source" in evidence:
             authorization = rescore.find_source(p.track, evidence["submission"]["intake_report"]["package_sha256"])
-            dossier = rescore.run_review(evidence, authorization, role_clients.get("lane_cost", client_factory(base_config)))
+            dossier = rescore.run_review(evidence, authorization, role_clients.get("lane_cost", client_factory(base_config)),
+                                        p.rescore_archives)
         else:
             dossier = run_paired_review(evidence, client_factory(base_config), role_clients=role_clients)
         dossier["aggregate"] = select_lane_aggregate(dossier, p.track.lane)
@@ -283,6 +292,8 @@ def run_judge(paths: RunPaths) -> int:
     dossier["aggregate"] = aggregate
     dossier["judge_configuration"] = safe_config
 
+    if "rescore_source" in evidence:
+        atomic_write_json(p.rescore_history, rescore.history_packets(evidence["rescore_source"], p.rescore_archives))
     atomic_write_json(p.dossier, dossier)
     atomic_write_json(p.aggregate, aggregate)
     status = aggregate["status"]
@@ -325,7 +336,7 @@ def run_score(paths: RunPaths) -> int:
         raise VerificationError("paired dossier/configuration integrity mismatch")
     projection = None
     if "rescore_source" in evidence:
-        anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier})
+        anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier}, p.rescore_archives)
         projection = {
             "ledger": dossier["rescore"]["review"]["resource_ledger"],
             "weights": rescore.weights(evidence), "source": evidence["rescore_source"],

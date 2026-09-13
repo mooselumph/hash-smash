@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from judge import rescore
 from verifier.frontier_tracks import get_frontier_track
 from verifier.io import atomic_write_json, canonical_json_bytes, load_json_bytes
+from verifier.schema_validation import require_sha256
 
 
 def archive(evidence_path, dossier_path, archive_root):
@@ -20,6 +21,17 @@ def archive(evidence_path, dossier_path, archive_root):
         "evidence": load_json_bytes(evidence_path.read_bytes(), str(evidence_path)),
         "dossier": load_json_bytes(dossier_path.read_bytes(), str(dossier_path)),
     }
+    history_path = dossier_path.parent / "rescore-history.json"
+    if history_path.exists():
+        from scripts.rescore_artifacts import read_packet_file
+        history = read_packet_file(history_path, limit=16 * 1024 * 1024)
+        if not isinstance(history, dict) or len(history) > 31:
+            raise ValueError("invalid archived review history")
+        for source, ancestor in history.items():
+            require_sha256(source, "history.source")
+            if rescore.digest(ancestor) != source:
+                raise ValueError("archived review history checksum mismatch")
+            atomic_write_json(archive_root / (source + ".json"), ancestor)
     rescore.verify_packet(packet, archive_root)
     source = rescore.digest(packet)
     destination = archive_root / (source + ".json")
