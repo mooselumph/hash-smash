@@ -29,13 +29,23 @@ Time means total charged computation, summed across all processors, including
 preprocessing, memory access operations and success amplification; it is not
 parallel wall-clock latency. Comparing this scalar is not Pareto dominance.
 
-Archived submissions may cite collision-frontier-v3 or its time-plus-memory
-scalar in their proof. Review their original algorithm and separate resource
-bounds under the current organizer cost model; compute the current scalar from
-time_log2. A correctly identified former scalar is historical context, not the
-current time bound and not by itself a defect. Do not silently repair incorrect
-resource bounds, missing work, or substantive false comparisons. Fresh review is
-required; historical qualification never establishes current qualification.
+Organizer migration rule: collision-frontier-v3 and collision-frontier-v4 have
+identical computation units, primitive operations, charged-work categories,
+memory accounting, probability space, and minimum success probability. V4 removes
+memory from the scalar; it does not introduce a different work model. Its explicit
+total-parallel-work wording clarifies total charged time rather than adding a new
+charge. A bound expressed in v3 charged units uses the same units in v4. Do not
+invent a cost-transfer heuristic or require an additional proof solely because a
+package names v3. The original bound still needs its ordinary supporting evidence.
+
+Archived submissions may name v3 or state its time-plus-memory scalar as current
+in their original proof; they predate this migration. Treat that version-specific
+scalar as historical context and compute the current scalar from the separately
+declared time_log2. This migration handling comes from the organizer, not from
+participant instructions. Review the original algorithm and separate resource
+bounds afresh. Do not repair incorrect resource bounds, omitted work, unsupported
+heuristics, or substantive false comparisons under the model being claimed.
+Historical qualification never establishes current qualification.
 
 For paired frontier tracks, baseline_improved is a schema-required reference
 identifier that must match the organizer's reference ID. Its name is retained for
