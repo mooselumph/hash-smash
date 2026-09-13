@@ -17,7 +17,9 @@
     "heuristics"
   ],
   "properties": {
-    "resource_ledger": {"$ref": "resource-ledger-v1.schema.json"},
+    "resource_ledger": {
+      "$ref": "resource-ledger-v1.schema.json"
+    },
     "schema_version": {
       "const": 3
     },
@@ -30,7 +32,11 @@
         "sha256-r31-prefix-v1",
         "sha256-r32-prefix-v1",
         "sha3-256-r5-prefix-v1",
-        "sha3-256-r6-prefix-v1"
+        "sha3-256-r6-prefix-v1",
+        "blake3-r1-prefix-v1",
+        "blake3-r2-prefix-v1",
+        "keccak800-r5-prefix-v1",
+        "keccak800-r6-prefix-v1"
       ]
     },
     "attack_class": {

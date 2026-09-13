@@ -4,8 +4,9 @@ This is an organizer baseline-authoring handoff, reached through the
 [builder guide](./BUILDER_GUIDE.md). Its feature-branch/PR deliverables and local
 provider review are for explicitly assigned import preparation. Ranked Yukon
 solvers follow [TASK.md](../TASK.md) and submit through Yukon instead.
-This handoff concerns the sixteen existing research lanes; it does not introduce
-a diagnostic benchmark or activate the twelve undefined slots.
+The catalog now contains 24 local research lanes; the import manifest includes
+only the 12 exploratory lanes. Four Poseidon slots remain undefined. The new
+organizer assignment covers BLAKE3 1/2 and Keccak[800] 5/6 baselines.
 
 `submission_state: ready` means that a complete package is submitted for review.
 It does not mean the package has qualified or can seed a successful Yukon import.
@@ -22,22 +23,25 @@ Prepare complete, reviewable baseline candidates for these target pairs:
 | `sha1-r79`, `sha1-r80` | `lanes/exploratory/candidates/<target>/` | `lanes/rigorous/candidates/<target>/` |
 | `sha256-r31`, `sha256-r32` | `lanes/exploratory/candidates/<target>/` | `lanes/rigorous/candidates/<target>/` |
 | `sha3-256-r5`, `sha3-256-r6` | `lanes/exploratory/candidates/<target>/` | `lanes/rigorous/candidates/<target>/` |
+| `blake3-r1`, `blake3-r2` | `lanes/exploratory/candidates/<target>/` | `lanes/rigorous/candidates/<target>/` (local only) |
+| `keccak800-r5`, `keccak800-r6` | `lanes/exploratory/candidates/<target>/` | `lanes/rigorous/candidates/<target>/` (local only) |
 
 Assign explicit candidate directories to each worker; a solver edits only its
 assigned directory. Use a separate worktree and feature branch, then open a PR,
 so candidate work does not interfere with the harness branch. Do not change target
 profiles, cost models, schemas, manifests, judge prompts, validators, workflows,
-or generated scores to get a candidate accepted. Do not invent definitions for
-BLAKE3, Keccak[800], or Poseidon. Keep all sixteen packages
+or generated scores to get a candidate accepted. Use the pinned BLAKE3 and Keccak[800] profiles; do not invent a Poseidon
+definition. Keep all packages
 independent even when they adapt the same underlying argument.
 
 Read `docs/BUILDER_GUIDE.md`, `docs/FRONTIER_LANES.md`, `docs/JUDGE_LANES.md`,
 `docs/HEURISTIC_EXPERIMENTS.md`, `schemas/claim-frontier-v3.schema.json`,
 `cost-models/collision-frontier-v5.json`, the assigned `tracks/<track>/TASK.md`,
 and that track's exact target profile. Yukon and organizer commands use the same
-full track ID including the lane, for example `sha256-r31-exploratory`. All sixteen
-tracks belong to one repository-root import; its baseline validations remain
-independent, and all must qualify before the challenge is ready to open.
+full track ID including the lane, for example `sha256-r31-exploratory`. The twelve exploratory
+tracks belong to one repository-root manifest; baseline validations remain
+independent. Appending new tracks validates those additions without requiring
+new imports of already registered siblings.
 
 ## What must replace each scaffold
 

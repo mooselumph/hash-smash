@@ -1,8 +1,9 @@
 # Paired collision-frontier lanes
 
-Implementation date: 2026-09-04. There are **28 planned slots, 16 runnable lanes,
-and 12 deferred slots**. Nothing has been deployed to Yukon by this change, no
-qualified baselines were manufactured, and no solver workers were started.
+Roster update: 2026-09-13. There are **28 planned slots, 24 locally runnable lanes,
+and 4 deferred Poseidon slots**. The root Yukon manifest includes **12 exploratory
+tracks**; rigorous packages remain available locally. This source change does not
+itself import or open tracks.
 See [FRONTIER_VALIDATION.md](./FRONTIER_VALIDATION.md) for test evidence and limits.
 
 ## Roster and selection limits
@@ -15,8 +16,8 @@ Every concrete target below has an independent `exploratory` and `rigorous` lane
 | SHA-1 | `sha1-r79`, `sha1-r80` | 4 | Penultimate/full-round controls; full SHA-1 is broken |
 | SHA-256 | `sha256-r31`, `sha256-r32` | 4 | User-selected classical ordinary-collision frontier pair |
 | Keccak[1600] | `sha3-256-r5`, `sha3-256-r6` | 4 | Selected SHA3-256 instance; rate 1088, capacity 512, output 256 |
-| BLAKE3 | Not yet assigned | 4 reserved | Matching ordinary-collision boundary not established |
-| Keccak[800] r544/c256 | Not yet assigned | 4 reserved | Boundary unresolved; exact output/padding must be ratified |
+| BLAKE3 | `blake3-r1`, `blake3-r2` | 4 local / 2 imported | Organizer-selected unkeyed BLAKE3-256 exploration pair; boundary unverified |
+| Keccak[800] r544/c256 | `keccak800-r5`, `keccak800-r6` | 4 local / 2 imported | Organizer-selected exploration pair; output 256, legacy pad10*1, prefix rounds; boundary unverified |
 | Poseidon | Not yet assigned | 4 reserved | Field, width, mode, constants, output and reduction schedule unresolved |
 
 The user approved deferring undefined round pairs. The MD5/SHA-1 control exception
@@ -167,8 +168,8 @@ fingerprint. Do not generalize a checked output predicate to unmeasured heuristi
 ## Yukon manifest and deployment gates
 
 Import the repository root once as `hashsmash`. The root schema-v2
-[`benchmark.json`](../benchmark.json) contains all sixteen runnable tracks:
-eight targets times two independent review lanes. Every track uses its full
+[`benchmark.json`](../benchmark.json) contains twelve exploratory tracks. Twelve rigorous siblings remain locally
+runnable with independent packages and review decisions. Every track uses its full
 `<target>-<lane>` ID, such as `sha256-r31-exploratory` or
 `sha256-r31-rigorous`, in both Yukon and organizer commands. No `rootDir`
 override or separate lane import is needed.
@@ -185,10 +186,10 @@ score paths in the manifest are repository-relative. For example, the explorator
 SHA-256 r31 track edits `lanes/exploratory/candidates/sha256-r31` and uploads only
 `lanes/exploratory/.yukon/scores/sha256-r31-exploratory.json` at that exact path.
 
-Yukon currently permits at most 20 tracks per challenge. Sixteen runnable tracks
-fit this limit; the twelve undefined slots remain inactive. Activating the full
-28-slot roster later requires both exact target definitions and an upstream
-track-limit increase. Splitting this repository into multiple lane imports is
+Yukon currently permits at most 20 tracks in a manifest. Twelve exploratory tracks
+fit this limit. Importing both lanes for all targets would exceed it; rigorous
+tracks are therefore excluded from the manifest. Poseidon still requires an exact
+definition before any of its four reserved slots can run. Splitting this repository into multiple lane imports is
 not the deployment contract.
 
 Workflow separation is intentional: a credential-free job validates and executes
@@ -201,21 +202,19 @@ artifacts must likewise remain organizer-controlled.
 For dev setup and exact import commands, use [YUKON_DEV_SETUP.md](./YUKON_DEV_SETUP.md).
 Candidate authors should follow [CANDIDATE_QUALIFICATION.md](./CANDIDATE_QUALIFICATION.md).
 
-Before activating the current sixteen lanes:
+Before activating the imported exploratory lanes:
 
 1. Confirm the explicit MD5/SHA-1 control exception and SHA3-256 instantiation.
-2. Keep the twelve undefined slots deferred. Their definitions are not a gate for
-   importing the current sixteen tracks. To activate them later, raise Yukon's
-   track limit, establish exact definitions and defensible or explicitly provisional
-   round pairs, then
+2. Keep the four undefined Poseidon slots deferred. To activate them later,
+   establish exact definitions and defensible or explicitly provisional round pairs, then
    update catalog, profiles, templates, schemas, manifest, wrappers and checker
    tests. `--require-complete` checks that eventual full roster only.
 3. Establish an admissible baseline separately for each activated lane, or obtain a
    supported Yukon change allowing an initially empty frontier. Drafts/nominal
    references cannot be passed off as successful baselines.
 4. Arrange the Yukon dev GitHub App/importer access and confirm the deployment supports
-   schema v2. One import queues all sixteen baseline workflows; all must qualify
-   before the challenge is ready. Run an end-to-end dev import, submission and
+   schema v2. A fresh import queues twelve baseline workflows; each must qualify. An
+   append import queues only newly declared tracks. Run an end-to-end dev import, submission and
    promotion test, including preservation of sibling tracks across both lanes.
 5. Calibrate both lane policies on labeled real cryptanalysis, with human review of
    false positives, false negatives and disagreements. Toy/fake-provider tests establish

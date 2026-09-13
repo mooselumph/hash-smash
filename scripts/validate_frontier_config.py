@@ -13,8 +13,13 @@ from verifier.errors import VerificationError
 from verifier.io import load_json_bytes
 
 
+def import_tracks():
+    """Organizer-selected public surface; rigorous lanes remain local only."""
+    return tuple(track for track in frontier_tracks() if track.lane == "exploratory")
+
+
 def manifest_for():
-    tracks = frontier_tracks()
+    tracks = import_tracks()
     return {
         "schemaVersion": 2, "name": "hashsmash",
         "tracks": [{
@@ -59,6 +64,7 @@ def validate_configuration(*, require_complete=False):
         if f"track: {track.id}\n" not in text or f"lane: {track.lane}\n" not in text:
             raise VerificationError("workflow must route the literal organizer-selected track and lane")
     return {"planned_tracks": len(planned_slots()), "runnable_tracks": len(tracks),
+            "import_tracks": len(manifest["tracks"]),
             "pending_tracks": len(planned_slots()) - len(tracks), "yukon_challenges": 1}
 
 

@@ -2,8 +2,10 @@
 
 HashSmash is a Yukon-compatible benchmark for AI-assisted review of cryptanalytic
 collision claims. Each target has independent exploratory and rigorous lanes.
-The roster has **28 planned slots: 16 runnable lanes and 12 reserved slots** for
-BLAKE3, Keccak[800] and Poseidon, whose exact target definitions remain unresolved.
+The roster has **28 planned slots: 24 locally runnable lanes and 4 reserved Poseidon
+slots**. The Yukon manifest exposes **12 exploratory tracks**. Rigorous packages
+and local review remain available, but are excluded from this import surface.
+The organizer selected BLAKE3 rounds 1/2 and Keccak[800] rounds 5/6 on 2026-09-13.
 
 Solvers start with [TASK.md](./TASK.md), the single entry point for assigned-track
 instructions and HashSmash's differences from the generic Yukon CLI workflow.
@@ -20,7 +22,7 @@ research context and historical plans.
 The exploratory outcome `plausible_not_refuted` means relevant support exists and
 no fatal flaw survives adjudication. Rigorous qualification is `ai_rigor_qualified`.
 Both are AI review outcomes, not mathematical proof or human acceptance. A score is
-`log2(total charged time) + log2(peak memory bytes)`, lower is better, under the
+`log2(total charged computation)`, lower is better, under the
 selected target and common cost model. Nominal references are neither established
 attacks nor qualified baselines, and scalar improvement does not establish Pareto
 dominance.
@@ -79,8 +81,8 @@ The SHA-1 pilot and nine local tracks have been retired.
 
 Follow [YUKON_DEV_SETUP.md](./docs/YUKON_DEV_SETUP.md) to import the repository root once
 as `hashsmash`. The schema-v2 [`benchmark.json`](./benchmark.json) declares all
-sixteen tracks with unique names such as `sha256-r31-exploratory` and
-`sha256-r31-rigorous`. There is no `rootDir` override or separate lane import.
+twelve exploratory tracks with unique names such as `sha256-r31-exploratory`
+and `blake3-r1-exploratory`. There is no `rootDir` override or separate lane import.
 Lane metadata remains in the protected registry, the validated claim binding,
 and each generated score's `metrics.lane`. Yukon track names include the lane
 suffix; its strict manifest schema has no arbitrary metadata field.
@@ -94,13 +96,11 @@ workflow wrappers separate deterministic intake, secret-bearing review, and
 final scoring. The score artifact contains that exact repository-relative path;
 qualification failures withhold a score.
 
-One import queues sixteen baseline workflows. All sixteen must qualify before
-the challenge is ready to open. The existing private repository, Actions settings
-and Bedrock configuration are in place; verify the new single import through
-Yukon before opening submissions. Archive the previous lane deployments before
-the fresh import. The twelve undefined slots remain deferred; the current
-20-track platform limit would need an upstream change before all 28 slots could
-be active in this one challenge.
+A fresh import queues twelve exploratory baseline workflows. To extend an existing
+challenge, use Yukon’s import-new-tracks operation, documented in the
+[operator runbook](./docs/YUKON_DEV_SETUP.md); it queues only newly declared tracks.
+It does not delete existing rigorous records or open submissions. The manifest
+stays below Yukon’s 20-track limit. The four undefined Poseidon slots remain deferred.
 
 Before opening, test Yukon-driven validation, non-editable-path rejection, and
 promotion while preserving sibling tracks in both lanes. Humans review harness
