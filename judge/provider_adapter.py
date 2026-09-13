@@ -167,6 +167,8 @@ def _schema_for_stage(stage: str) -> dict[str, Any]:
     for annotation in ("$schema", "$id", "title"):
         schema.pop(annotation, None)
     schema["properties"]["stage"] = {"type": "string", "enum": [stage]}
+    if stage != "lane_rescore":
+        schema["properties"]["cost_reconstruction"]["required"].append("resource_ledger")
     return schema
 
 

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CATALOG_PATH = ROOT / "tracks" / "frontier-v1.json"
 LANES = {"exploratory": "plausible_not_refuted", "rigorous": "ai_rigor_qualified"}
-COST_MODEL_ID = "collision-frontier-v4"
+COST_MODEL_ID = "collision-frontier-v5"
 
 
 def catalog() -> dict:
@@ -122,6 +122,13 @@ class LaneTrack:
             raise VerificationError(f"{self.id}: frontier registry/profile mismatch")
         if cost.get("id") != COST_MODEL_ID:
             raise VerificationError("unexpected frontier cost model")
+        from .resources import validate_weights
+        reference_cost = self.reference_operation_cost(cost)
+        if type(reference_cost) not in (int, float) or reference_cost < 1:
+            raise VerificationError("selected target needs a reference operation cost")
+        cost["operation_weights"] = validate_weights({
+            "target_compression": 1, "word_operation": 1 / reference_cost,
+        })
         # Bind every organizer experiment/checker implementation, including dependencies.
         implementation_files = sorted((ROOT / "verifier").glob("*.py"))
         implementation_files += sorted((ROOT / "experiments").glob("*.py"))
@@ -136,7 +143,9 @@ class LaneTrack:
         policy_files += [ROOT / "judge" / "prompts" / "paired-common-v1.md"]
         policy_files += sorted((ROOT / "judge" / "strategies").glob("*.md"))
         policy_files += [ROOT / "schemas" / name for name in (
-            "review-lanes-v1.schema.json", "claim-frontier-v3.schema.json", "experiment-manifest-v1.schema.json")]
+            "review-lanes-v1.schema.json", "claim-frontier-v3.schema.json", "experiment-manifest-v1.schema.json",
+            "resource-ledger-v1.schema.json", "review-rescore-v1.schema.json")]
+        policy_files += [ROOT / "judge/rescore.py", ROOT / "judge/prompts/rescore-v1.md"]
         return {
             "track_id": self.id, "lane": self.lane, "target_id": self.target_id,
             "target_profile": profile, "cost_model": cost,
@@ -157,6 +166,9 @@ class LaneTrack:
                 "note": "Organizer nominal security exponent, matching the mockup. It is neither an executed or qualified baseline nor a proved total-computation bound; instruction constants require accounting in each submission. Memory is reported separately.",
             },
         }
+
+    def reference_operation_cost(self, cost: dict):
+        return cost.get("reference_operation_costs", {}).get(self.target_id)
 
     def config_sha256(self) -> str:
         return sha256_bytes(canonical_json_bytes(self.benchmark()))

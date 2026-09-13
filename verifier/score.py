@@ -20,12 +20,13 @@ def build_score(
     aggregate: Mapping[str, Any],
     output_path: str | os.PathLike[str] | None = None,
     *, track: LaneTrack,
+    resource_projection: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a score only for an explicitly AI-qualified judge aggregate.
 
-    The leaderboard value is recomputed from the validated claim.  It is never accepted
-    from the model or aggregate.  The caller may attach hashes of the judge configuration
-    and dossier; other aggregate content is deliberately ignored.
+    The leaderboard value uses the validated claim, or a ledger whose provenance
+    the cost-only pipeline has verified. No model-supplied scalar is accepted.
+    The caller may attach hashes of the judge configuration and dossier.
     """
 
     if not isinstance(aggregate, Mapping):
@@ -64,6 +65,15 @@ def build_score(
     costs = intake["claim"]["claim"]
     time_log2 = float(costs["time_log2"])
     memory_log2_bytes = float(costs["memory_log2_bytes"])
+    if resource_projection is not None:
+        from .resources import price_ledger
+        if resource_projection["weights"] != track.benchmark()["cost_model"]["operation_weights"]:
+            raise VerificationError("resource projection must use organizer weights")
+        if resource_projection["ledger"]["success_probability"] != costs["success_probability"]:
+            raise VerificationError("resource projection must preserve success probability")
+        require_sha256(resource_projection["source"], "rescore source")
+        time_log2 = price_ledger(resource_projection["ledger"], resource_projection["weights"],
+                                rigorous=track.lane == "rigorous")
 
     metrics: dict[str, Any] = {
         "reviewStatus": accepted_status,
@@ -97,6 +107,16 @@ def build_score(
         metrics["judgeConfigSha256"] = judge_config_sha256
     if dossier_sha256 is not None:
         metrics["dossierSha256"] = dossier_sha256
+    if resource_projection is not None:
+        from .resources import UNIT_WEIGHTS
+        original_model = resource_projection["declared_cost_model"]
+        metrics.update(declaredTimeLog2=float(costs["time_log2"]),
+                       declaredPreprocessingLog2=metrics.pop("preprocessingLog2"),
+                       declaredCostModelId=original_model["id"],
+                       declaredOperationWeights=original_model.get("operation_weights", dict(UNIT_WEIGHTS)),
+                       resourceLedger=resource_projection["ledger"],
+                       operationWeights=resource_projection["weights"],
+                       rescoreSourceSha256=resource_projection["source"])
 
     score = {
         "schema_version": SCHEMA_VERSION,

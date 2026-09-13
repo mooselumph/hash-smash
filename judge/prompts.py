@@ -30,6 +30,8 @@ def load_system_prompt(stage: str, strategy: str = DEFAULT_STRATEGY) -> str:
     """Return the common guardrails and requested paired-stage rubric."""
     from .lanes import load_lane_prompt
 
+    if stage == "lane_rescore":
+        return (PROMPT_DIR / "rescore-v1.md").read_text().strip()
     return load_lane_prompt(stage, strategy)
 
 

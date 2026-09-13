@@ -6,6 +6,14 @@ expected time or a single observed lucky run. Check restart and tail assumptions
 
 Fill cost_reconstruction, with concise calculation_trace, for the submitted
 algorithm. Preserve time units and calculate normalized_score_log2 as time_log2.
+Also fill resource_ledger: separate target_compression counts, word_operation
+counts and opaque work measured at explicit source_weights. Give total bounds
+per phase, evidence references and assumptions; distinguish exact counts, upper
+bounds and estimates. Cover preprocessing, failures and recovery at the same
+success probability, without overlapping allowances. Review any solver ledger;
+do not copy it unchecked. Keep unknown historical work opaque rather than
+inventing its operation mix. This ledger is retained for future pricing; it does
+not replace the submitted scalar in a normal review.
 Continue checking memory_log2_bytes even though it does not affect the scalar.
 Parallel processors reduce latency, not the total charged work. If reconstruction cannot be completed, provide the submitted
 conditional values with explicitly unresolved obligations and explain the missing

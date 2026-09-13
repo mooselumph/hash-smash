@@ -110,7 +110,7 @@ class FrontierPipelineTests(unittest.TestCase):
                 score, aggregate = read_json(paths.score), read_json(paths.aggregate)
                 self.assertEqual(score["score"], track.nominal_score)
                 self.assertEqual(score["metrics"]["memoryLog2Bytes"], 100)
-                self.assertEqual(score["metrics"]["costModelId"], "collision-frontier-v4")
+                self.assertEqual(score["metrics"]["costModelId"], "collision-frontier-v5")
                 self.assertEqual(score["metrics"]["scoreMetric"], "timeLog2")
                 self.assertEqual(score["metrics"]["reviewStatus"], track.accepted_status)
                 self.assertEqual(score["metrics"]["lane"], track.lane)
@@ -141,7 +141,7 @@ class FrontierPipelineTests(unittest.TestCase):
         slots = planned_slots()
         self.assertEqual(len(slots), 28)
         self.assertEqual(sum(slot["rounds"] is None for slot in slots), 12)
-        self.assertEqual({slot["cost_model_id"] for slot in slots}, {"collision-frontier-v4"})
+        self.assertEqual({slot["cost_model_id"] for slot in slots}, {"collision-frontier-v5"})
         families = {family["id"]: family for family in catalog()["families"]}
         self.assertEqual(families["sha256"]["round_pair"], [31, 32])
         for family in ("md5", "sha1"):

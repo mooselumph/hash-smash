@@ -56,7 +56,7 @@ provider/model, with different strategies. No majority vote or numerical model
 confidence threshold substitutes for proof obligations. Success probability in a
 claim means algorithmic success, not confidence that the judge is right.
 
-The fixed `collision-frontier-v4` cost model ranks
+The fixed `collision-frontier-v5` cost model ranks
 `log2(total charged time)`, lower is better, with success
 probability at least 0.39. Preprocessing, failed trials, verification, advice and
 code storage count in the resource ledger. Memory is required and reviewed, but
