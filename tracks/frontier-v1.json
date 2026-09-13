@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "cost_model_id": "collision-frontier-v4",
   "selection_date": "2026-09-04",
   "mockup": "https://zooko.github.io/hashsmash-webdesigns/small-multiples.html",
   "planned_lane_count": 28,
@@ -20,7 +21,7 @@
       "id": "sha256", "algorithm": "sha256", "label": "SHA-256", "full_rounds": 64,
       "digest_bits": 256, "nominal_security_bits": 128, "round_pair": [31, 32],
       "first_unbroken_round": 32, "selection_status": "selected",
-      "selection_note": "User-selected ordinary-collision frontier experiment at rounds 31/32; literature boundaries must match the complete padded hash and charged time-memory model."
+      "selection_note": "User-selected ordinary-collision frontier experiment at rounds 31/32; literature boundaries must match the complete padded hash and charged total-computation model."
     },
     {
       "id": "sha3-256", "algorithm": "sha3_256", "label": "Keccak[1600] / SHA3-256", "full_rounds": 24,

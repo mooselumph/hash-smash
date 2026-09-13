@@ -19,7 +19,7 @@ def manifest_for():
         "schemaVersion": 2, "name": "hashsmash",
         "tracks": [{
             "name": track.id,
-            "description": f"{track.target_id} ordinary collisions; {track.lane} AI review. Minimize log2(time * memory bytes). Pass means {track.accepted_status}.",
+            "description": f"{track.target_id} ordinary collisions; {track.lane} AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means {track.accepted_status}.",
             "category": "cryptanalysis", "direction": "-",
             "promotionMode": "manual",
             "editablePaths": [track.candidate.relative_to(ROOT).as_posix()],

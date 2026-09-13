@@ -4,7 +4,7 @@
   "tracks": [
     {
       "name": "md5-s63-exploratory",
-      "description": "md5-s63 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "md5-s63 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -32,7 +32,7 @@
     },
     {
       "name": "md5-s63-rigorous",
-      "description": "md5-s63 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "md5-s63 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -60,7 +60,7 @@
     },
     {
       "name": "md5-s64-exploratory",
-      "description": "md5-s64 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "md5-s64 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -88,7 +88,7 @@
     },
     {
       "name": "md5-s64-rigorous",
-      "description": "md5-s64 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "md5-s64 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -116,7 +116,7 @@
     },
     {
       "name": "sha1-r79-exploratory",
-      "description": "sha1-r79 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha1-r79 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -144,7 +144,7 @@
     },
     {
       "name": "sha1-r79-rigorous",
-      "description": "sha1-r79 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha1-r79 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -172,7 +172,7 @@
     },
     {
       "name": "sha1-r80-exploratory",
-      "description": "sha1-r80 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha1-r80 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -200,7 +200,7 @@
     },
     {
       "name": "sha1-r80-rigorous",
-      "description": "sha1-r80 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha1-r80 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -228,7 +228,7 @@
     },
     {
       "name": "sha256-r31-exploratory",
-      "description": "sha256-r31 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha256-r31 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -256,7 +256,7 @@
     },
     {
       "name": "sha256-r31-rigorous",
-      "description": "sha256-r31 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha256-r31 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -284,7 +284,7 @@
     },
     {
       "name": "sha256-r32-exploratory",
-      "description": "sha256-r32 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha256-r32 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -312,7 +312,7 @@
     },
     {
       "name": "sha256-r32-rigorous",
-      "description": "sha256-r32 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha256-r32 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -340,7 +340,7 @@
     },
     {
       "name": "sha3-256-r5-exploratory",
-      "description": "sha3-256-r5 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha3-256-r5 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -368,7 +368,7 @@
     },
     {
       "name": "sha3-256-r5-rigorous",
-      "description": "sha3-256-r5 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha3-256-r5 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -396,7 +396,7 @@
     },
     {
       "name": "sha3-256-r6-exploratory",
-      "description": "sha3-256-r6 ordinary collisions; exploratory AI review. Minimize log2(time * memory bytes). Pass means plausible_not_refuted.",
+      "description": "sha3-256-r6 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
@@ -424,7 +424,7 @@
     },
     {
       "name": "sha3-256-r6-rigorous",
-      "description": "sha3-256-r6 ordinary collisions; rigorous AI review. Minimize log2(time * memory bytes). Pass means ai_rigor_qualified.",
+      "description": "sha3-256-r6 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",

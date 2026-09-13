@@ -5,8 +5,9 @@ needed to achieve the stated algorithmic success probability; do not substitute 
 expected time or a single observed lucky run. Check restart and tail assumptions.
 
 Fill cost_reconstruction, with concise calculation_trace, for the submitted
-algorithm. Preserve time units and calculate normalized_score_log2 as time_log2 +
-memory_log2_bytes. If reconstruction cannot be completed, provide the submitted
+algorithm. Preserve time units and calculate normalized_score_log2 as time_log2.
+Continue checking memory_log2_bytes even though it does not affect the scalar.
+Parallel processors reduce latency, not the total charged work. If reconstruction cannot be completed, provide the submitted
 conditional values with explicitly unresolved obligations and explain the missing
 premise. Do not fabricate improved values. A definitely understated cost or
 overstated success rate is a cited fatal finding for adversarial challenge. The

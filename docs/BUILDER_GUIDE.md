@@ -23,7 +23,7 @@ Use these guides for the assigned subsystem:
 
 | Work | Required context |
 | --- | --- |
-| Target/claim/certificate verification and score construction | [Verifier](../verifier/README.md), [claim schema](../schemas/claim-frontier-v3.schema.json), [cost model](../cost-models/collision-frontier-v3.json), and the selected target profile |
+| Target/claim/certificate verification and score construction | [Verifier](../verifier/README.md), [claim schema](../schemas/claim-frontier-v3.schema.json), [cost model](../cost-models/collision-frontier-v4.json), and the selected target profile |
 | Judge providers, roles, or qualification | [Judge implementation](../judge/README.md) and [review policy](./JUDGE_LANES.md) |
 | Candidate experiments | [Experiment protocol](./HEURISTIC_EXPERIMENTS.md) |
 | Yukon App, imports, Actions, baseline validation, or promotion checks | [Dev operator runbook](./YUKON_DEV_SETUP.md) |

@@ -27,7 +27,7 @@ synthetic, not cryptanalytic evidence. See [FRONTIER_RESEARCH.md](./FRONTIER_RES
 for primary sources, exact problem distinctions, and unresolved choices.
 
 The selected boundaries reflect dated classical collision literature, not proofs
-of security and not yet independently normalized best-known time-memory scores.
+of security and not yet independently normalized best-known computation scores.
 For every implementation, execute the **first** `r` rounds in every compression
 or sponge permutation, with the fixed initialization, padding, full output and
 serialization in its trusted target profile. SHA3-256 uses the SHA-3 domain suffix,
@@ -56,16 +56,19 @@ provider/model, with different strategies. No majority vote or numerical model
 confidence threshold substitutes for proof obligations. Success probability in a
 claim means algorithmic success, not confidence that the judge is right.
 
-The new fixed `collision-frontier-v3` cost model ranks
-`log2(total charged time) + log2(peak memory bytes)`, lower is better, with success
+The fixed `collision-frontier-v4` cost model ranks
+`log2(total charged time)`, lower is better, with success
 probability at least 0.39. Preprocessing, failed trials, verification, advice and
-code storage count. A trusted selected-target compression/permutation costs one
+code storage count in the resource ledger. Memory is required and reviewed, but
+does not affect the scalar or break ties. Time sums work across all processors.
+This shared policy applies to all 28 planned slots, including those whose target
+definitions are still pending; it does not activate unresolved slots. A trusted selected-target compression/permutation costs one
 unit; other 256-bit RAM operations are charged as specified in the model.
 
 The display reference is nominal collision-security exponent: 64 for MD5, 80 for
 SHA-1, 128 for these 256-bit targets. It is **not** a measured attack, an executable
-baseline, or a proved time-memory bound. A birthday table is not a constant-memory
-attack. Actual submissions must account for bytes and implementation constants.
+baseline, or a proved total-computation bound. A birthday exponent alone does not account
+for implementation constants. Actual submissions must still report memory bytes.
 Profiles, policies and scores are isolated by lane; historical artifacts are never
 reinterpreted under the paired policy.
 Nominal references cannot satisfy Yukon's successful-baseline import requirement.

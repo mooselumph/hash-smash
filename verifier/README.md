@@ -39,7 +39,10 @@ manifest is used by the paired v3 claims.
 Scores require `submission_state: ready`, the selected lane's qualifying review
 outcome, and matching package, evidence and configuration bindings. The score
 builder ignores model-provided scores and computes
-`time_log2 + memory_log2_bytes` from the validated claim. Drafts, failed review and
+`time_log2` from the validated claim under `collision-frontier-v4`.
+Memory is still required and reviewed, and emitted as `metrics.memoryLog2Bytes`;
+it neither contributes to the scalar nor breaks ties. New score artifacts carry
+`metrics.costModelId` and `metrics.scoreMetric` and omit the former `timeMemoryLog2`. Drafts, failed review and
 nominal-reference values never emit scores. Follow the
 [qualification sequence](../docs/CANDIDATE_QUALIFICATION.md) to generate and review
 the complete evidence before scoring.

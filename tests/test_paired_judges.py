@@ -155,7 +155,7 @@ class PairedJudgeTests(unittest.TestCase):
         def mutate(stage, review, _):
             if stage == "lane_cost":
                 review["cost_reconstruction"]["time_log2"] = 11
-                review["cost_reconstruction"]["normalized_score_log2"] = 19
+                review["cost_reconstruction"]["normalized_score_log2"] = 11
         dossier = run_paired_review(fixture_evidence(), FixtureClient(mutate))
         self.assertFalse(dossier["lanes"]["rigorous"]["eligible"])
         self.assertEqual(dossier["lanes"]["exploratory"]["status"], "infra_failed")
@@ -172,7 +172,7 @@ class PairedJudgeTests(unittest.TestCase):
                     if stage == "lane_cost":
                         cost = review["cost_reconstruction"]
                         cost[field] = value
-                        cost["normalized_score_log2"] = cost["time_log2"] + cost["memory_log2_bytes"]
+                        cost["normalized_score_log2"] = cost["time_log2"]
                 client = FixtureClient(mutate)
                 dossier = run_paired_review(fixture_evidence(), client)
                 self.assertEqual(dossier["lanes"]["exploratory"]["status"], "infra_failed")
@@ -183,7 +183,7 @@ class PairedJudgeTests(unittest.TestCase):
         def mutate(stage, review, _):
             if stage == "lane_cost":
                 review["cost_reconstruction"]["time_log2"] = 11
-                review["cost_reconstruction"]["normalized_score_log2"] = 19
+                review["cost_reconstruction"]["normalized_score_log2"] = 11
                 review["obligations"][0]["status"] = "unresolved"
         dossier = run_paired_review(fixture_evidence(), FixtureClient(mutate))
         self.assertTrue(dossier["lanes"]["exploratory"]["eligible"])
@@ -193,7 +193,7 @@ class PairedJudgeTests(unittest.TestCase):
         def mutate(stage, review, _):
             if stage == "lane_cost":
                 review["cost_reconstruction"]["time_log2"] = 11
-                review["cost_reconstruction"]["normalized_score_log2"] = 19
+                review["cost_reconstruction"]["normalized_score_log2"] = 11
                 add_fatal(review)
             if stage == "lane_adjudicator":
                 review["challenge_resolutions"][0]["result"] = "confirmed"

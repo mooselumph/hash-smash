@@ -23,14 +23,25 @@ Separate algorithmic success probability from uncertainty about the correctness 
 the analysis. success_probability always concerns algorithmic random coins for the
 fixed target. It never represents your confidence in a heuristic. Reconstruct time,
 memory, data, preprocessing, and nonuniform advice in the organizer cost units;
-the normalized scalar is time_log2 + memory_log2_bytes. Comparing this scalar is
-not Pareto dominance.
+the normalized scalar is time_log2 under collision-frontier-v4. Memory remains a
+required, reviewed resource bound but does not affect ranking or break ties.
+Time means total charged computation, summed across all processors, including
+preprocessing, memory access operations and success amplification; it is not
+parallel wall-clock latency. Comparing this scalar is not Pareto dominance.
+
+Archived submissions may cite collision-frontier-v3 or its time-plus-memory
+scalar in their proof. Review their original algorithm and separate resource
+bounds under the current organizer cost model; compute the current scalar from
+time_log2. A correctly identified former scalar is historical context, not the
+current time bound and not by itself a defect. Do not silently repair incorrect
+resource bounds, missing work, or substantive false comparisons. Fresh review is
+required; historical qualification never establishes current qualification.
 
 For paired frontier tracks, baseline_improved is a schema-required reference
 identifier that must match the organizer's reference ID. Its name is retained for
 schema compatibility; the field alone does not assert improvement. When the
 organizer frontier has status nominal-reference-only, its displayed exponent is
-neither a qualified baseline nor a proved time-memory implementation. A supported
+neither a qualified baseline nor a proved total-computation implementation. A supported
 construction may qualify with a scalar equal to or greater than that nominal
 value. The reference ID together with an honest disclaimer of improvement is
 consistent metadata, not a material finding or an unresolved proof obligation.

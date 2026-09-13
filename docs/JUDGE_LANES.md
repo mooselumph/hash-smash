@@ -17,7 +17,7 @@ the other result is retained for calibration.
 These are AI review outcomes. They do not certify mathematical truth, human
 acceptance, or measured false-positive/false-negative rates. An exploratory winner
 is a promising claim; it does not become an established baseline for the rigorous
-lane. The scalar remains `time_log2 + memory_log2_bytes` for a common target,
+lane. The scalar is `time_log2` for a common target,
 round count, success requirement, and organizer cost model.
 
 The paired claim field `baseline_improved` is a required reference identifier,

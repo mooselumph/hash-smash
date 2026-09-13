@@ -119,8 +119,6 @@ def validate_claim(value: Any, *, track: LaneTrack) -> dict[str, Any]:
     _number(costs["time_log2"], "$.claim.time_log2", minimum=0)
     _exact_string(costs["time_unit"], "target-compressions", "$.claim.time_unit")
     _number(costs["memory_log2_bytes"], "$.claim.memory_log2_bytes", minimum=0)
-    if not math.isfinite(float(costs["time_log2"]) + float(costs["memory_log2_bytes"])):
-        _fail("$.claim", "time-memory score must be finite")
     _number(costs["data_log2"], "$.claim.data_log2", minimum=0)
     _number(costs["preprocessing_log2"], "$.claim.preprocessing_log2", minimum=0)
     _number(
