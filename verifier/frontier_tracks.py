@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CATALOG_PATH = ROOT / "tracks" / "frontier-v1.json"
 LANES = {"exploratory": "plausible_not_refuted", "rigorous": "ai_rigor_qualified"}
+COST_MODEL_ID = "collision-frontier-v4"
 
 
 def catalog() -> dict:
@@ -18,6 +19,8 @@ def catalog() -> dict:
     if (not isinstance(data, dict) or data.get("schema_version") != 1
             or not isinstance(data.get("families"), list) or len(data["families"]) != 7):
         raise VerificationError("frontier catalog must describe seven algorithm families")
+    if data.get("cost_model_id") != COST_MODEL_ID:
+        raise VerificationError("all planned frontier slots must use the current cost model")
     ids = set()
     for family in data["families"]:
         key = family.get("id")
@@ -82,7 +85,7 @@ class LaneTrack:
 
     @property
     def cost_path(self) -> Path:
-        return ROOT / "cost-models" / "collision-frontier-v3.json"
+        return ROOT / "cost-models" / f"{COST_MODEL_ID}.json"
 
     @property
     def reference_id(self) -> str:
@@ -117,7 +120,7 @@ class LaneTrack:
             self.profile_id, self.algorithm, self.rounds, self.digest_bits,
         ):
             raise VerificationError(f"{self.id}: frontier registry/profile mismatch")
-        if cost.get("id") != "collision-frontier-v3":
+        if cost.get("id") != COST_MODEL_ID:
             raise VerificationError("unexpected frontier cost model")
         # Bind every organizer experiment/checker implementation, including dependencies.
         implementation_files = sorted((ROOT / "verifier").glob("*.py"))
@@ -151,7 +154,7 @@ class LaneTrack:
                 "rounds": self.rounds, "digest_bits": self.digest_bits,
                 "nominal_collision_security_bits": self.nominal_security_bits,
                 "score": self.nominal_score,
-                "note": "Organizer nominal security exponent, matching the mockup. It is neither an executed or qualified baseline nor a proved time-memory bound; byte and instruction constants require accounting in each submission.",
+                "note": "Organizer nominal security exponent, matching the mockup. It is neither an executed or qualified baseline nor a proved total-computation bound; instruction constants require accounting in each submission. Memory is reported separately.",
             },
         }
 
@@ -190,6 +193,7 @@ def planned_slots() -> list[dict]:
     """All 28 requested slots, without inventing numbers for unresolved targets."""
     return [{"family": f["id"], "lane": lane, "position": position,
              "rounds": f["round_pair"][index] if f["round_pair"] else None,
-             "selection_status": f["selection_status"], "note": f["selection_note"]}
+             "selection_status": f["selection_status"], "note": f["selection_note"],
+             "cost_model_id": COST_MODEL_ID}
             for f in catalog()["families"]
             for index, position in enumerate(("lower", "upper")) for lane in LANES]

@@ -27,10 +27,14 @@ candidates and generated state, and no longer contain import manifests.
 
 Each track has a literal `<target>-<lane>.yml` workflow. All workflows check out
 the dispatched commit and run on GitHub-hosted `ubuntu-24.04`. The submission cap
-is 4,194,304 expanded bytes per track. Lower `time_log2 + memory_log2_bytes` wins.
+is 4,194,304 expanded bytes per track. Lower `time_log2` wins.
 The target, cost, and acceptance definitions remain in `docs/FRONTIER_LANES.md`,
 `docs/JUDGE_LANES.md`, and their linked trusted profiles; this runbook does not change
 them. MD5/SHA-1 endpoints are explicitly controls.
+
+For the v3-to-v4 scoring migration, follow the
+[total-computation reorg plan](./TIME_ONLY_REORG.md), including the UI compatibility
+gate and candidate-only baseline restoration before replay.
 
 The twelve pending BLAKE3, Keccak[800], and Poseidon slots are excluded from the
 manifest. Resolving them is not a prerequisite for deploying the current sixteen

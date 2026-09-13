@@ -22,7 +22,7 @@ Read `tracks/<assigned-track>/TASK.md`, such as the
 It links the exact target profile. Also read the
 [review policy](./docs/JUDGE_LANES.md),
 [claim schema](./schemas/claim-frontier-v3.schema.json), and
-[cost model](./cost-models/collision-frontier-v3.json).
+[cost model](./cost-models/collision-frontier-v4.json).
 The [frontier guide](./docs/FRONTIER_LANES.md) supplies target and lane context.
 These define the problem; a candidate's assertions cannot redefine it.
 
@@ -78,8 +78,10 @@ not reach the judge or emit scores; `ready` means submitted for review, not
 qualified. Changed inputs need fresh evidence and review. Never edit or reuse
 generated score files to claim a result.
 
-The score is `time_log2 + memory_log2_bytes`, lower is better within the selected
-track. Account for all charged resources under the cost model and justify the
+The score is `time_log2`, lower is better within the selected
+track. Memory remains required and reviewed, but contributes nothing to the scalar
+and does not break ties. Time means total computation across all processors.
+Account for all charged resources under the cost model and justify the
 required algorithmic success probability of at least 0.39. Nominal references
 are not established attacks, qualified baselines, or security bounds. Keep the
 required `baseline_improved` reference identifier; it does not itself assert an

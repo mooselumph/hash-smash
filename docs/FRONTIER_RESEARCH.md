@@ -50,7 +50,7 @@ full MD5 collisions. [SHA-1 is a Shambles](https://eprint.iacr.org/2020/014)
 reports both ordinary identical-prefix and chosen-prefix collision methods
 against full SHA-1, including an executed chosen-prefix result. These are good
 positive controls for judging established cryptanalysis. Published operation
-figures are not automatically this repository's time-memory scores.
+figures are not automatically this repository's total-computation scores.
 
 ### SHA-256
 
@@ -81,7 +81,7 @@ SHA3-256 is only one possible instantiation of the mockup's Keccak[1600] row.
 Selecting SHAKE128 with rate 1344/capacity 256/output 256 instead gives a
 time-based literature pair of 6/7. Its 6-round result is close enough to the
 nominal 128-bit threshold that exact memory and cost accounting are material;
-do not silently copy `123.5` as `log2(T*M)`. Selecting legacy Keccak padding
+do not silently copy `123.5` as the current `log2(T)` score. Selecting legacy Keccak padding
 instead of SHAKE padding also requires a matching attack/transfer argument.
 
 ## Why the remaining boundaries are unresolved
@@ -154,20 +154,19 @@ an additional limitation. A guessed 30/31 pair from the mockup has no authority.
 ## Cost and round conventions required before publication
 
 The literature commonly compares time against the nominal birthday exponent
-`n/2`. This repository ranks `log2(T*M)` in explicit time and memory units.
-A table birthday search has approximately `T=2^(n/2)` and
-`M=2^(n/2)` entries, hence product exponent near `n`, before overheads. A
-constant-memory cycle search has a different analysis and can have a different
-product. Consequently a nominal 128-bit display reference must not be
-presented as the measured score of a particular table algorithm. Preserve both
-the conventional nominal collision-security exponent and the cost-model
-reference, and label which criterion selected the rounds.
+`n/2`. The current `collision-frontier-v4` policy ranks `log2(T)`, where T is
+all charged computation in the organizer's explicit units, including preprocessing,
+failed trials, memory access operations and success amplification. Memory bytes
+remain a reviewed metric. Neither parallel wall-clock time nor a count of only
+hash calls automatically equals this score.
 
-For SHAKE128's reported `2^123.5` time, even a few additional memory bits in
-the exponent can change whether the attack beats a literal `T*M < 2^128`
-threshold. That audit is necessary if 6/7 is chosen instead of SHA3-256 5/6.
-For the latter, the practical 5-round result has a much larger margin, but a
-qualified score still needs the ordinary resource review.
+The former v3 policy ranked `log2(T*M)`: a table birthday search had product
+exponent near `n` before overheads. That historical product must not be used as
+the current score. Conversely, the nominal `n/2` reference does not guarantee an
+exact implementation score once instruction constants are charged. Keep nominal
+references distinct from qualified constructions and identify the cost model
+used by each result. The reported SHAKE128 time still needs normalization to the
+selected target, success threshold and operation units before selecting a frontier.
 
 The [Keccak specification summary](https://keccak.team/keccak_specs_summary.html)
 defines lane layout, round constants, padding, and standardized domain

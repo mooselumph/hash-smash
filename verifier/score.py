@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 import os
 from pathlib import Path
 from typing import Any, Mapping
@@ -65,9 +64,6 @@ def build_score(
     costs = intake["claim"]["claim"]
     time_log2 = float(costs["time_log2"])
     memory_log2_bytes = float(costs["memory_log2_bytes"])
-    time_memory_log2 = time_log2 + memory_log2_bytes
-    if not math.isfinite(time_memory_log2):
-        raise VerificationError("time-memory score must be finite")
 
     metrics: dict[str, Any] = {
         "reviewStatus": accepted_status,
@@ -76,7 +72,8 @@ def build_score(
         "rounds": intake["track"]["rounds"],
         "timeLog2": time_log2,
         "memoryLog2Bytes": memory_log2_bytes,
-        "timeMemoryLog2": time_memory_log2,
+        "scoreMetric": "timeLog2",
+        "costModelId": track.benchmark()["cost_model"]["id"],
         "dataLog2": float(costs["data_log2"]),
         "preprocessingLog2": float(costs["preprocessing_log2"]),
         "nonuniformAdviceLog2Bytes": float(costs["nonuniform_advice_log2_bytes"]),
@@ -87,7 +84,7 @@ def build_score(
         "targetConfigSha256": track.config_sha256(),
         "timeUnit": "target-compressions",
         "nominalReferenceScore": track.nominal_score,
-        "improvesNominalReference": time_memory_log2 < track.nominal_score,
+        "improvesNominalReference": time_log2 < track.nominal_score,
         "referenceIsQualifiedBaseline": False,
         "lane": track.lane,
         "qualificationPolicy": "paired-lanes-v1",
@@ -103,7 +100,7 @@ def build_score(
 
     score = {
         "schema_version": SCHEMA_VERSION,
-        "score": time_memory_log2,
+        "score": time_log2,
         "metrics": metrics,
     }
     if output_path is not None:

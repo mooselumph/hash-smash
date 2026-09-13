@@ -98,6 +98,9 @@ class FrontierPipelineTests(unittest.TestCase):
         for track in tracks:
             with self.subTest(track=track.id):
                 paths = self.paths(track.id)
+                claim = read_json(paths.candidate / "claim.json")
+                claim["claim"]["memory_log2_bytes"] = 100
+                atomic_write_json(paths.candidate / "claim.json", claim)
                 paths = pipeline.RunPaths.for_track(
                     track, state_root=self.root / track.state_root.relative_to(ROOT),
                     candidate=paths.candidate,
@@ -106,6 +109,9 @@ class FrontierPipelineTests(unittest.TestCase):
                     self.assertEqual(pipeline.run_all(paths), 0)
                 score, aggregate = read_json(paths.score), read_json(paths.aggregate)
                 self.assertEqual(score["score"], track.nominal_score)
+                self.assertEqual(score["metrics"]["memoryLog2Bytes"], 100)
+                self.assertEqual(score["metrics"]["costModelId"], "collision-frontier-v4")
+                self.assertEqual(score["metrics"]["scoreMetric"], "timeLog2")
                 self.assertEqual(score["metrics"]["reviewStatus"], track.accepted_status)
                 self.assertEqual(score["metrics"]["lane"], track.lane)
                 self.assertFalse(score["metrics"]["referenceIsQualifiedBaseline"])
@@ -135,6 +141,7 @@ class FrontierPipelineTests(unittest.TestCase):
         slots = planned_slots()
         self.assertEqual(len(slots), 28)
         self.assertEqual(sum(slot["rounds"] is None for slot in slots), 12)
+        self.assertEqual({slot["cost_model_id"] for slot in slots}, {"collision-frontier-v4"})
         families = {family["id"]: family for family in catalog()["families"]}
         self.assertEqual(families["sha256"]["round_pair"], [31, 32])
         for family in ("md5", "sha1"):
@@ -176,7 +183,7 @@ class FrontierPipelineTests(unittest.TestCase):
                 with fake_provider():
                     self.assertEqual(pipeline.run_all(paths), 0)
                 score = read_json(paths.score)
-                self.assertEqual(score["score"], 182)
+                self.assertEqual(score["score"], 94)
                 self.assertEqual(score["metrics"]["nominalReferenceScore"], 80)
                 self.assertFalse(score["metrics"]["improvesNominalReference"])
                 self.assertFalse(score["metrics"]["referenceIsQualifiedBaseline"])
@@ -187,14 +194,14 @@ class FrontierPipelineTests(unittest.TestCase):
         claim["claim"].update(time_log2=94, memory_log2_bytes=88)
         atomic_write_json(paths.candidate / "claim.json", claim)
         (paths.candidate / "proof.md").write_text(
-            "Organizer negative fixture: falsely asserts that 182 is less than 80.\n"
+            "Organizer negative fixture: falsely asserts that 94 is less than 80.\n"
         )
 
         def false_comparison(stage, review, _):
             if stage == "lane_evaluability":
                 review["findings"].append({
                     "id": "EVAL-001", "severity": "material", "category": "invalid_inference",
-                    "statement": "The explicit comparison 182 < 80 is false.",
+                    "statement": "The explicit comparison 94 < 80 is false.",
                     "obligation_ids": ["evidence_relevant"], "heuristic_ids": [],
                     "evidence": ["proof.md:L1"],
                 })

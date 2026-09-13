@@ -112,6 +112,6 @@ def validate_lane_review(
     if stage == "lane_cost":
         if cost is None:
             raise ReviewValidationError("lane_cost must reconstruct the resource claim")
-        if not math.isclose(cost["normalized_score_log2"], cost["time_log2"] + cost["memory_log2_bytes"], abs_tol=1e-6):
-            raise ReviewValidationError("reconstructed score must equal time_log2 + memory_log2_bytes")
+        if not math.isclose(cost["normalized_score_log2"], cost["time_log2"], abs_tol=1e-6):
+            raise ReviewValidationError("reconstructed score must equal time_log2")
     return review

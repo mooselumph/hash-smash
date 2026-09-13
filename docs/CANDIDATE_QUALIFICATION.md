@@ -33,7 +33,7 @@ independent even when they adapt the same underlying argument.
 
 Read `docs/BUILDER_GUIDE.md`, `docs/FRONTIER_LANES.md`, `docs/JUDGE_LANES.md`,
 `docs/HEURISTIC_EXPERIMENTS.md`, `schemas/claim-frontier-v3.schema.json`,
-`cost-models/collision-frontier-v3.json`, the assigned `tracks/<track>/TASK.md`,
+`cost-models/collision-frontier-v4.json`, the assigned `tracks/<track>/TASK.md`,
 and that track's exact target profile. Yukon and organizer commands use the same
 full track ID including the lane, for example `sha256-r31-exploratory`. All sixteen
 tracks belong to one repository-root import; its baseline validations remain
@@ -55,8 +55,8 @@ independent, and all must qualify before the challenge is ready to open.
    including failures, randomness, sorting/lookups, verification and restarts.
    Peak memory includes code, advice, retained messages, tables and working state.
    Explain the data and advice fields and the units of every bound. The emitted
-   score is `time_log2 + memory_log2_bytes`; a birthday exponent is not a complete
-   time-memory implementation ledger.
+   score is `time_log2`; a birthday exponent is not a complete
+   total-computation implementation ledger. Memory remains a required reviewed metric.
 3. **A success-probability argument of at least 0.39.** Specify the algorithm's
    probability space and distinguish repeated inputs from collisions of distinct
    inputs. Account for restart/amplification costs. This number is algorithmic
