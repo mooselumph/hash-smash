@@ -16,27 +16,36 @@ runnable; the 12 rigorous lanes are excluded from new imports. Poseidon is defer
   222/430 for BLAKE3 1/2 and 1355/1626 for Keccak[800] 5/6.
 - All eight new candidate packages passed mechanical intake. Their complete
   fixed-function probability proof claims success >= 1/2. The conservative time
-  bound is 149; memory log2 bytes is 137. These are proposed analytical bounds,
-  not measured attack results or emitted scores.
-- Live Bedrock review has not run: automatic approval review requires explicit
-  approval to send the four exploratory packages to that provider. No local
-  qualifying verdict or trusted score is claimed. No Yukon import was submitted.
+  bound is 149; memory log2 bytes is 137. These are analytical bounds,
+  not measured attack costs; the qualifying scores are recorded below.
+- All four exploratory baselines passed live Amazon Bedrock review using
+  `us.openai.gpt-5.6-sol`, committee mode, high reasoning effort. Each selected
+  outcome is `plausible_not_refuted`, with score 149 and no unresolved material
+  obligations. These are local AI qualifications; Yukon must validate the exact
+  imported source separately. No Yukon import has been submitted.
+- Keccak[800] r6 had two format-failed standard review attempts. A separate
+  diagnostic cost call passed validation but was not eligible for scoring; a
+  subsequent standard committee review qualified the unchanged package. All
+  failed attempts, the nonqualifying diagnostic and standard run IDs are retained. No acceptance gate or candidate was changed.
 
 ## Exploratory package bindings
 
 | Track | Package SHA-256 | Mechanical status | Live review / score |
 | --- | --- | --- | --- |
-| `blake3-r1-exploratory` | `f344e2274d19fa431d2105e7ae5e13583f3201a73dd007fade061838f157e40b` | ready / valid | pending / none |
-| `blake3-r2-exploratory` | `bc5f741d43c675493fa11123375f7e8bc7552b326bcb59b4cb5a3389fec8b8d8` | ready / valid | pending / none |
-| `keccak800-r5-exploratory` | `623a76c91903ac292574caeb65500cfad4b15f8fdcdc32f161130cbe89145d11` | ready / valid | pending / none |
-| `keccak800-r6-exploratory` | `6369be3cfd4436ac4610cb1c52300439619d7882e1c2a3d88468c77eebfa9b14` | ready / valid | pending / none |
+| `blake3-r1-exploratory` | `f344e2274d19fa431d2105e7ae5e13583f3201a73dd007fade061838f157e40b` | ready / valid | plausible_not_refuted / 149 |
+| `blake3-r2-exploratory` | `bc5f741d43c675493fa11123375f7e8bc7552b326bcb59b4cb5a3389fec8b8d8` | ready / valid | plausible_not_refuted / 149 |
+| `keccak800-r5-exploratory` | `623a76c91903ac292574caeb65500cfad4b15f8fdcdc32f161130cbe89145d11` | ready / valid | plausible_not_refuted / 149 |
+| `keccak800-r6-exploratory` | `6369be3cfd4436ac4610cb1c52300439619d7882e1c2a3d88468c77eebfa9b14` | ready / valid | plausible_not_refuted / 149 |
 
-Intake snapshots live in each track's ignored
-`lanes/exploratory/.yukon/reports/tracks/<track>/runs/` directory. The exact
-candidate and configuration fingerprints are retained in those reports. After
-approval, review each frozen package using the configured Bedrock Sol committee
-with high reasoning effort, then run its deterministic score phase. Preserve
-all attempts and address substantive findings before regenerating evidence.
+The [validation record](../validation/new-lanes-20260913.json) records the source
+commit, package/configuration hashes, dossier/evidence hashes and all review run
+IDs. Complete immutable run snapshots and exact-path score ZIPs are preserved in
+the operator checkout's ignored `.yukon/reports/new-lanes-c165a7f/` directory,
+including both failed r6 attempts and the nonqualifying diagnostic. Scores were
+regenerated and their package,
+configuration and selected-lane bindings verified. The ZIP entries match the
+manifest-relative score paths. Rigorous packages remain mechanically ready but
+were not separately qualified or scored in this assignment.
 
 ## Import and existing-score implications
 
