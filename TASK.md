@@ -22,7 +22,7 @@ Read `tracks/<assigned-track>/TASK.md`, such as the
 It links the exact target profile. Also read the
 [review policy](./docs/JUDGE_LANES.md),
 [claim schema](./schemas/claim-frontier-v3.schema.json), and
-[cost model](./cost-models/collision-frontier-v4.json).
+[cost model](./cost-models/collision-frontier-v5.json).
 The [frontier guide](./docs/FRONTIER_LANES.md) supplies target and lane context.
 These define the problem; a candidate's assertions cannot redefine it.
 
@@ -71,6 +71,12 @@ certificates or experiments. Keep the certificate manifest valid even when it is
 empty. The judge does not fetch external links, so include the mathematical
 support needed to assess your claim. Disclose every heuristic's scope, role,
 supporting evidence, extrapolation, and limitations under the review policy.
+
+Include a `resource_ledger` in `claim.json` using the
+[ledger format](./docs/RESCORING.md#resource-ledgers). Separate operation counts
+from organizer prices, cite their derivations, and include preprocessing and
+failed trials. Mark unknown historical work explicitly; do not invent a breakdown.
+Older packages without a ledger remain valid inputs.
 
 Keep incomplete work in `submission_state: draft`. Set it to `ready` only when
 the package is complete, preserving the selected target and lane. Drafts must

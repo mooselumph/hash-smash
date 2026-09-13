@@ -17,6 +17,7 @@
     "heuristics"
   ],
   "properties": {
+    "resource_ledger": {"$ref": "resource-ledger-v1.schema.json"},
     "schema_version": {
       "const": 3
     },

@@ -22,8 +22,9 @@ if str(REPO_ROOT) not in sys.path:
 
 from judge.bedrock_adapter import BedrockClient, BedrockConfig, bedrock_system_prompt  # noqa: E402
 from judge.prompts import load_system_prompt  # noqa: E402
-from judge.provider_adapter import OpenRouterClient, OpenRouterConfig  # noqa: E402
+from judge.provider_adapter import JudgeInfraError, OpenRouterClient, OpenRouterConfig  # noqa: E402
 from judge.paired_review import run_paired_review, select_lane_aggregate  # noqa: E402
+from judge import rescore  # noqa: E402
 from judge.lanes import LANE_STAGES, POLICY_ID as PAIRED_POLICY_ID  # noqa: E402
 from verifier.certificates import verify_certificates  # noqa: E402
 from verifier.errors import VerificationError  # noqa: E402
@@ -113,6 +114,11 @@ def _build_evidence(
         },
         "benchmark": p.track.benchmark(),
     }
+    authorization = rescore.find_source(p.track, intake_report["package_sha256"])
+    if authorization is not None:
+        evidence["rescore_source"] = authorization["source"]
+        rescore.context(evidence, authorization)
+        return evidence
     report = _load_json(p.work / "experiment-report.json")
     if intake_report["submission_state"] == "ready":
         validate_experiment_evidence(report, p.candidate, intake_report, p.track)
@@ -131,9 +137,10 @@ def run_intake(paths: RunPaths) -> int:
     certificate_report = verify_certificates(
         p.candidate, p.work / "certificate-report.json", track=p.track,
     )
-    experiment_report = execute_experiments(p.candidate, intake_report, p.track,
-                                           holdout_nonce=os.environ.get("HASHSMASH_EXPERIMENT_HOLDOUT_NONCE"))
-    atomic_write_json(p.work / "experiment-report.json", experiment_report)
+    if rescore.find_source(p.track, intake_report["package_sha256"]) is None:
+        experiment_report = execute_experiments(p.candidate, intake_report, p.track,
+                                               holdout_nonce=os.environ.get("HASHSMASH_EXPERIMENT_HOLDOUT_NONCE"))
+        atomic_write_json(p.work / "experiment-report.json", experiment_report)
     evidence = _build_evidence(intake_report, certificate_report, p)
     atomic_write_json(p.evidence, evidence)
     draft = intake_report["submission_state"] == "draft"
@@ -163,7 +170,7 @@ def _safe_config(config: Any) -> dict[str, Any]:
             (bedrock_system_prompt(config, stage) if isinstance(config, BedrockConfig)
              else load_system_prompt(stage, config.strategy)).encode("utf-8")
         )
-        for stage in LANE_STAGES
+        for stage in (*LANE_STAGES, "lane_rescore")
     }
     if isinstance(config, BedrockConfig):
         value["api"] = config.api
@@ -171,9 +178,12 @@ def _safe_config(config: Any) -> dict[str, Any]:
     value["review_schema_sha256"] = sha256_bytes(
         (REPO_ROOT / "schemas" / "review-lanes-v1.schema.json").read_bytes()
     )
+    value["rescore_schema_sha256"] = sha256_bytes(
+        (REPO_ROOT / "schemas/review-rescore-v1.schema.json").read_bytes()
+    )
     value["aggregation_sha256"] = sha256_bytes(canonical_json_bytes({
         name: sha256_bytes((REPO_ROOT / "judge" / name).read_bytes())
-        for name in ("lanes.py", "paired_review.py", "schema_validation.py")
+        for name in ("lanes.py", "paired_review.py", "schema_validation.py", "rescore.py")
     }))
     return value
 
@@ -231,9 +241,26 @@ def run_judge(paths: RunPaths) -> int:
         safe_config = {"mode": mode, "provider": provider,
                        "judge": _safe_config(base_config),
                        "role_committee": committee_record}
-        dossier = run_paired_review(evidence, client_factory(base_config), role_clients=role_clients)
+        if "rescore_source" in evidence:
+            authorization = rescore.find_source(p.track, evidence["submission"]["intake_report"]["package_sha256"])
+            dossier = rescore.run_review(evidence, authorization, role_clients.get("lane_cost", client_factory(base_config)))
+        else:
+            dossier = run_paired_review(evidence, client_factory(base_config), role_clients=role_clients)
         dossier["aggregate"] = select_lane_aggregate(dossier, p.track.lane)
         judge_label = f"paired:{provider}:{base_config.model}"
+    except rescore.RescoreNeedsEvidence as error:
+        aggregate = {"status": "rescore_needs_evidence", "reasons": error.result.review["calculation_trace"]}
+        atomic_write_json(p.aggregate, aggregate)
+        atomic_write_json(p.dossier, {
+            "schema_version": "judge-rescore-failure-v1", "aggregate": aggregate,
+            "review": error.result.review, "provenance": error.result.provenance,
+            "source": evidence["rescore_source"], "judge_configuration": safe_config,
+        })
+        print(json.dumps(aggregate, sort_keys=True))
+        return 2
+    except JudgeInfraError:
+        _write_infrastructure_failure("cost-only judge provider failed", p)
+        return 3
     except (OSError, ValueError) as error:
         reason = f"judge configuration failed: {type(error).__name__}: {error}"
         _write_infrastructure_failure(reason, p)
@@ -296,15 +323,24 @@ def run_score(paths: RunPaths) -> int:
             or aggregate.get("dossier_sha256") != sha256_bytes(canonical_json_bytes(core))
             or dossier.get("aggregate") != aggregate):
         raise VerificationError("paired dossier/configuration integrity mismatch")
-    outcomes = aggregate_paired_reviews(dossier["reviews"], binding=binding,
-        claim=evidence["submission"]["intake_report"]["claim"],
-        infrastructure_failures=dossier.get("infrastructure_failures"))
-    if outcomes != dossier["lanes"]:
-        raise VerificationError("stored paired decisions differ from deterministic aggregation")
+    projection = None
+    if "rescore_source" in evidence:
+        anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier})
+        projection = {
+            "ledger": dossier["rescore"]["review"]["resource_ledger"],
+            "weights": rescore.weights(evidence), "source": evidence["rescore_source"],
+            "declared_cost_model": anchor["evidence"]["benchmark"]["cost_model"],
+        }
+    else:
+        outcomes = aggregate_paired_reviews(dossier["reviews"], binding=binding,
+            claim=evidence["submission"]["intake_report"]["claim"],
+            infrastructure_failures=dossier.get("infrastructure_failures"))
+        if outcomes != dossier["lanes"]:
+            raise VerificationError("stored paired decisions differ from deterministic aggregation")
     selected = select_lane_aggregate(dossier, p.track.lane)
     if any(aggregate.get(key) != value for key, value in selected.items()):
         raise VerificationError("score aggregate differs from selected lane dossier")
-    score = build_score(p.candidate, aggregate, p.score, track=p.track)
+    score = build_score(p.candidate, aggregate, p.score, track=p.track, resource_projection=projection)
     print(
         json.dumps(
             {

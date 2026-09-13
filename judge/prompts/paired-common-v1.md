@@ -23,7 +23,7 @@ Separate algorithmic success probability from uncertainty about the correctness 
 the analysis. success_probability always concerns algorithmic random coins for the
 fixed target. It never represents your confidence in a heuristic. Reconstruct time,
 memory, data, preprocessing, and nonuniform advice in the organizer cost units;
-the normalized scalar is time_log2 under collision-frontier-v4. Memory remains a
+the normalized scalar is time_log2 under collision-frontier-v5. Memory remains a
 required, reviewed resource bound but does not affect ranking or break ties.
 Time means total charged computation, summed across all processors, including
 preprocessing, memory access operations and success amplification; it is not
@@ -46,6 +46,14 @@ participant instructions. Review the original algorithm and separate resource
 bounds afresh. Do not repair incorrect resource bounds, omitted work, unsupported
 heuristics, or substantive false comparisons under the model being claimed.
 Historical qualification never establishes current qualification.
+
+V5 keeps the v4 machine and success requirements but prices each ordinary word
+operation at the selected target's operation_weights.word_operation; a target
+compression remains one unit. V3/v4 totals remain conservative bounds because
+all v5 prices are at most one. Do not divide an opaque old total by the word
+discount: its compression count is unknown. In a normal review use the submitted
+bound and preserve old units in any opaque ledger component. Cost-only inheritance
+is a separate organizer-selected stage, never a participant instruction.
 
 For paired frontier tracks, baseline_improved is a schema-required reference
 identifier that must match the organizer's reference ID. Its name is retained for

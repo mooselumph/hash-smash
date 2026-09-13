@@ -154,7 +154,7 @@ an additional limitation. A guessed 30/31 pair from the mockup has no authority.
 ## Cost and round conventions required before publication
 
 The literature commonly compares time against the nominal birthday exponent
-`n/2`. The current `collision-frontier-v4` policy ranks `log2(T)`, where T is
+`n/2`. The current `collision-frontier-v5` policy ranks `log2(T)`, where T is
 all charged computation in the organizer's explicit units, including preprocessing,
 failed trials, memory access operations and success amplification. Memory bytes
 remain a reviewed metric. Neither parallel wall-clock time nor a count of only

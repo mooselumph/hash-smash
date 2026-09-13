@@ -33,7 +33,7 @@ independent even when they adapt the same underlying argument.
 
 Read `docs/BUILDER_GUIDE.md`, `docs/FRONTIER_LANES.md`, `docs/JUDGE_LANES.md`,
 `docs/HEURISTIC_EXPERIMENTS.md`, `schemas/claim-frontier-v3.schema.json`,
-`cost-models/collision-frontier-v4.json`, the assigned `tracks/<track>/TASK.md`,
+`cost-models/collision-frontier-v5.json`, the assigned `tracks/<track>/TASK.md`,
 and that track's exact target profile. Yukon and organizer commands use the same
 full track ID including the lane, for example `sha256-r31-exploratory`. All sixteen
 tracks belong to one repository-root import; its baseline validations remain

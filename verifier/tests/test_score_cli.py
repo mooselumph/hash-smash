@@ -46,7 +46,7 @@ class ScoreTests(unittest.TestCase):
             self.assertEqual(score["metrics"]["timeLog2"], 81.0)
             self.assertEqual(score["metrics"]["memoryLog2Bytes"], 85.0)
             self.assertEqual(score["metrics"]["scoreMetric"], "timeLog2")
-            self.assertEqual(score["metrics"]["costModelId"], "collision-frontier-v4")
+            self.assertEqual(score["metrics"]["costModelId"], "collision-frontier-v5")
             self.assertNotIn("timeMemoryLog2", score["metrics"])
             self.assertEqual(score["metrics"]["judgeConfigSha256"], "a" * 64)
             self.assertEqual(json.loads(output.read_text()), score)
