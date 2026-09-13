@@ -16,6 +16,12 @@ claims. Configuration fingerprints change; old reviews and scores are invalid
 for the new policy. Archived references to the former scalar are historical
 context, while original algorithm and resource bounds receive fresh review.
 
+The trusted judge prompt explicitly states that v3 and v4 use identical resource
+units and accounting. A v3 reference does not require a new cost-transfer heuristic.
+Original archives can describe the former scalar as current because they predate
+the migration; the organizer supplies its present interpretation. This does not
+supply missing evidence for the original resource bounds or reuse an old verdict.
+
 ## Consequences
 
 - A time bound of 73 with memory exponent 21 changes from score 94 to 73 if the
