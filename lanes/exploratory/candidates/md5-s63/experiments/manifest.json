@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "prefix-collision-b14",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 14 digest bits.",
+      "hypothesis": "Per-trial success frequency is consistent with the random-mapping prediction 1 - exp(-512^2 / 2^15) ~= 0.9997 for the 14-bit prefix at 512-step scale.",
+      "program": "experiments/probe.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "fffc0000000000000000000000000000",
+        "expected_hex": "00000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "prefix-collision-b16",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 16 digest bits.",
+      "hypothesis": "Per-trial success frequency is consistent with the random-mapping prediction 1 - exp(-512^2 / 2^17) = 1 - exp(-2) ~= 0.865 for the 16-bit prefix at 512-step scale.",
+      "program": "experiments/probe.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "ffff0000000000000000000000000000",
+        "expected_hex": "00000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "prefix-collision-b18",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 18 digest bits.",
+      "hypothesis": "Per-trial success frequency is consistent with the random-mapping prediction 1 - exp(-512^2 / 2^19) = 1 - exp(-0.5) ~= 0.393 for the 18-bit prefix at 512-step scale.",
+      "program": "experiments/probe.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "ffffc000000000000000000000000000",
+        "expected_hex": "00000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "prefix-collision-b20",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 20 digest bits.",
+      "hypothesis": "Per-trial success frequency is consistent with the random-mapping prediction 1 - exp(-512^2 / 2^21) = 1 - exp(-0.125) ~= 0.118 for the 20-bit prefix at 512-step scale.",
+      "program": "experiments/probe.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "fffff000000000000000000000000000",
+        "expected_hex": "00000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "prefix-collision-b22",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target md5-s63-prefix-v1 on 16-byte trajectory messages. 256 organizer-seeded trials; each trial iterates the claim's iteration function f for at most 512 steps and returns the first pair of distinct messages whose digests agree on the leading 22 digest bits.",
+      "hypothesis": "Per-trial success frequency is consistent with the random-mapping prediction 1 - exp(-512^2 / 2^23) = 1 - exp(-0.03125) ~= 0.031 for the 22-bit prefix at 512-step scale.",
+      "program": "experiments/probe.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "fffffc00000000000000000000000000",
+        "expected_hex": "00000000000000000000000000000000"
+      }
+    }
+  ]
+}
