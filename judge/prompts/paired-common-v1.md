@@ -52,8 +52,8 @@ operation at the selected target's operation_weights.word_operation; a target
 compression remains one unit. V3/v4 totals remain conservative bounds because
 all v5 prices are at most one. Do not divide an opaque old total by the word
 discount: its compression count is unknown. In a normal review use the submitted
-bound and preserve old units in any opaque ledger component. Cost-only inheritance
-is a separate organizer-selected stage, never a participant instruction.
+bound. Reorg review is a separate organizer-selected stage, never a participant
+instruction.
 
 For paired frontier tracks, baseline_improved is a schema-required reference
 identifier that must match the organizer's reference ID. Its name is retained for

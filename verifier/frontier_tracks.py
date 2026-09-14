@@ -146,7 +146,7 @@ class LaneTrack:
         policy_files += sorted((ROOT / "judge" / "strategies").glob("*.md"))
         policy_files += [ROOT / "schemas" / name for name in (
             "review-lanes-v1.schema.json", "claim-frontier-v3.schema.json", "experiment-manifest-v1.schema.json",
-            "resource-ledger-v1.schema.json", "review-rescore-v1.schema.json", "review-rescore-v2.schema.json")]
+            "resource-ledger-v1.schema.json", "review-rescore-v2.schema.json")]
         policy_files += [ROOT / "judge/rescore.py", ROOT / "judge/output.py", ROOT / "judge/prompts/rescore-v1.md"]
         return {
             "track_id": self.id, "lane": self.lane, "target_id": self.target_id,

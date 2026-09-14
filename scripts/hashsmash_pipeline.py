@@ -331,15 +331,7 @@ def run_score(paths: RunPaths) -> int:
         raise VerificationError("paired dossier/configuration integrity mismatch")
     rescored = None
     if "rescore_source" in evidence:
-        anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier}, p.rescore_archives)
-        previous = rescore.score_reference(rescore.load_archive(evidence["rescore_source"], p.rescore_archives), p.rescore_archives)
-        rescored = {
-            "time_log2": rescore.accepted_score({"evidence": evidence, "dossier": dossier}),
-            "source": evidence["rescore_source"],
-            "previous_score": rescore.accepted_score(previous),
-            "score_policy_changed": rescore.scoring_policy(evidence) != rescore.scoring_policy(previous["evidence"]),
-            "declared_cost_model": anchor["evidence"]["benchmark"]["cost_model"],
-        }
+        rescored = rescore.score_result(evidence, dossier, p.rescore_archives)
     else:
         outcomes = aggregate_paired_reviews(dossier["reviews"], binding=binding,
             claim=evidence["submission"]["intake_report"]["claim"],

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preserve a trusted review packet and print its proposed cost-only plan entry.
+"""Preserve a trusted review packet and print its proposed reorg plan entry.
 
 Run on organizer-downloaded workflow artifacts, never participant-supplied packets.
 The printed entry does not activate anything; review it into reorg/plan.json.

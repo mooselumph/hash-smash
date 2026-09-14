@@ -50,10 +50,6 @@ def validate_response(review, stage, evidence):
     validate_review(review, expected_stage=stage)
     context = evidence.get("review_context", {})
     if stage == "lane_rescore":
-        if "submission" in evidence:
-            from .rescore import check_cost_review
-            if review["status"] == "complete":
-                check_cost_review(review, {k: v for k, v in evidence.items() if k != "review_context"})
         return
     if "submission" not in evidence:
         return  # Low-level adapter diagnostics need not contain a full submission.

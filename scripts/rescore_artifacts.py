@@ -105,7 +105,7 @@ def main():
                 with open(os.environ["GITHUB_OUTPUT"], "a") as output:
                     output.write(f"run_id={reference['run_id']}\nartifact_id={reference['artifact_id']}\n")
     except (VerificationError, OSError) as error:
-        print(f"prior judgment unavailable: {error}; no cost-only review was started", file=sys.stderr)
+        print(f"prior judgment unavailable: {error}; no reorg review was started", file=sys.stderr)
         return 2
     return 0
 

@@ -54,13 +54,16 @@ class RescoringTests(unittest.TestCase):
     setUp = fixtures.FrontierPipelineTests.setUp
     paths = fixtures.FrontierPipelineTests.paths
 
-    def source(self, *, rigorous=False):
+    def source(self, *, rigorous=False, rejected=False):
         lane = "rigorous" if rigorous else "exploratory"
         paths = self.paths("sha256-r31-" + lane)
         old = paths.track.benchmark()
         old["cost_model"] = read_json(ROOT / "cost-models/collision-frontier-v4.json")
-        with patch.object(LaneTrack, "benchmark", return_value=old), fake_provider():
-            self.assertEqual(pipeline.run_all(paths), 0)
+        def old_review(stage, review, _):
+            if rejected and stage == "lane_evaluability":
+                review["obligations"][1]["status"] = "unresolved"
+        with patch.object(LaneTrack, "benchmark", return_value=old), fake_provider(old_review):
+            self.assertEqual(pipeline.run_all(paths), 2 if rejected else 0)
         self.archives = paths.rescore_archives
         self.plan = self.root / "plan.json"
         self.enterContext(patch.object(rescore, "ARCHIVES", self.archives))
@@ -104,7 +107,7 @@ class RescoringTests(unittest.TestCase):
         client = CostClient(21.0)
         self.run_cost(paths, client)
         self.assertEqual([stage for stage, _ in client.calls], ["lane_rescore"])
-        self.assertEqual(len(client.calls[0][1]["review_context"]["cost_history"]), 1)
+        self.assertEqual(len(client.calls[0][1]["review_context"]["judgments"]), 2)
         self.assertEqual(set(read_json(paths.rescore_history)), {entry["source"], second["source"]})
 
     def test_missing_or_changed_workflow_artifact_fails_before_review(self):
@@ -157,15 +160,18 @@ class RescoringTests(unittest.TestCase):
             references.unlink()
             self.assertIsNone(rescore_artifacts.selection(paths))
 
-    def test_migration_preserves_anchor_and_only_calls_cost_judge(self):
+    def test_reorg_supplies_original_reasoning_and_only_calls_one_judge(self):
         paths, entry = self.source()
         anchor = rescore.load_archive(entry["source"])
         client = CostClient(21.0)
         self.run_cost(paths, client)
         self.assertEqual([stage for stage, _ in client.calls], ["lane_rescore"])
         supplied = client.calls[0][1]["review_context"]
-        self.assertEqual(supplied["qualification_anchor"], anchor)
-        self.assertEqual(supplied["cost_history"], [])
+        self.assertEqual(supplied["judgments"][0]["dossier"], anchor["dossier"])
+        self.assertEqual(len(supplied["judgments"]), 1)
+        self.assertEqual(supplied["experiment_report"], anchor["evidence"]["submission"]["experiment_report"])
+        self.assertEqual(client.calls[0][1]["submission"]["proof_markdown_line_numbered"],
+                         anchor["evidence"]["submission"]["proof_markdown_line_numbered"])
         result = read_json(paths.score)
         expected = 21.0
         self.assertAlmostEqual(result["score"], expected)
@@ -179,7 +185,7 @@ class RescoringTests(unittest.TestCase):
         self.assertNotIn("resourceLedger", result["metrics"])
         self.assertEqual(result["metrics"]["rescoreMode"], "policy_change")
 
-    def test_repeated_reorgs_reuse_counts_and_retain_history(self):
+    def test_repeated_reorgs_reuse_reasoning_and_retain_history(self):
         paths, entry = self.source()
         self.run_cost(paths, CostClient(21.0))
         entry2 = archive(paths.evidence, paths.dossier, self.archives)
@@ -192,9 +198,9 @@ class RescoringTests(unittest.TestCase):
             client = CostClient(21.0)
             self.run_cost(paths, client)
             supplied = client.calls[0][1]["review_context"]
-            self.assertEqual(rescore.digest(supplied["qualification_anchor"]), entry["source"])
-            self.assertEqual(len(supplied["cost_history"]), 1)
-            self.assertEqual(supplied["cost_history"][0]["review"]["time_log2"], 21.0)
+            self.assertEqual(supplied["judgments"][0]["dossier"], rescore.load_archive(entry["source"])["dossier"])
+            self.assertEqual(len(supplied["judgments"]), 2)
+            self.assertEqual(supplied["judgments"][1]["dossier"]["rescore"]["review"]["time_log2"], 21.0)
             self.assertEqual(read_json(paths.score)["score"], 21.0)
             self.assertTrue(supplied["score_policy_changed"])
         updated["qualification_policy"]["sha256"] = "e" * 64
@@ -275,7 +281,7 @@ class RescoringTests(unittest.TestCase):
             with fake_provider(factory=lambda _: client):
                 self.assertEqual(pipeline.run_all(paths), 2)
             supplied = client.calls[0][1]["review_context"]
-            self.assertEqual(supplied["previous_judgment"]["dossier"], prior)
+            self.assertEqual(supplied["judgments"][-1]["dossier"], prior)
             self.assertEqual(supplied["score_policy_changed"], change_prices)
             dossier = read_json(paths.dossier)
             self.assertEqual(dossier["aggregate"]["status"], "reorg_rejected")
@@ -292,7 +298,7 @@ class RescoringTests(unittest.TestCase):
             reconsidered = CostClient(12)
             self.run_cost(paths, reconsidered)
             supplied = reconsidered.calls[0][1]["review_context"]
-            self.assertEqual(supplied["previous_judgment"]["dossier"]["rescore"]["review"]["status"], "rejected")
+            self.assertEqual(supplied["judgments"][-1]["dossier"]["rescore"]["review"]["status"], "rejected")
             self.assertEqual(read_json(paths.score)["score"], 12 if change_prices else 66.28)
 
     def test_validity_prompt_change_can_reject_and_accept_without_repricing(self):
@@ -328,13 +334,53 @@ class RescoringTests(unittest.TestCase):
         with self.assertRaisesRegex(VerificationError, "duplicate"):
             pipeline.run_intake(paths)
 
-    def test_failed_anchor_cannot_be_used_for_inheritance(self):
+    def test_tampered_historical_decision_fails_integrity_checks(self):
         paths, entry = self.source()
         packet = rescore.load_archive(entry["source"])
         packet["dossier"]["lanes"]["exploratory"]["eligible"] = False
-        # Even resealing an inconsistent decision cannot pass deterministic checks.
+        # Recorded decisions remain covered by the trusted artifact seal.
         with self.assertRaises(VerificationError):
             rescore.verify_packet(packet)
+
+    def test_historical_judgment_does_not_have_to_pass_todays_validators(self):
+        paths, _ = self.source()
+        with patch("judge.paired_review.aggregate_paired_reviews", side_effect=AssertionError("must not replay old qualification")):
+            self.run_cost(paths, CostClient(66.28))
+        self.assertEqual(read_json(paths.score)["score"], 66.28)
+
+    def test_original_rejection_can_supply_reasoning_for_a_new_decision(self):
+        paths, _ = self.source(rejected=True)
+        client = CostClient(66.28)
+        self.run_cost(paths, client)
+        previous = client.calls[0][1]["review_context"]["judgments"][0]["dossier"]
+        self.assertEqual(previous["aggregate"]["status"], "not_evaluable")
+        self.assertEqual(read_json(paths.score)["score"], 66.28)
+
+    def test_ledger_reorg_is_excluded_instead_of_reinterpreted(self):
+        paths, _ = self.source()
+        self.run_cost(paths, CostClient(66.28))
+        packet = {"evidence": read_json(paths.evidence), "dossier": read_json(paths.dossier)}
+        dossier = packet["dossier"]
+        dossier["rescore"]["review"]["schema_version"] = "review-rescore-v1"
+        core = {k: v for k, v in dossier.items() if k not in {"aggregate", "judge_configuration"}}
+        core["judge_configuration_sha256"] = rescore.digest(dossier["judge_configuration"])
+        dossier["aggregate"]["dossier_sha256"] = rescore.digest(core)
+        with self.assertRaisesRegex(VerificationError, "pin the original ordinary judgment"):
+            rescore.verify_packet(packet, self.archives)
+
+    def test_final_score_gate_still_enforces_the_new_result(self):
+        paths, _ = self.source()
+        self.run_cost(paths, CostClient(66.28))
+        latest = archive(paths.evidence, paths.dossier, self.archives)
+        atomic_write_json(self.plan, {"entries": [latest]})
+        self.run_cost(paths, CostClient(20))
+        evidence, dossier = read_json(paths.evidence), read_json(paths.dossier)
+        dossier["rescore"]["review"]["time_log2"] = 20
+        with self.assertRaisesRegex(VerificationError, "preserve the previous score"):
+            rescore.score_result(evidence, dossier, self.archives)
+        dossier["rescore"]["review"]["binding"]["package_sha256"] = "0" * 64
+        with self.assertRaisesRegex(VerificationError, "mismatched binding"):
+            rescore.score_result(evidence, dossier, self.archives)
 
     def test_incomplete_cost_review_retains_history_and_emits_no_score(self):
         paths, entry = self.source()

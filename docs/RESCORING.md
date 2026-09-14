@@ -50,8 +50,8 @@ Yukon continues dispatching its ordinary workflow. An organizer-reviewed
 `reorg/plan.json` entry supplies a previous judgment for an exact track, package
 and source/destination configuration. Unlisted submissions receive ordinary review.
 
-The reorg judge receives the original submission, original qualification judgment,
-latest judgment, intervening reviews and current judging instructions. Previous
+The reorg judge receives the original submission and experiment report, a
+chronological list of judgments, and current judging instructions. Previous
 judgments provide reusable reasoning, not a binding verdict. The judge can accept
 or reject under the current rules, revisiting what changed prompts, accounting or
 configuration require. A pricing-only change will usually leave validity reasoning
@@ -65,6 +65,7 @@ For accepted results, the score rule is explicit:
   retains the submitted score; a later reorg retains the previous reorg's score.
   A tighter reconstruction or unrelated prompt/checker change does not alter it.
   An intervening rejected or incomplete review does not erase that scored judgment.
+  If no judgment has accepted it yet, use the original submitted bound and policy.
 - Changed scoring policy: the judge gives a revised computation bound and a short
   calculation with evidence references. No prescribed intermediate ledger is needed.
 
@@ -95,8 +96,21 @@ original declared bound, previous score, `rescoreMode` and source packet.
    downloads the pinned artifact and checks its content and ancestry before review.
 4. Pin the newest review artifact for a subsequent reorg. It bundles the prior
    judgments in `rescore-history.json`, so earlier artifacts need not survive
-   independently. Legacy ledger-based judgments remain readable at their original
-   recorded prices; they are never retroactively reinterpreted as new reviews.
+   independently.
+
+History loading verifies organizer pins, artifact integrity and submission identity.
+It preserves recorded conclusions without replaying today's output validators or
+qualification rules on old reviews. The new result still receives schema, binding,
+qualification and score-preservation checks before scoring.
+
+### Reset from the original judgments
+
+The ledger-based `review-rescore-v1` judgments are deliberately excluded. Pin the
+original ordinary reviews instead; the existing artifact map identifies those
+originals. The reorg judge then calculates new bounds from the original submission
+and reasoning under the current accounting rules. This reset does not preserve the
+intermediate ledger-derived scores or supply those judgments as evidence.
+Subsequent reorgs retain the new simple judgments, including rejected decisions.
 
 Artifacts currently expire after 30 days. Missing or mismatched artifacts stop
 explicitly; restore a trusted backup or choose a fresh review. History is bounded
