@@ -6,22 +6,41 @@
   "rounds": 63,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 79,
+    "time_log2": 73,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 72,
-    "data_log2": 65,
-    "preprocessing_log2": 73,
-    "success_probability": 0.39,
+    "memory_log2_bytes": 22,
+    "data_log2": 67,
+    "preprocessing_log2": 21,
+    "success_probability": 0.58,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Only 32-byte messages encoded from independently sampled uniform 256-bit words; q=2^64 fixed samples and no restart.",
+    "Only 16-byte messages m(w) encoded from 128-bit words; a single distinguished-point walk with restarts, hard-capped at 2^66.1 total f evaluations including recovery.",
     "Exact md5-s63-prefix-v1 full-message hashing: fixed IV, required padding, steps 0 through 62, feed-forward, and all 128 digest bits.",
-    "Classical 256-bit word RAM with charged ideal independent uniform random-word primitive; no seeded PRNG or hash-distribution heuristic.",
-    "Resource fields are conservative upper bounds: time and preprocessing in charged RAM/target-compression units, memory and advice in bytes, data in complete input-message evaluations.",
-    "No nonuniform advice, precomputed collision, external corpus, or empirical premise. The nominal reference identifier does not assert an established baseline or an improvement."
+    "Classical 256-bit word RAM with the charged ideal independent uniform random-word primitive for walk starts; no seeded PRNG or hash-distribution assumption for the coins.",
+    "Time, memory, data, and preprocessing fields are deterministic upper bounds under the hard budget and table caps; success_probability is conditional on the declared heuristics H1 and H2.",
+    "No nonuniform advice, precomputed collision, external corpus, or declared experiments. The nominal reference identifier does not assert an established baseline or an improvement."
   ],
   "baseline_improved": "md5-s63-nominal-v2",
-  "heuristics": [],
+  "heuristics": [
+    {
+      "id": "H1-random-mapping-trajectory",
+      "statement": "For f(w) = md5-s63(m(w)) on {0,1}^128, forward trajectories x_{i+1} = f(x_i) from uniform random starts have the collision statistics of a uniform random mapping on N = 2^128 points: conditional on x_0,...,x_{i-1} being distinct, x_i is uniform on the N digest values, for all trajectory lengths up to 2^66. Hence Pr[no repeat in the first t steps] = product_{j=1}^{t}(1 - j/N), which is exact for a uniform random mapping.",
+      "role": "score-critical",
+      "scope": "Only the fixed f defined by the exact md5-s63-prefix-v1 target on 16-byte messages, trajectories of length at most 2^66, and only as the premise for this algorithm's success probability. The resource bounds do not depend on H1.",
+      "extrapolation": "From the exact statement for a uniform random mapping (proved in the cited proof lines) to one fixed deterministic function. Supported by the distribution-free worst-case-uniformity of iid birthday sampling and by the absence of any known mechanism that suppresses generic trajectory collisions; published MD5 differential attacks only increase collision probability. This is the standard premise of birthday-bound security claims and of classical rho/distinguished-point collision-search analyses.",
+      "evidence_ids": ["proof:193-229", "proof:240-275"],
+      "limitations": "Unproven for the fixed f; a pathological iteration structure (for example an anomalously small cycle cover) could reduce the success probability below the claimed 0.58. Such structure is not known for MD5 variants and is partially mitigated by abandonment and restart of walks. Exploratory-lane premise; not asserted to rigorous standards."
+    },
+    {
+      "id": "H2-distinguished-point-gaps",
+      "statement": "Distinguished-point hits (digest value < 2^72) along a trajectory behave as Bernoulli trials with probability 2^-56 per step: gaps between consecutive distinguished points are geometric with mean 2^56, and Pr[gap > 2^60] = (1 - 2^-56)^(2^60) <= exp(-16) <= 1.2e-7.",
+      "role": "supporting",
+      "scope": "Only the detection lag, the walk-abandonment rate, and the expected table occupancy of the declared algorithm. The memory bound is a hard cap independent of H2.",
+      "extrapolation": "Follows from uniformity of pre-repeat trajectory values under H1: each value is distinguished with probability 2^72/2^128 = 2^-56.",
+      "evidence_ids": ["proof:230-239", "proof:240-266"],
+      "limitations": "If digest values are biased, gaps lengthen and table occupancy grows; the success loss is bounded by the abandonment analysis, and the memory bound remains hard-capped. Exploratory-lane premise; not asserted to rigorous standards."
+    }
+  ],
   "certificate_manifest": "certificates/manifest.json"
 }
