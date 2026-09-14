@@ -3,8 +3,8 @@
 This operator runbook is reached through the [builder guide](./BUILDER_GUIDE.md).
 It applies the reusable Yukon setup instructions to HashSmash's paired research
 candidates. There is
-one schema-v2 challenge imported from the repository root. Its sixteen tracks
-include both review lanes; do not create a second import for the other lane.
+one schema-v2 challenge imported from the repository root. Its manifest exposes twelve exploratory tracks. Rigorous packages remain
+locally runnable, outside the import manifest; do not create a second import root.
 
 ## Contract and current scope
 
@@ -12,7 +12,7 @@ include both review lanes; do not create a second import for the other lane.
 | --- | --- |
 | Challenge manifest name | `hashsmash` |
 | Manifest / import root | Repository-root `benchmark.json`; omit `rootDir` |
-| Schema / current tracks | 2 / 16 (eight exploratory, eight rigorous) |
+| Schema / imported tracks | 2 / 12 exploratory (24 local lanes total) |
 | Promotion mode | `manual` on every track; owner review before promotion |
 | Yukon and organizer track ID | `<target>-<lane>`, such as `sha1-r80-rigorous` |
 | Required exploratory / rigorous outcome | `plausible_not_refuted` / `ai_rigor_qualified` |
@@ -36,10 +36,10 @@ For the v3-to-v4 scoring migration, follow the
 [total-computation reorg plan](./TIME_ONLY_REORG.md), including the UI compatibility
 gate and candidate-only baseline restoration before replay.
 
-The twelve pending BLAKE3, Keccak[800], and Poseidon slots are excluded from the
-manifest. Resolving them is not a prerequisite for deploying the current sixteen
-tracks. Yukon's present limit is 20 tracks per challenge; activating all 28 slots
-would first require an upstream limit increase as well as exact target definitions.
+BLAKE3 rounds1/2 and Keccak[800] rounds5/6 are now concrete organizer-selected
+exploration targets. The four pending Poseidon slots remain excluded. Twelve
+exploratory entries fit Yukon's 20-track manifest limit; including all 24 local
+lanes would exceed it.
 Do not manufacture boundaries or scores to make `--require-complete` pass.
 
 HashSmash needs neither Willow's M3 Max runner group and JIT App nor its Rust
@@ -116,15 +116,14 @@ python3 scripts/import_yukon_dev.py --source-branch main
 
 The request uses the fixed `https://api-dev.yukon.org` API, repository
 `https://github.com/mooselumph/hash-smash`, and source branch `main`. It omits
-`rootDir`, so Yukon reads the sixteen-track schema-v2 manifest at the repository
+`rootDir`, so Yukon reads the twelve-track exploratory schema-v2 manifest at the repository
 root. The helper sends the supported `POST /api/benchmarks` JSON body directly.
 If using the setter UI instead, choose the same repository and branch, leave its
 root-directory field empty, and use the challenge name `hashsmash`.
 
-Submitting that import activates validation: Yukon queues sixteen baseline
-workflows against the resolved source commit. There is no separate per-lane
-activation step. All sixteen baselines must qualify for the challenge to become
-ready; an exploratory success does not substitute for its rigorous sibling.
+Submitting a fresh import queues twelve exploratory baseline workflows against
+the resolved source commit. Each imported baseline must qualify. For an existing
+challenge, use the append operation below rather than recreating it.
 
 After baseline readiness and credential setup, run the real import:
 
@@ -148,6 +147,37 @@ wait timeout. A timeout does not cancel or recreate the import. Inspect the save
 IDs in dev before retrying after a network error or interruption. To retry a failed
 baseline, archive/delete that failed import in the setter UI, fix the actual
 cause, and import again; never delete/recreate the GitHub repository.
+
+## Append newly declared tracks to an existing challenge
+
+Yukon's `POST /api/benchmarks/:id/import-tracks` reads the challenge's saved
+repository, branch and root, and appends only newly declared schema-v2 tracks.
+It preserves already imported records and queues independent baseline jobs for
+the additions. It takes no per-track filter and does not delete tracks omitted
+from the current manifest. Existing rigorous records therefore remain in Yukon;
+this manifest change does not close or archive them.
+
+After the human-reviewed source change is merged into the saved source branch,
+inspect an offline plan using the actual existing challenge reference:
+
+```sh
+python3 scripts/import_yukon_dev.py --append-to SETTER/CHALLENGE
+```
+
+Replace the uppercase placeholder with the confirmed lowercase setter/challenge
+name or an existing benchmark UUID. The helper checks only the twelve manifest
+candidates; local-only rigorous packages do not block importing exploratory lanes.
+The plan's workflow count is null because the server determines which tracks
+are new. To send the reviewed request and wait for those jobs, add `--submit --wait`.
+The append request uses the saved source; `--source-branch` and `--name` overrides
+are not supported. It never opens submissions. An empty returned track list means
+there were no additions; do not retry an uncertain mutation without inspecting Yukon.
+
+The endpoint was verified against Yukon’s GitHub default branch on 2026-09-13. A fresh import
+contains twelve tracks. Appending these four exploratory targets to an existing
+sixteen-track deployment leaves twenty saved records, including its old rigorous
+tracks. Avoid a whole-challenge reorg while saved records are absent from the
+manifest; use the append operation for these additions.
 
 ## Yukon verification before opening
 
@@ -184,7 +214,7 @@ changing scientific acceptance thresholds.
 
 ## Convert an existing registration to manual review
 
-The root manifest sets `"promotionMode": "manual"` on all sixteen track entries.
+The root manifest sets `"promotionMode": "manual"` on all twelve imported track entries.
 Yukon defaults omitted modes to `automatic`; editing this file alone does not
 change existing registrations. Follow the released
 [manual submission review contract](https://github.com/Layr-Labs/yukon/blob/v2026.09.10-1/docs/manual-submission-review.md).
@@ -194,7 +224,7 @@ and `POST /api/submissions/{id}/review`.
 
 Use the registered repository, source branch, challenge, and track IDs from the
 owner API. Do not assume the GitHub namespace is the Yukon setter namespace. For
-each of the sixteen existing track benchmarks, authenticated as its owner:
+each existing track benchmark that needs the setting, authenticated as its owner:
 
 1. Record its ID, source reference, baseline, promoted best, and submission history.
    Pause new submissions with `POST /api/benchmarks/:id/pause`.

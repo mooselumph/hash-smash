@@ -30,7 +30,9 @@ Edit only the selected manifest entry's `editablePaths`, normally
 `lanes/<lane>/candidates/<target>/`. Sibling candidates, this file, agent guidance,
 the registry, target profiles, cost models, schemas, verifier, judge prompts,
 workflows, and generated scores remain protected. Switching lanes does not convert
-a claim or move its evidence. The twelve undefined slots are not solver targets.
+a claim or move its evidence. The four undefined Poseidon slots are not solver targets. The root manifest
+exposes exploratory tracks only; rigorous lanes are available for local organizer
+work and are not newly imported by this manifest.
 
 ## HashSmash evaluation differs from the generic solve loop
 

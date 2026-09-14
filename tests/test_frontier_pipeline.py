@@ -90,7 +90,7 @@ class FrontierPipelineTests(unittest.TestCase):
 
     def test_every_active_track_runs_end_to_end_with_independent_bound_outputs(self):
         tracks = frontier_tracks()
-        self.assertEqual(len(tracks), 16)
+        self.assertEqual(len(tracks), 24)
         manifest = read_json(ROOT / "benchmark.json")
         atomic_write_json(self.root / "benchmark.json", manifest)
         manifest_tracks = {row["name"]: row for row in manifest["tracks"]}
@@ -121,29 +121,37 @@ class FrontierPipelineTests(unittest.TestCase):
                 self.assertEqual([stage for stage, _ in client.calls], list(INITIAL_STAGES))
                 # Exercise the actual manifest-to-pipeline-to-upload handoff for
                 # every track. Yukon reads this exact ZIP entry, including lanes/.
-                score_path = manifest_tracks[track.id]["scorePath"]
-                artifact = self.root / "artifacts" / track.id
-                staged = stage_score(self.root, score_path, artifact)
-                archive = io.BytesIO()
-                with zipfile.ZipFile(archive, "w") as zipped:
-                    zipped.write(staged, staged.relative_to(artifact).as_posix())
-                with zipfile.ZipFile(archive) as zipped:
-                    self.assertEqual(zipped.namelist(), [score_path])
-                    self.assertEqual(json.loads(zipped.read(score_path)), score)
+                if track.id in manifest_tracks:
+                    score_path = manifest_tracks[track.id]["scorePath"]
+                    artifact = self.root / "artifacts" / track.id
+                    staged = stage_score(self.root, score_path, artifact)
+                    archive = io.BytesIO()
+                    with zipfile.ZipFile(archive, "w") as zipped:
+                        zipped.write(staged, staged.relative_to(artifact).as_posix())
+                    with zipfile.ZipFile(archive) as zipped:
+                        self.assertEqual(zipped.namelist(), [score_path])
+                        self.assertEqual(json.loads(zipped.read(score_path)), score)
                 outputs.add(paths.score)
                 configs.add(score["metrics"]["targetConfigSha256"])
                 packages.add(score["metrics"]["inputPackageSha256"])
-        self.assertEqual(len(outputs), 16)
-        self.assertEqual(len(configs), 16)
-        self.assertEqual(len(packages), 16)
+        self.assertEqual(len(outputs), 24)
+        self.assertEqual(len(configs), 24)
+        self.assertEqual(len(packages), 24)
 
     def test_catalog_and_yukon_manifests_preserve_pending_slots_and_literal_routes(self):
         slots = planned_slots()
         self.assertEqual(len(slots), 28)
-        self.assertEqual(sum(slot["rounds"] is None for slot in slots), 12)
+        self.assertEqual(sum(slot["rounds"] is None for slot in slots), 4)
         self.assertEqual({slot["cost_model_id"] for slot in slots}, {"collision-frontier-v5"})
         families = {family["id"]: family for family in catalog()["families"]}
         self.assertEqual(families["sha256"]["round_pair"], [31, 32])
+        for family, pair in (("blake3", [1, 2]), ("keccak800", [5, 6])):
+            self.assertEqual(families[family]["round_pair"], pair)
+            self.assertEqual(families[family]["selection_status"], "organizer_selected")
+            self.assertIsNone(families[family]["first_unbroken_round"])
+            for rounds in pair:
+                track = get_frontier_track(f"{family}-r{rounds}-exploratory")
+                self.assertIn(track.boundary_role, ("lower-exploration", "upper-exploration"))
         for family in ("md5", "sha1"):
             self.assertEqual(families[family]["selection_status"], "full_round_control")
             self.assertIsNone(families[family]["first_unbroken_round"])
@@ -151,7 +159,7 @@ class FrontierPipelineTests(unittest.TestCase):
         manifest = read_json(ROOT / "benchmark.json")
         self.assertEqual(manifest["schemaVersion"], 2)
         self.assertEqual(manifest["name"], "hashsmash")
-        self.assertEqual(len(manifest["tracks"]), 16)
+        self.assertEqual(len(manifest["tracks"]), 12)
         for row in manifest["tracks"]:
             track = get_frontier_track(row["name"])
             self.assertEqual(row["benchmarkCommand"], ["python3", "scripts/hashsmash_pipeline.py", "all", "--track", track.id])
@@ -163,9 +171,9 @@ class FrontierPipelineTests(unittest.TestCase):
             manifest_ids.add(track.id)
         for lane in ("exploratory", "rigorous"):
             self.assertFalse((ROOT / "lanes" / lane / "benchmark.json").exists())
-        self.assertEqual(manifest_ids, {track.id for track in frontier_tracks()})
+        self.assertEqual(manifest_ids, {track.id for track in frontier_tracks() if track.lane == "exploratory"})
         for undefined in (
-            "poseidon-r8-exploratory", "blake3-r6-rigorous", "keccak800-r6-exploratory",
+            "poseidon-r8-exploratory", "blake3-r6-rigorous", "keccak800-r7-exploratory",
             "md5-s8", "md5-s24", "md5-s64", "sha1-r8", "sha1-r40", "sha1-r80",
             "sha256-r8", "sha256-r24", "sha256-r64",
         ):

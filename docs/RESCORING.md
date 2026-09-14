@@ -12,6 +12,8 @@ Memory remains a required metric, with no scalar contribution or tie-break.
 | SHA-1-r79 / r80 | 1957 / 1982 |
 | SHA-256-r31 / r32 | 2140 / 2224 |
 | SHA3-256-r5 / r6 | 1355 / 1626 |
+| BLAKE3-r1 / r2 | 222 / 430 |
+| Keccak[800]-r5 / r6 | 1355 / 1626 |
 
 `python3 scripts/reference_operation_costs.py` reproduces these estimates from the
 trusted reference cores. It counts additions, logical operations, shifts and masks
@@ -100,6 +102,11 @@ Incomplete cost reviews emit no score and report that further evidence is needed
 The history is bounded to 32 records and 2 MiB of model input; exceeding either
 limit stops explicitly rather than silently dropping provenance.
 
-The initial dev plan pins 16 qualified baselines and 9 qualified submissions.
-The 8 previously failed submissions remain on the ordinary review path. A managed
-reorg is still required to apply these prices to stored scores.
+The initial dev plan pinned 16 qualified baselines and 9 qualified submissions.
+It is preserved verbatim in [the historical plan](../reorg/history/pre-blake3-keccak800-plan.json).
+The BLAKE3/Keccak[800] addition changes trusted checker/schema/configuration
+fingerprints, so those exact destination pins are no longer current. The active
+plan is empty: future evaluations use ordinary full review, rather than silently
+repinning or inheriting old qualification under changed code. Existing stored
+Yukon scores are not modified by this source change. A future cost-only reorg
+requires new reviewed pins and matching evidence.

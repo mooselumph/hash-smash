@@ -36,12 +36,14 @@ def catalog() -> dict:
                 or any(type(r) is not int for r in pair) or pair[0] < 1
                 or pair[1] != pair[0] + 1 or pair[1] > family["full_rounds"]):
             raise VerificationError("frontier round pair must be consecutive valid round counts")
-        if family.get("selection_status") not in ("selected", "full_round_control"):
+        if family.get("selection_status") not in ("selected", "full_round_control", "organizer_selected"):
             raise VerificationError("unconfirmed frontier family cannot become a runnable track")
         if family["selection_status"] == "full_round_control" and family.get("first_unbroken_round") is not None:
             raise VerificationError("broken full-round controls have no first-unbroken round")
         if family["selection_status"] == "selected" and family.get("first_unbroken_round") != pair[1]:
             raise VerificationError("selected frontier boundary must match upper round count")
+        if family["selection_status"] == "organizer_selected" and family.get("first_unbroken_round") is not None:
+            raise VerificationError("organizer exploration pairs do not assert a first-unbroken round")
     return data
 
 
@@ -189,7 +191,9 @@ def frontier_tracks() -> tuple[LaneTrack, ...]:
                     nominal_security_bits=family["nominal_security_bits"],
                     selection_status=family["selection_status"],
                     boundary_role=("predecessor", "boundary")[index] if family["selection_status"] == "selected"
-                    else ("penultimate-control", "full-round-control")[index],
+                    else (("lower-exploration", "upper-exploration")[index]
+                          if family["selection_status"] == "organizer_selected"
+                          else ("penultimate-control", "full-round-control")[index]),
                 ))
     return tuple(result)
 

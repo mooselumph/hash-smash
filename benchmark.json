@@ -31,34 +31,6 @@
       }
     },
     {
-      "name": "md5-s63-rigorous",
-      "description": "md5-s63 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/md5-s63"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "md5-s63-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/md5-s63-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "md5-s63-rigorous.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
       "name": "md5-s64-exploratory",
       "description": "md5-s64 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
@@ -83,34 +55,6 @@
       "runner": {
         "provider": "github-actions",
         "workflow": "md5-s64-exploratory.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
-      "name": "md5-s64-rigorous",
-      "description": "md5-s64 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/md5-s64"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "md5-s64-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/md5-s64-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "md5-s64-rigorous.yml",
         "maxConcurrentWorkflows": 2
       }
     },
@@ -143,34 +87,6 @@
       }
     },
     {
-      "name": "sha1-r79-rigorous",
-      "description": "sha1-r79 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/sha1-r79"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "sha1-r79-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha1-r79-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "sha1-r79-rigorous.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
       "name": "sha1-r80-exploratory",
       "description": "sha1-r80 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
@@ -195,34 +111,6 @@
       "runner": {
         "provider": "github-actions",
         "workflow": "sha1-r80-exploratory.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
-      "name": "sha1-r80-rigorous",
-      "description": "sha1-r80 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/sha1-r80"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "sha1-r80-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha1-r80-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "sha1-r80-rigorous.yml",
         "maxConcurrentWorkflows": 2
       }
     },
@@ -255,34 +143,6 @@
       }
     },
     {
-      "name": "sha256-r31-rigorous",
-      "description": "sha256-r31 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/sha256-r31"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "sha256-r31-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha256-r31-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "sha256-r31-rigorous.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
       "name": "sha256-r32-exploratory",
       "description": "sha256-r32 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
@@ -307,34 +167,6 @@
       "runner": {
         "provider": "github-actions",
         "workflow": "sha256-r32-exploratory.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
-      "name": "sha256-r32-rigorous",
-      "description": "sha256-r32 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/sha256-r32"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "sha256-r32-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha256-r32-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "sha256-r32-rigorous.yml",
         "maxConcurrentWorkflows": 2
       }
     },
@@ -367,34 +199,6 @@
       }
     },
     {
-      "name": "sha3-256-r5-rigorous",
-      "description": "sha3-256-r5 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
-      "category": "cryptanalysis",
-      "direction": "-",
-      "promotionMode": "manual",
-      "editablePaths": [
-        "lanes/rigorous/candidates/sha3-256-r5"
-      ],
-      "setupCommand": [
-        "bash",
-        ".yukon/setup.sh"
-      ],
-      "benchmarkCommand": [
-        "python3",
-        "scripts/hashsmash_pipeline.py",
-        "all",
-        "--track",
-        "sha3-256-r5-rigorous"
-      ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha3-256-r5-rigorous.json",
-      "maxSubmissionBytes": 4194304,
-      "runner": {
-        "provider": "github-actions",
-        "workflow": "sha3-256-r5-rigorous.yml",
-        "maxConcurrentWorkflows": 2
-      }
-    },
-    {
       "name": "sha3-256-r6-exploratory",
       "description": "sha3-256-r6 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
@@ -423,13 +227,13 @@
       }
     },
     {
-      "name": "sha3-256-r6-rigorous",
-      "description": "sha3-256-r6 ordinary collisions; rigorous AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means ai_rigor_qualified.",
+      "name": "blake3-r1-exploratory",
+      "description": "blake3-r1 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
       "category": "cryptanalysis",
       "direction": "-",
       "promotionMode": "manual",
       "editablePaths": [
-        "lanes/rigorous/candidates/sha3-256-r6"
+        "lanes/exploratory/candidates/blake3-r1"
       ],
       "setupCommand": [
         "bash",
@@ -440,13 +244,97 @@
         "scripts/hashsmash_pipeline.py",
         "all",
         "--track",
-        "sha3-256-r6-rigorous"
+        "blake3-r1-exploratory"
       ],
-      "scorePath": "lanes/rigorous/.yukon/scores/sha3-256-r6-rigorous.json",
+      "scorePath": "lanes/exploratory/.yukon/scores/blake3-r1-exploratory.json",
       "maxSubmissionBytes": 4194304,
       "runner": {
         "provider": "github-actions",
-        "workflow": "sha3-256-r6-rigorous.yml",
+        "workflow": "blake3-r1-exploratory.yml",
+        "maxConcurrentWorkflows": 2
+      }
+    },
+    {
+      "name": "blake3-r2-exploratory",
+      "description": "blake3-r2 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
+      "category": "cryptanalysis",
+      "direction": "-",
+      "promotionMode": "manual",
+      "editablePaths": [
+        "lanes/exploratory/candidates/blake3-r2"
+      ],
+      "setupCommand": [
+        "bash",
+        ".yukon/setup.sh"
+      ],
+      "benchmarkCommand": [
+        "python3",
+        "scripts/hashsmash_pipeline.py",
+        "all",
+        "--track",
+        "blake3-r2-exploratory"
+      ],
+      "scorePath": "lanes/exploratory/.yukon/scores/blake3-r2-exploratory.json",
+      "maxSubmissionBytes": 4194304,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "blake3-r2-exploratory.yml",
+        "maxConcurrentWorkflows": 2
+      }
+    },
+    {
+      "name": "keccak800-r5-exploratory",
+      "description": "keccak800-r5 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
+      "category": "cryptanalysis",
+      "direction": "-",
+      "promotionMode": "manual",
+      "editablePaths": [
+        "lanes/exploratory/candidates/keccak800-r5"
+      ],
+      "setupCommand": [
+        "bash",
+        ".yukon/setup.sh"
+      ],
+      "benchmarkCommand": [
+        "python3",
+        "scripts/hashsmash_pipeline.py",
+        "all",
+        "--track",
+        "keccak800-r5-exploratory"
+      ],
+      "scorePath": "lanes/exploratory/.yukon/scores/keccak800-r5-exploratory.json",
+      "maxSubmissionBytes": 4194304,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "keccak800-r5-exploratory.yml",
+        "maxConcurrentWorkflows": 2
+      }
+    },
+    {
+      "name": "keccak800-r6-exploratory",
+      "description": "keccak800-r6 ordinary collisions; exploratory AI review. Minimize log2(total charged computation); memory is a reported metric only. Pass means plausible_not_refuted.",
+      "category": "cryptanalysis",
+      "direction": "-",
+      "promotionMode": "manual",
+      "editablePaths": [
+        "lanes/exploratory/candidates/keccak800-r6"
+      ],
+      "setupCommand": [
+        "bash",
+        ".yukon/setup.sh"
+      ],
+      "benchmarkCommand": [
+        "python3",
+        "scripts/hashsmash_pipeline.py",
+        "all",
+        "--track",
+        "keccak800-r6-exploratory"
+      ],
+      "scorePath": "lanes/exploratory/.yukon/scores/keccak800-r6-exploratory.json",
+      "maxSubmissionBytes": 4194304,
+      "runner": {
+        "provider": "github-actions",
+        "workflow": "keccak800-r6-exploratory.yml",
         "maxConcurrentWorkflows": 2
       }
     }

@@ -14,7 +14,7 @@ import sys
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from verifier import hash_functions, keccak
+from verifier import blake3, hash_functions, keccak
 
 
 class Word(int):
@@ -47,9 +47,15 @@ def reference_costs():
             suffix = "s" if algorithm == "md5" else "r"
             result[f"{algorithm}-{suffix}{rounds}"] = Word.operations
     for rounds in (5, 6):
+        for name, bits in (("sha3-256", 64), ("keccak800", 32)):
+            Word.operations = 0
+            keccak._permute_lanes([Word(i) for i in range(25)], bits, rounds)
+            result[f"{name}-r{rounds}"] = Word.operations
+    for rounds in (1, 2):
         Word.operations = 0
-        keccak._permute_lanes([Word(i) for i in range(25)], 64, rounds)
-        result[f"sha3-256-r{rounds}"] = Word.operations
+        blake3._compress(tuple(Word(x) for x in blake3.IV),
+                         tuple(Word(i) for i in range(16)), Word(0), Word(64), Word(11), rounds)
+        result[f"blake3-r{rounds}"] = Word.operations
     return result
 
 
