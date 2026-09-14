@@ -96,7 +96,10 @@ def _validate(instance: Any, schema: Mapping[str, Any], path: str) -> None:
             raise ReviewValidationError(f"{path}: string is too short")
 
     if isinstance(instance, (int, float)) and not isinstance(instance, bool):
-        numeric = float(instance)
+        try:
+            numeric = float(instance)
+        except OverflowError:
+            raise ReviewValidationError(f"{path}: number must be finite") from None
         if not math.isfinite(numeric):
             raise ReviewValidationError(f"{path}: number must be finite")
         if "minimum" in schema and numeric < schema["minimum"]:

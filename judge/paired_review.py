@@ -296,6 +296,15 @@ def run_paired_review(
             # Never serialize provider exceptions, which could contain request
             # bodies or credentials from an alternate implementation.
             dossier["infrastructure_failures"][stage] = f"{type(exc).__name__}: review did not validate"
+            if isinstance(exc, JudgeInfraError):
+                dossier.setdefault("failure_diagnostics", {})[stage] = {
+                    "attempts": exc.attempts, "errors": exc.diagnostics,
+                }
+                if exc.diagnostics:
+                    dossier["infrastructure_failures"][stage] = (
+                        f"judge output failed after {exc.attempts} attempts: "
+                        + json.dumps(exc.diagnostics[-1], sort_keys=True)
+                    )
 
     for stage in INITIAL_STAGES:
         call(stage)

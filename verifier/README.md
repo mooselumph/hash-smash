@@ -38,10 +38,10 @@ manifest is used by the paired v3 claims.
 
 Scores require `submission_state: ready`, the selected lane's qualifying review
 outcome, and matching package, evidence and configuration bindings. The score
-builder ignores model-provided scores and computes
-`time_log2` from the validated claim under `collision-frontier-v5`.
-An organizer-pinned [cost-only reorg](../docs/RESCORING.md) instead prices the
-reviewed resource ledger, after checking the complete qualification ancestry.
+builder uses the validated submitted `time_log2` bound under `collision-frontier-v5`.
+An organizer-pinned [reorg](../docs/RESCORING.md) uses previous judgments: it retains
+the latest accepted score unless the scoring policy changes, in which case it uses
+the judge's final reviewed bound. No new intermediate operation ledger is required.
 Memory is still required and reviewed, and emitted as `metrics.memoryLog2Bytes`;
 it neither contributes to the scalar nor breaks ties. New score artifacts carry
 `metrics.costModelId` and `metrics.scoreMetric` and omit the former `timeMemoryLog2`. Drafts, failed review and

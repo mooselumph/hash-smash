@@ -68,8 +68,8 @@ AWS currently lists structured outputs as unsupported for Sol on Bedrock Runtime
 The organizer-owned `prompts/bedrock-sol-json-v1.md` instructions therefore include the
 stage-specific schema. The response must complete with exactly one assistant JSON
 review; refusals, tool calls, truncated responses, fenced JSON, duplicate keys, schema
-violations, and semantic inconsistencies fail closed. Only stage-inapplicable null/empty
-fields are supplied by normalization; claims and verdicts are never repaired. Effective
+violations, and semantic inconsistencies fail closed. The harness supplies request metadata, stage-inapplicable null/empty fields and
+derived bookkeeping values. Substantive judgments are never filled in or repaired. Effective
 prompt hashes, API route, actual returned model, request IDs, and token usage are recorded.
 
 `store=false` disables Responses conversation storage; it is not a claim of account-wide
@@ -135,6 +135,21 @@ same proof obligations and adjudication rules; neither uses majority voting.
 The dossier records effective models, prompt hashes and role configuration.
 
 ## Diagnostics and tests
+
+The provider contract contains only the selected role's substantive outputs.
+The harness attaches stage, version and evidence binding, derives the duplicate
+normalized score and prompt-injection flag, and supplies inapplicable empty fields.
+Normal cost reviews explain their calculation without a required resource ledger.
+
+JSON, schema, context and declared-heuristic coverage errors share the configured
+provider retry budget. Retries receive validator-generated feedback and ask for a
+complete review, never a more favorable verdict. Valid rejections are not retried.
+Successful provenance retains retry diagnostics; failures retain category, location
+where available, stage, attempt count and request ID without raw response text,
+internal reasoning, credentials or request headers. Arbitrary provider exceptions
+remain redacted. Workflow output exposes the final diagnostic as infrastructure
+failure rather than a cryptanalytic rejection.
+
 
 Run deterministic tests before any live diagnostic:
 

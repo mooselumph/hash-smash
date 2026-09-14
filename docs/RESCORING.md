@@ -30,83 +30,74 @@ The definitions follow [MD5](https://www.rfc-editor.org/rfc/rfc1321),
 [SHA-1/SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final), and
 [Keccak](https://keccak.team/keccak_specs_summary.html).
 
-## Resource ledgers
+## Submitted scores
 
-Add optional `resource_ledger` to `claim.json`, using
-[resource-ledger-v1](../schemas/resource-ledger-v1.schema.json). Older packages
-remain accepted. A ledger describes the entire algorithm at the claim's success
-probability, including preprocessing, failures, recovery and verification.
+Ordinary submissions are scored at their justified `claim.time_log2` bound under
+the current public accounting rules. One target compression costs 1 and an ordinary
+operation costs the selected `operation_weights.word_operation`. For example,
+H target compressions and W ordinary operations cost `log2(H + W/C)` before any
+additional charged work. Include preprocessing, failed trials and recovery at the
+claimed success probability. State the tightest bound you can support; the judge
+does not automatically tighten the submitted scalar.
 
-Each component has an ID, phase, operation category, `count_log2`, bound kind,
-review status, evidence and assumptions. Categories are `target_compression`,
-`word_operation`, and `opaque`. Omit zero-work components: log2(0) is undefined,
-while `count_log2: 0` means one operation. Use `source_weights: null` for raw counts;
-opaque work records the prices in which its historical bound was stated.
-Component bounds must cover all work without overlapping allowances. Use
-`exact`, `upper_bound` or `estimate`, and `supported`, `conditional` or `unresolved`.
-Only exact counts and upper bounds can set a migrated score; conditional bounds
-retain their assumptions and are limited to the exploratory lane.
+Explain the calculation in the proof. An operation ledger is not required from a
+solver or judge. Existing optional `resource_ledger` claim fields remain readable
+for compatibility, but no ledger is a new review output or score override.
 
-The normal cost judge reviews or reconstructs this ledger and retains it in
-`cost_reconstruction.resource_ledger`. Normal reviews still score the submitted
-`time_log2` bound. Their ledger prepares future migrations, without giving a model
-an unchecked scalar override. Unknown work may remain an opaque total.
+## Reorg judgments
 
-## Cost-only reorgs
+Yukon continues dispatching its ordinary workflow. An organizer-reviewed
+`reorg/plan.json` entry supplies a previous judgment for an exact track, package
+and source/destination configuration. Unlisted submissions receive ordinary review.
 
-Yukon still dispatches its ordinary intake, judge and score workflow. A protected
-`reorg/plan.json` entry selects cost-only mode for an exact track and package.
-Unlisted packages receive normal review. Entries pin both source and destination
-configuration hashes: changing the algorithm, target, success rules or other work
-semantics cannot silently inherit an old qualification. The initial v4-to-v5 entry
-also explicitly authorizes the accounting-code migration; later v5 entries change
-only prices. A code change needs a reviewed configuration pin, not just a prompt.
+The reorg judge receives the original submission, original qualification judgment,
+latest judgment and intervening cost reviews. It reuses validity reasoning where
+applicable and revisits only what the changed policy or configuration requires.
+If the retained reasoning is insufficient, it reports `needs_evidence` rather than
+inventing assumptions or issuing a score. Target, algorithm, success probability
+and lane remain bound to the unchanged submission.
 
-1. Download the trusted workflow's review artifact and verify its evidence/dossier:
+The score rule is explicit:
 
-   ```sh
-   python3 scripts/archive_review.py --evidence /path/runs/RUN/judge-evidence.json \
-     --dossier /path/judge-dossier.json
-   ```
+- Same scoring policy: retain the latest accepted score exactly. A first reorg
+  retains the submitted score; a later reorg retains the previous reorg's score.
+  A tighter reconstruction or unrelated prompt/checker change does not alter it.
+- Changed scoring policy: the judge gives a revised computation bound and a short
+  calculation with evidence references. No prescribed intermediate ledger is needed.
 
-   This writes a local, ignored cache and imports any `rescore-history.json`
-   beside the dossier. Keep that bundled history when downloading a review.
-2. Review the emitted entry into `reorg/plan.json`. In `reorg/artifacts.json`, map
-   its `source` packet hash to the trusted workflow's `run_id` and `artifact_id`.
-   Include baselines that should also be repriced. Only IDs and hashes enter Git;
-   the organizer-reviewed pins establish provenance, not participant links.
-3. Merge the reviewed policy/plan and perform the usual managed Yukon reorg.
-   The workflow downloads that exact prior artifact using its existing
-   `actions: read` permission and verifies the packet checksum and full ancestry.
-   Intake rechecks the original submission and certificates; original experiment
-   evidence is inherited unchanged. Only the cost reviewer runs. It receives the
-   original evidence and full qualification anchor plus the history of cost reviews.
-4. The scorer verifies the chain, preserves qualification and success probability,
-   and prices the new ledger deterministically. Memory, data and advice remain
-   unchanged. Original time and preprocessing bounds appear as `declaredTimeLog2`
-   and `declaredPreprocessingLog2`, with their original model and prices; the new
-   score records its ledger, weights and source packet.
-5. The new review artifact includes `rescore-history.json` with all required prior
-   packets. Pin this newest artifact for the next reorg; earlier artifacts need
-   not remain available. Earlier scalar scores are never treated as raw counts.
+Scoring policy identity is the public cost-model ID plus the selected target's
+actual operation weights. Bump the public ID when accounting rules change; a
+price-only change is detected without a version bump. Changes to other targets'
+prices, comments, judge prompts or general configuration hashes do not by themselves
+change a submission's scoring policy. Organizer pins still authorize the exact
+configuration transition independently of this score comparison.
 
-Artifacts currently expire after 30 days. If the pinned artifact has expired or
-is missing, the reorg stops before review; it does not silently repeat qualification.
-An organizer must restore a trusted backup or explicitly choose a fresh full review.
+The final review contains only status, a computation bound (or null when evidence
+is insufficient), and a concise explanation. The harness supplies stage/version/
+binding metadata and preserves the previous score when policy is unchanged.
+Memory, data and advice metrics remain reported separately. Scores record the
+original declared bound, previous score, `rescoreMode` and source packet.
 
-Unknown work B at original weights w is repriced conservatively as
-`B * max(new_weight / original_weight)`. Its original weights remain attached
-through every reorg. Under the v4-to-v5 discounts an opaque v4 bound therefore
-stays unchanged. Missing decomposition does not create a new validity failure.
-Incomplete cost reviews emit no score and report that further evidence is needed.
-The history is bounded to 32 records and 2 MiB of model input; exceeding either
-limit stops explicitly rather than silently dropping provenance.
+## Artifact handoff
 
-The initial dev plan pinned 16 qualified baselines and 9 qualified submissions.
-It is preserved verbatim in [the historical plan](../reorg/history/pre-blake3-keccak800-plan.json).
-The BLAKE3/Keccak[800] addition changes trusted checker/schema/configuration
-fingerprints, so those exact destination pins are no longer current. The active
-plan is empty: future evaluations use ordinary full review, rather than silently
-repinning or inheriting old qualification under changed code. Existing stored
-Yukon scores are not modified by this source change. A future cost-only reorg
-requires new reviewed pins and matching evidence.
+1. Download the trusted workflow's review artifact, including its bundled history.
+   Run `scripts/archive_review.py --evidence PATH --dossier PATH` to verify and
+   cache it locally and print a proposed plan entry.
+2. Review the entry into `reorg/plan.json`. Map its source packet hash to the trusted
+   workflow's `run_id` and `artifact_id` in `reorg/artifacts.json`. Only IDs and
+   hashes enter Git; the full judgments stay in workflow artifacts.
+3. Merge the reviewed plan and perform the normal managed Yukon reorg. The workflow
+   downloads the pinned artifact and checks its content and ancestry before review.
+4. Pin the newest review artifact for a subsequent reorg. It bundles the prior
+   judgments in `rescore-history.json`, so earlier artifacts need not survive
+   independently. Legacy ledger-based judgments remain readable at their original
+   recorded prices; they are never retroactively reinterpreted as new reviews.
+
+Artifacts currently expire after 30 days. Missing or mismatched artifacts stop
+explicitly; restore a trusted backup or choose a fresh review. History is bounded
+to 32 records and 2 MiB of model input, with an explicit error on overflow.
+
+The initial migration plan is retained in
+[the historical plan](../reorg/history/pre-blake3-keccak800-plan.json). The active
+plan is empty. This source change does not alter stored Yukon scores or initiate
+a reorg; future inheritance requires fresh organizer-reviewed pins.
