@@ -24,38 +24,5 @@
   ],
   "baseline_improved": "blake3-r2-nominal-v2",
   "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json",
-  "resource_ledger": {
-    "schema_version": "resource-ledger-v1",
-    "success_probability": 0.5,
-    "coverage": "Entire one-batch algorithm, including setup, all failed samples, sorting, scan and final verification. Disjoint target compression and other word-operation categories.",
-    "components": [
-      {
-        "id": "hashes",
-        "phase": "Sampling and final verification",
-        "operation": "target_compression",
-        "count_log2": 130,
-        "bound_kind": "upper_bound",
-        "status": "supported",
-        "source_weights": null,
-        "evidence": [
-          "proof:279"
-        ],
-        "assumptions": []
-      },
-      {
-        "id": "ram",
-        "phase": "All non-compression work, including initialization",
-        "operation": "word_operation",
-        "count_log2": 149,
-        "bound_kind": "upper_bound",
-        "status": "supported",
-        "source_weights": null,
-        "evidence": [
-          "proof:279"
-        ],
-        "assumptions": []
-      }
-    ]
-  }
+  "certificate_manifest": "certificates/manifest.json"
 }

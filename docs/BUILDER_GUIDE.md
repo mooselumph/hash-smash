@@ -91,6 +91,6 @@ provide local judge access. A local score does not replace Yukon's validation of
 the exact imported or submitted content.
 
 For deployment, use the [Dev runbook](./YUKON_DEV_SETUP.md): one import at the
-repository root, with no lane-specific import root. Keep all 12 imported exploratory baseline checks
-independent; rigorous packages remain local. The 4 unresolved Poseidon slots stay inactive; current platform limits and
+repository root, with no lane-specific import root. Keep all 20 imported baseline checks
+independent; the four new BLAKE3/Keccak[800] rigorous packages remain local. The 4 unresolved Poseidon slots stay inactive; current platform limits and
 target-definition prerequisites are documented there.

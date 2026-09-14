@@ -3,8 +3,8 @@
 HashSmash is a Yukon-compatible benchmark for AI-assisted review of cryptanalytic
 collision claims. Each target has independent exploratory and rigorous lanes.
 The roster has **28 planned slots: 24 locally runnable lanes and 4 reserved Poseidon
-slots**. The Yukon manifest exposes **12 exploratory tracks**. Rigorous packages
-and local review remain available, but are excluded from this import surface.
+slots**. The Yukon manifest preserves the **20 registered tracks: 12 exploratory
+and 8 existing rigorous tracks**. The four BLAKE3/Keccak[800] rigorous lanes remain local.
 The organizer selected BLAKE3 rounds 1/2 and Keccak[800] rounds 5/6 on 2026-09-13.
 
 Solvers start with [TASK.md](./TASK.md), the single entry point for assigned-track
@@ -81,7 +81,7 @@ The SHA-1 pilot and nine local tracks have been retired.
 
 Follow [YUKON_DEV_SETUP.md](./docs/YUKON_DEV_SETUP.md) to import the repository root once
 as `hashsmash`. The schema-v2 [`benchmark.json`](./benchmark.json) declares all
-twelve exploratory tracks with unique names such as `sha256-r31-exploratory`
+twenty tracks with unique names such as `sha256-r31-exploratory`
 and `blake3-r1-exploratory`. There is no `rootDir` override or separate lane import.
 Lane metadata remains in the protected registry, the validated claim binding,
 and each generated score's `metrics.lane`. Yukon track names include the lane
@@ -96,11 +96,11 @@ workflow wrappers separate deterministic intake, secret-bearing review, and
 final scoring. The score artifact contains that exact repository-relative path;
 qualification failures withhold a score.
 
-A fresh import queues twelve exploratory baseline workflows. To extend an existing
+A fresh import queues twenty baseline workflows. To extend an existing
 challenge, use Yukon’s import-new-tracks operation, documented in the
 [operator runbook](./docs/YUKON_DEV_SETUP.md); it queues only newly declared tracks.
 It does not delete existing rigorous records or open submissions. The manifest
-stays below Yukon’s 20-track limit. The four undefined Poseidon slots remain deferred.
+matches Yukon’s 20-track limit. The four undefined Poseidon slots remain deferred.
 
 Before opening, test Yukon-driven validation, non-editable-path rejection, and
 promotion while preserving sibling tracks in both lanes. Humans review harness
