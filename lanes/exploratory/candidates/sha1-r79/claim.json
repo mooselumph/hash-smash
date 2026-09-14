@@ -6,7 +6,7 @@
   "rounds": 79,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 94,
+    "time_log2": 80.5,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 88,
     "data_log2": 81,
@@ -16,10 +16,11 @@
   },
   "restrictions": [
     "Complete fixed-IV SHA-1 with prefix rounds 0 through 78, standard padding and feed-forward, and all 160 output bits.",
-    "Inputs are independent uniform 32-byte messages; ideal random-word access is the charged primitive in collision-frontier-v4.",
-    "A single bounded N=2^80 attempt uses two arrays and deterministic merge sort; identical-input matches are excluded.",
+    "Inputs are independent uniform 32-byte messages; ideal random-word access is the charged primitive in collision-frontier-v5.",
+    "A single bounded N=2^80 attempt uses two record arrays, one counter array, and a two-pass stable counting-sort (least-significant-digit-first radix sort over two 80-bit digits); identical-input matches are excluded.",
     "Analytic upper bounds only: no executed full-scale search, stored collision advice, cryptanalytic heuristic, or claimed improvement over the nominal reference.",
-    "The schema-required baseline_improved value sha1-r79-nominal-v2 is a reference identifier. The claimed scalar is 94 > 80, so this construction does not improve that numerical nominal reference."
+    "Every 256-bit word operation is charged at 1/1957 of a target compression under collision-frontier-v5; the claimed scalar 80.5 upper-bounds the reconstructed total 2^80.1.",
+    "The schema-required baseline_improved value sha1-r79-nominal-v2 is a reference identifier. The claimed scalar is 80.5 > 80, so this construction does not improve that numerical nominal reference."
   ],
   "baseline_improved": "sha1-r79-nominal-v2",
   "heuristics": [],

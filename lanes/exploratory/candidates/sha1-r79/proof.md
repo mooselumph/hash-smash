@@ -1,12 +1,16 @@
-# A distribution-free baseline for complete SHA-1 with 79 prefix rounds
+# A distribution-free radix-sort baseline for complete SHA-1 with 79 prefix rounds
 
-The scalar below is `time_log2` under `collision-frontier-v4`. Memory remains
-a separately reported resource bound.
+The scalar below is `time_log2` under `collision-frontier-v5`. Memory remains
+a separately reported resource bound and contributes nothing to the scalar.
 
 This package selects `sha1-r79-prefix-v1`, ordinary collisions, 79 rounds,
-and the exploratory lane under `paired-lanes-v1` and `collision-frontier-v4`.
+and the exploratory lane under `paired-lanes-v1` and `collision-frontier-v5`.
 Its claim is an upper bound for a finite randomized RAM algorithm, not a
 measurement, an executed collision search, or a cryptanalytic improvement.
+It improves the previously promoted package for this track (an analytic
+merge-sort birthday construction scored 82.663) by replacing the 80-pass
+merge sort with a two-pass radix sort and by re-pricing every word operation
+at the collision-frontier-v5 rate of 1/1957 per 256-bit operation.
 
 ## 1. Parameters and claimed bounds
 
@@ -20,8 +24,8 @@ organizer's probabilistic RAM model, not a seeded PRNG or a random oracle.
 
 | Claim field | Upper bound and units |
 | --- | --- |
-| `time_log2: 94` | At most 2^94 charged operations, in the model's target-compressions unit; each ordinary RAM primitive also costs one unit. |
-| `memory_log2_bytes: 88` | At most 2^88 bytes of peak memory, including both arrays, code, constants, messages, retained coins, and scratch. |
+| `time_log2: 80.5` | At most 2^80.1 charged operations, in the model's target-compressions unit; one selected-round target compression costs 1 and each ordinary 256-bit RAM primitive costs 1/1957. |
+| `memory_log2_bytes: 88` | At most 2^88 bytes of peak memory, including both record arrays, the counter array, code, constants, messages, retained coins, and scratch. |
 | `data_log2: 81` | At most N+2 <= 2^81 complete selected-target evaluations counting final verification; at most N distinct chosen messages. |
 | `preprocessing_log2: 20` | At most 2^20 charged initialization operations, included in total time. |
 | `success_probability: 0.39` | Probability of returning distinct complete messages with equal full digests is greater than 0.39. |
@@ -31,10 +35,10 @@ The data field counts chosen-message evaluations, not bytes or entropy bits.
 There is no external dataset. Exactly N random-word draws consume 256N
 random bits; the sampled input bytes counting multiplicity total 32N; the
 bytes submitted to hash evaluations total at most 32(N+2). No random tape is
-stored separately from the messages. The scalar is 94, a conservative
+stored separately from the messages. The scalar is 80.5, a conservative
 upper bound rather than an optimality claim. The schema-required field
 `baseline_improved` contains the reference identifier `sha1-r79-nominal-v2`.
-The nominal reference value is 80; this construction's scalar is 94 > 80,
+The nominal reference value is 80; this construction's scalar is 80.5 > 80,
 which is worse under the lower-is-better numerical comparison. The identifier
 is metadata, and the candidate makes no assertion of improvement over that
 reference or of Pareto dominance. The nominal entry is not an established
@@ -84,18 +88,21 @@ complete-message, 79-prefix-round hashing with full output.
 ## 3. Bounded algorithm and storage
 
 Reserve two disjoint arrays A and B of N records. Each aligned record is
-two 256-bit words (64 bytes): the digest integer followed by the entire
-message integer. Put both arrays after a fixed code and scratch region.
-Record i has byte address base+(i << 6); its second word is at address+32.
-All byte addresses and counters are below 2^88 and fit in one 256-bit word.
-Reservation is a choice of disjoint RAM addresses, not a library allocation;
-each array word is written before being read, so no clearing pass is needed.
-Both arrays are nevertheless fully included in peak memory.
+two 256-bit words (64 bytes): the packed digest integer followed by the
+entire message integer. Reserve one counter array C of 2^80 words (each
+counter holds values below 2^80 < 2^256, so one 256-bit word suffices).
+Record i of an array has byte address base+(i << 6); its second word is at
+address+32. Counter j has byte address cbase+(j << 5). All byte addresses
+and counters are below 2^88 and fit in one 256-bit word. Reservation is a
+choice of disjoint RAM addresses, not a library allocation; each record word
+is written before being read, and each counter word is written by the
+clearing loop before being read, so no uninitialized read occurs. Both
+arrays and the counter array are nevertheless fully included in peak memory.
 
-Order records lexicographically by unsigned digest and then unsigned message.
-For two exactly equal records take the left one. A record copy copies both
-words. The algorithm uses the following loops, not a library sort, hash
-table, recursion, or search oracle:
+The sort key is the 160-bit packed digest, split into a low digit
+lo(X) = X mod 2^80 (bits 0..79) and a high digit hi(X) = floor(X/2^80)
+(bits 80..159). The algorithm is a least-significant-digit-first radix sort
+with two stable counting-sort passes, followed by a linear scan:
 
     N := 1 << 80
     for i := 0,...,N-1:
@@ -103,23 +110,20 @@ table, recursion, or search oracle:
         X := H(the 32-byte big-endian encoding of R)
         A[i] := (X,R)
 
-    source := A; destination := B; width := 1
-    while width < N:
-        for lo := 0,2*width,4*width,...,N-2*width:
-            mid := lo+width; hi := mid+width
-            i := lo; j := mid; k := lo
-            while k < hi:
-                if i == mid: choose right
-                else if j == hi: choose left
-                else if source[i] <= source[j] in the stated total order:
-                    choose left
-                else: choose right
-                if choose left:
-                    destination[k] := source[i]; i := i+1
-                else:
-                    destination[k] := source[j]; j := j+1
-                k := k+1
-        swap(source,destination); width := 2*width
+    source := A; destination := B
+    for pass in (lo, hi):                       # two passes
+        for j := 0,...,2^80-1: C[j] := 0
+        for i := 0,...,N-1:
+            k := pass(source[i].digest)         # extract 80-bit digit
+            C[k] := C[k] + 1
+        s := 0
+        for j := 0,...,2^80-1:                  # prefix sums, in place
+            t := C[j]; C[j] := s; s := s + t
+        for i := 0,...,N-1:                     # stable scatter
+            k := pass(source[i].digest)
+            destination[C[k]] := source[i]
+            C[k] := C[k] + 1
+        swap(source,destination)
 
     for k := 1,...,N-1:
         (x,r) := source[k-1]; (y,s) := source[k]
@@ -131,30 +135,38 @@ table, recursion, or search oracle:
             else: return failure
     return failure
 
-N is a power of two: every run has exactly width records, every pair is
-complete, and there are exactly 80 merge passes. Exponential loops are not
-unrolled. Swapping source/destination exchanges pointers. All N inputs are
-sampled before scanning. The algorithm stops at the first nontrivial match,
-or returns failure after all N-1 adjacent pairs. There is one attempt, no
-restart, and no success amplification. Verification failure is a specified
-halt but Section 4 proves it is unreachable under the algorithm's semantics.
+N is a power of two and each digit is exactly 80 bits, so every pass uses
+the full counter array. Exponential loops are not unrolled. Swapping
+source/destination exchanges pointers. All N inputs are sampled before
+sorting. The algorithm stops at the first nontrivial match, or returns
+failure after all N-1 adjacent pairs. There is one attempt, no restart, and
+no success amplification. Verification failure is a specified halt but
+Section 4 proves it is unreachable under the algorithm's semantics.
 
 ## 4. Deterministic correctness
 
-Every generated record is (H(R),R). A merge copies the smaller available
-head, or the remaining head when a run is exhausted. Induction on emitted
-records proves that it preserves the input multiset and produces the sorted
-union. Induction over width proves that the final source contains exactly
-the N sampled records in total order, including identical repeated messages.
+Every generated record is (H(R),R). Each counting pass first computes, for
+every digit value k, the number of records with that digit, then replaces
+counts by running offsets (the prefix-sum loop leaves in C[k] the number of
+records with digit strictly below k), then walks the source in index order
+and places each record at the next free position for its digit. That is the
+standard stable counting sort: induction on i shows the i-th source record
+is placed after exactly the earlier source records with equal digit, so each
+pass preserves the relative order of records with equal digits (stability)
+and produces an array sorted by the pass digit.
 
-Each digest's records are contiguous. Within such a group, message integers
-are sorted. If two message values differ, some two consecutive records lie
-at a boundary between unequal values. The scan reaches such a boundary and
-finds equal digests but unequal messages. Repeated copies of one message
-cannot conceal that boundary. Conversely, every candidate output has unequal
-32-byte encodings and equal full digest integers. H is deterministic, so
-recomputation accepts. Thus success occurs exactly when two distinct sampled
-messages have equal complete hashes. The algorithm returns no false collision.
+After the low pass the array is sorted by lo; after the subsequent stable
+high pass it is sorted by hi, and within equal hi it remains sorted by lo.
+Hence the final array is sorted by the full 160-bit digest: standard
+least-significant-digit-first radix-sort correctness. Each digest's records
+are contiguous. Within such a group, if two message values differ, some two
+consecutive records lie at a boundary between unequal message values. The
+scan reaches such a boundary and finds equal digests but unequal messages.
+Repeated copies of one message cannot conceal that boundary. Conversely,
+every candidate output has unequal 32-byte encodings and equal full digest
+integers. H is deterministic, so recomputation accepts. Thus success occurs
+exactly when two distinct sampled messages have equal complete hashes. The
+algorithm returns no false collision.
 
 ## 5. Distribution-free probability proof
 
@@ -206,48 +218,40 @@ target, not an asymptotic or empirical extrapolation.
 
 ## 6. Time and memory ledger
 
-All accounting is in the fixed 256-bit RAM: load/store, addition/subtraction,
+All accounting is in the fixed 256-bit RAM under collision-frontier-v5: one
+selected-round target compression costs 1; load/store, addition/subtraction,
 bitwise operation, shift/rotation, comparison, conditional branch and fresh
-uniform word each cost one. The selected compression costs one. No unit-cost
-sort or arbitrary-precision arithmetic is used. Moves, address arithmetic,
-loop control, argument construction and scratch accesses are charged.
+uniform word each cost 1/1957. No unit-cost sort or arbitrary-precision
+arithmetic is used. Moves, address arithmetic, loop control, argument
+construction and scratch accesses are charged. Loops keep running pointers,
+so record and counter addresses cost one addition per step after one shift
+and one addition at loop entry.
 
-Here are explicit primitive expansions bounding the pseudocode. Reading a
-record needs a shift, base addition, first load, addition of 32, and second
-load: at most 5 operations. Writing uses the analogous 5. A total-order
-test needs at most 3 comparisons and 3 branches: 6. A register assignment
-can use a load and store (2 operations). A two-word move between register
-pairs therefore costs at most 4. Counter increments take one addition;
-each loop test takes a comparison and branch. All unconditional control
-transfers are also charged one branch, implementable as a branch on true.
+Generation costs at most 16 word operations per message: one random draw,
+at most 2 for the two block words and IV arguments, one compression (charged
+as 1 unit, not a word operation), at most 8 for masking/packing the five
+output words into one word, 2 for writing the record, and at most 3 for
+counter control, call/return, and scratch moves. These allowances sum to 16.
+All N trials, successful or not, count.
 
-Generation costs at most 128 per message: one random draw, at most 16 for
-the two block words and IV arguments, one compression, at most 32 for
-masking/packing the five output words, 5 for writing the record, and at most
-32 for counter control, call/return, and scratch moves. In particular there
-is no hidden byte conversion: R is the first block word and the second is
-a constant. Packing a digest uses four shifts and four ORs plus loads/masks.
-These allowances sum to 87, below 128. All N trials, successful or not, count.
+Each pass clears the counter array (at most 4 word operations per counter:
+one store, one pointer addition, one comparison, one branch), counts records
+(at most 11 per record: one load, two for digit extraction, two for counter
+address, one load, one addition, one store, one pointer addition, two loop
+control), prefix-sums the counters in place (at most 6 per counter: one
+load, one addition, one store, three loop control), and scatters stably (at
+most 16 per record: two loads, two for digit extraction, two for offset
+address, one load, two for destination address, two stores, one offset
+addition, one store, one pointer addition, two loop control). Per pass this
+is at most 27N+10*2^80 word operations; two passes cost at most
+54N+20*2^80 = 74N word operations.
 
-For each merge emission allow at most 10 for two head reads, 6 for the
-total-order test, 4 for exhaustion comparisons/branches, 5 for the record
-write, and 39 for choosing a side, index updates, temporary moves, loop
-test, and jumps. This sums to 64; conservatively charge 96. Exhausted
-paths read only valid heads. Initializing/advancing each pair of runs costs
-at most 32; pass pointer/width setup and exit cost at most 32. There are
-N emitted records and at most N/2 run pairs in a pass, so
-
-    cost per pass <= 96N+32(N/2)+32 <= 128N.
-
-Both arrays' entire contents are overwritten every pass before becoming the
-next source. No extra full-array copy occurs. There are 80 passes.
-
-A scan iteration costs at most 10 for adjacent record reads, 4 for equality
-and distinctness comparisons/branches, and 32 for index/address scratch,
-updates, control, and return checks. Charge 64N for the entire scan.
-At most one final verification occurs; charge 256 for its two block
-preparations, two complete hashes, full comparisons, and two 32-byte
-output writes. Even early success was charged the whole scan.
+A scan iteration costs at most 7 word operations: two adjacent digest loads
+through a running pointer, one comparison, one branch, one pointer addition,
+and two loop control. Charge 7N for the entire scan. At most one final
+verification occurs; charge 2^10 word operations for its two block
+preparations, two complete hashes (2 units), full comparisons, and two
+32-byte output writes. Even early success was charged the whole scan.
 
 Program storage is finite uniform code, not omitted advice. An explicit
 encoding uses at most four 256-bit words per primitive instruction: opcode
@@ -273,21 +277,32 @@ for writing/copying this finite code, constants and scratch and setting the
 array base addresses. The program and fixed constants are specified above;
 there is no target-dependent search, precomputed collision, external advice,
 or hidden dataset. This initialization is the entire preprocessing phase.
-The two table regions need no initial writes because every read follows a
-write, as specified in Section 3.
+The record and counter regions need no initial writes beyond the charged
+clearing loop because every read follows a write, as specified in Section 3.
 
-Total worst-case time, including initialization and verification, is
+Total worst-case word operations, including initialization and verification,
+are
 
-    T <= 2^20 + 128N + 80*128N + 64N + 256
-       = 10432N+2^20+256
-       < 16384N = 2^94.
+    W <= 2^20 + 16N + 74N + 7N + 2^10
+       = 97N + 2^20 + 2^10
+       < 128N = 2^87.
 
-Both N-record arrays together occupy 128N=2^87 bytes. No recursion stack,
-third array, separate message list, or extra random tape is used. The
-message fields are the retained random choices. Including code, constants,
-all scratch, and the two output messages, peak allocated memory is
+Total charged time in target-compression units is therefore
 
-    S < 2^87+2^20 < 2^88 bytes.
+    T <= (N + 2) * 1 + W/1957
+       < 2^80 + 2 + 2^87/1957
+       = 2^80 + 2^87/1957 + 2
+       < 2^80 * (1 + 2^7/1957) + 2
+       < 2^80 * 1.066
+       < 2^80.1.
+
+Both N-record arrays together occupy 128N=2^87 bytes, and the counter array
+occupies 32*2^80=2^85 bytes. No recursion stack, fourth array, separate
+message list, or extra random tape is used. The message fields are the
+retained random choices. Including code, constants, all scratch, and the two
+output messages, peak allocated memory is
+
+    S < 2^87 + 2^85 + 2^20 < 2^88 bytes.
 
 ## 7. Evidence scope
 
