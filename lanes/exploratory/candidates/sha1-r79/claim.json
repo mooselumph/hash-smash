@@ -6,22 +6,70 @@
   "rounds": 79,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 94,
+    "time_log2": 62,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 88,
-    "data_log2": 81,
-    "preprocessing_log2": 20,
-    "success_probability": 0.39,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 24,
+    "data_log2": 62,
+    "preprocessing_log2": 50,
+    "success_probability": 0.45,
+    "nonuniform_advice_log2_bytes": 16
   },
   "restrictions": [
-    "Complete fixed-IV SHA-1 with prefix rounds 0 through 78, standard padding and feed-forward, and all 160 output bits.",
-    "Inputs are independent uniform 32-byte messages; ideal random-word access is the charged primitive in collision-frontier-v4.",
-    "A single bounded N=2^80 attempt uses two arrays and deterministic merge sort; identical-input matches are excluded.",
-    "Analytic upper bounds only: no executed full-scale search, stored collision advice, cryptanalytic heuristic, or claimed improvement over the nominal reference.",
-    "The schema-required baseline_improved value sha1-r79-nominal-v2 is a reference identifier. The claimed scalar is 94 > 80, so this construction does not improve that numerical nominal reference."
+    "Exactly sha1-r79-prefix-v1: fixed standard IV, prefix rounds 0 through 78 on every padded block, standard FIPS 180-4 padding and feed-forward, full 160-bit digest, ordinary two-message collision only.",
+    "Two-block identical-prefix differential attack: messages P || B1 || B2 with a shared 64-byte prefix; block 1 maps chaining difference 0 to a fixed nonzero dO, block 2 maps dO back to 0 after round 78; the identical padding block preserves the collision.",
+    "Hard budgets: each near-collision block search is capped at 2^60.9 model units (one 79-round target compression = 1, any other 256-bit word operation = 1/1957); preprocessing charged at 2^50; verification at most 2^10; total at most 2^61.91 < 2^62 including all failed trials.",
+    "Analytic upper bound under explicitly declared heuristics H-path-79, H-search-exp, H-transfer, H-preproc with supporting experiment-backed H-local-add; no executed full-scale search, no stored collision, no certificate; the certificate manifest is intentionally empty.",
+    "The exact 79-round condition tables are not re-derived in this package; existence and cost of the paths rest on the published executed/benchmarked 80-round attacks, the published reduced-round lineage, and the stated one-round truncation argument. This disclosed gap is the exploratory-lane content of the claim.",
+    "The schema-required baseline_improved value sha1-r79-nominal-v2 is a reference identifier; the claimed scalar 62 is an honest numerical comparison against the nominal display exponent 80, which is not an established attack, qualified baseline, or security bound."
   ],
   "baseline_improved": "sha1-r79-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-path-79",
+      "statement": "For the 79-round target there exist two differential near-collision paths in Wang's disturbance-vector family (block 1: chaining difference 0 to a fixed nonzero dO after round 78 with feed-forward; block 2: dO back to 0 after round 78 with feed-forward) whose standard message-modification/neutral-bit/boomerang search has expected per-block cost no larger than the published 80-round identical-prefix figures, i.e. expected total at most 2^61.2 compression-equivalents before the transfer adjustment of proof.md Section 8.",
+      "role": "score-critical",
+      "scope": "Complete fixed-IV 79-round SHA-1 (rounds 0..78), two-block identical-prefix ordinary collision; per-block search cost and path existence for the round-shifted disturbance vector.",
+      "extrapolation": "From the executed 80-round collision (2^63.1 spent, SHAttered), the benchmark-backed 80-round identical-prefix expectation 2^61.2 (Shambles), and the published reduced-round collisions at 64/70/73/75 steps (2^35, 2^44, 2^50.7, 2^57.7) from the same disturbance-vector family, to the unexecuted 79-round prefix target via one-round truncation.",
+      "evidence_ids": ["proof:72-102", "proof:230-264"],
+      "limitations": "The exact 79-round condition tables are not exhibited or independently re-derived in this package; the claim relies on the structural truncation argument (fewer rounds carry no more conditions) plus the published round-scaling record. If no valid 79-round path with this cost exists, the claimed scalar fails."
+    },
+    {
+      "id": "H-search-exp",
+      "statement": "Each near-collision block search behaves as a long sequence of low-probability trials whose cost to success is exponentially distributed with mean E_i, so a hard budget B_i succeeds with probability 1 - exp(-B_i/E_i); with B1 = B2 = 2^60.9 and E_1 + E_2 <= 2^61.4 the overall success probability is at least 0.507 for any split, claimed at 0.45.",
+      "role": "score-critical",
+      "scope": "Success-probability model of the two budgeted block searches under fresh independent algorithmic coins with the target fixed.",
+      "extrapolation": "From the observed agreement between pre-computed estimates and actually spent work in the executed 80-round attacks (SHAttered spent 2^63.1 against the 2^61 theoretical estimate; the Shambles chosen-prefix computation completed within its budgeted two months) to the tail behavior of the same search processes at 79 rounds.",
+      "evidence_ids": ["proof:103-140", "proof:159-185", "proof:230-264"],
+      "limitations": "Per-trial independence is not proved and small-sample tail behavior is not directly observed at full scale; the claimed success probability 0.45 is set below the analyzed worst case 0.507 to absorb model error, and all failed trials are charged inside the budgets."
+    },
+    {
+      "id": "H-transfer",
+      "statement": "Published GPU SHA-1-equivalent totals for the 80-round attack transfer to collision-frontier-v5 model units for the 79-round attack at the ratio of one compression to its reference word-operation cost (1957 for sha1-r79 versus about 1982 for the 80-round figure), giving expected total at most 2^61.2 * (1982/1957) <= 2^61.22, used with margin as 2^61.4.",
+      "role": "supporting",
+      "scope": "Conversion of the published measured work totals (which bundle round-function evaluations and all other word operations) into the organizer cost model.",
+      "extrapolation": "From GPU wall-clock-derived 80-round totals to the model's word-RAM prices; assumes the published implementations' non-compression word work is priced conservatively by the 1/1957 rate.",
+      "evidence_ids": ["proof:186-229"],
+      "limitations": "Hardware-specific constants differ from the model's reference normalization; the ledger carries explicit margin and the executed SHAttered 2^63.1 anchors the upper side independently of the transfer."
+    },
+    {
+      "id": "H-preproc",
+      "statement": "One-time construction of the two 79-round differential paths (disturbance-vector selection and condition-table search with published tooling, starting from the public 80-round paths) plus the one-time prefix-block search costs at most 2^50 compression-equivalents, charged in total time.",
+      "role": "supporting",
+      "scope": "Preprocessing only; excludes the online search, which is budgeted separately at 2^61.9.",
+      "extrapolation": "From published path-search practice (hashclash-style local search and joint local-collision analysis) to a conservative fixed bound; no precise historical figure is published.",
+      "evidence_ids": ["proof:72-102", "proof:186-229"],
+      "limitations": "The 2^50 bound is an estimate; the claimed scalar is insensitive to it because even 2^58 preprocessing leaves the total below 2^62."
+    },
+    {
+      "id": "H-local-add",
+      "statement": "The local modular-addition XOR-differential transition probabilities used by the per-round path probability calculus of the cited attacks are exactly computable finite counts (for example: MSB flip of one addend gives an MSB-only output difference with probability 1; LSB flip of one addend gives an LSB-only output difference with probability 1/2).",
+      "role": "supporting",
+      "scope": "Single modular additions at 8-bit width, exhaustively enumerated by the organizer evaluator; methodology evidence for the calculus underlying path probabilities.",
+      "extrapolation": "None claimed beyond the stated finite counts: the experiments do not establish any multi-round or full-scale probability, which remains covered by H-path-79.",
+      "evidence_ids": ["experiment:ax-msb-single", "experiment:ax-lsb-single", "experiment:ax-msb-both", "experiment:ax-lowtwo-single", "proof:308-330"],
+      "limitations": "Exact 8-bit single-addition counts only; composed round behavior is not measured and is not claimed to follow from these checks."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }

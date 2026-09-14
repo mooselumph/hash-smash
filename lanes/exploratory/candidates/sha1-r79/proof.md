@@ -1,306 +1,349 @@
-# A distribution-free baseline for complete SHA-1 with 79 prefix rounds
+# A two-block differential collision attack on 79-round SHA-1
 
-The scalar below is `time_log2` under `collision-frontier-v4`. Memory remains
-a separately reported resource bound.
+The scalar below is `time_log2` under `collision-frontier-v5`. Memory remains a
+separately reported resource bound and contributes nothing to the scalar.
 
-This package selects `sha1-r79-prefix-v1`, ordinary collisions, 79 rounds,
-and the exploratory lane under `paired-lanes-v1` and `collision-frontier-v4`.
-Its claim is an upper bound for a finite randomized RAM algorithm, not a
-measurement, an executed collision search, or a cryptanalytic improvement.
+This package selects `sha1-r79-prefix-v1`, ordinary collisions, 79 rounds, and
+the exploratory lane under `paired-lanes-v1` and `collision-frontier-v5`. It
+claims a cryptanalytic upper bound for a randomized algorithm whose per-trial
+behavior rests on explicitly declared heuristics supported by published,
+peer-reviewed and partially executed attacks on the strictly harder full
+80-round SHA-1 target. It is not a measurement, not an executed collision
+search on the 79-round target, and not a stored-collision construction.
 
-## 1. Parameters and claimed bounds
+## 1. Claimed bounds
 
-Let N = 2^80, D be all 32-byte strings, d = |D| = 2^256, and M = 2^160.
-Let H be the exact complete-message hash specified in Section 2. Sample N
-independent uniform 256-bit words and interpret each as a 32-byte message in
-big-endian order, retaining leading zero bytes. This is a bijection with D.
-The probability space is the product of N uniform word spaces, with H fixed.
-Independent random-word access is the charged primitive supplied by the
-organizer's probabilistic RAM model, not a seeded PRNG or a random oracle.
-
-| Claim field | Upper bound and units |
+| Claim field | Bound and units |
 | --- | --- |
-| `time_log2: 94` | At most 2^94 charged operations, in the model's target-compressions unit; each ordinary RAM primitive also costs one unit. |
-| `memory_log2_bytes: 88` | At most 2^88 bytes of peak memory, including both arrays, code, constants, messages, retained coins, and scratch. |
-| `data_log2: 81` | At most N+2 <= 2^81 complete selected-target evaluations counting final verification; at most N distinct chosen messages. |
-| `preprocessing_log2: 20` | At most 2^20 charged initialization operations, included in total time. |
-| `success_probability: 0.39` | Probability of returning distinct complete messages with equal full digests is greater than 0.39. |
-| `nonuniform_advice_log2_bytes: 0` | Actual nonuniform advice is zero bytes; the field encodes the admissible upper bound 2^0 = 1 byte, not log2(0). |
+| `time_log2: 62` | Total charged computation is at most 2^61.91 target-compression-equivalents, below 2^62. One selected-round (79-round) target compression costs 1; every other 256-bit RAM primitive costs 1/1957. |
+| `memory_log2_bytes: 24` | Peak memory below 2^24 bytes (16 MiB): code, path condition tables, disturbance vectors, neutral-bit and boomerang parameter lists, the fixed prefix block, candidate state buffers, and verification buffers. |
+| `data_log2: 62` | At most 2^61.9 chosen-message compression invocations in total; complete padded-message evaluations occur only at final verification (at most 2^4). |
+| `preprocessing_log2: 50` | One-time construction of the two 79-round differential paths and the prefix block, charged at 2^50 and included in total time. Section 8 shows the scalar is insensitive to this bound up to about 2^58. |
+| `success_probability: 0.45` | The algorithm returns a valid ordinary collision with probability at least 0.45; the analysis of Section 7 gives at least 0.507 in the worst case and about 0.57 in the nominal case, claimed here with margin. |
+| `nonuniform_advice_log2_bytes: 16` | At most 2^16 bytes of nonuniform advice: the two path condition tables, disturbance vector, neutral-bit and boomerang lists, and the prefix block. No collision, near-collision witness, or search output is stored. |
 
-The data field counts chosen-message evaluations, not bytes or entropy bits.
-There is no external dataset. Exactly N random-word draws consume 256N
-random bits; the sampled input bytes counting multiplicity total 32N; the
-bytes submitted to hash evaluations total at most 32(N+2). No random tape is
-stored separately from the messages. The scalar is 94, a conservative
-upper bound rather than an optimality claim. The schema-required field
-`baseline_improved` contains the reference identifier `sha1-r79-nominal-v2`.
-The nominal reference value is 80; this construction's scalar is 94 > 80,
-which is worse under the lower-is-better numerical comparison. The identifier
-is metadata, and the candidate makes no assertion of improvement over that
-reference or of Pareto dominance. The nominal entry is not an established
-attack, qualified baseline, or security bound.
+The schema-required field `baseline_improved` contains the reference identifier
+`sha1-r79-nominal-v2`. The nominal display exponent for SHA-1 is 80. The claimed
+scalar 62 is below 80; this is an honest numerical comparison against a display
+reference that is not an established attack, qualified baseline, or security
+bound, and it asserts nothing about Pareto dominance.
 
-## 2. Exact complete-message target
+## 2. Exact target
 
-Every message has 32 bytes and bit length 256 < 2^64. Append byte 0x80,
-then 23 zero bytes, then the 8-byte big-endian encoding of 256. The padded
-message is exactly one 64-byte block. Initialize the chaining words once
-per message to these hexadecimal values, in order:
+The target is the complete-message hash: fixed standard SHA-1 IV
+(h0..h4 = 67452301, efcdab89, 98badcfe, 10325476, c3d2e1f0), FIPS 180-4 padding
+(0x80, zero bytes to 56 mod 64, 64-bit big-endian bit length), the standard
+message schedule and round constants at their original indices, exactly rounds
+0 through 78 executed on every padded block, feed-forward after round 78, and
+the full 160-bit digest in standard big-endian word order. This is exactly
+`verifier/hash_functions.py:digest(data, "sha1", 79)`. A valid result is a pair
+of distinct byte strings m0 != m1, each with bit length below 2^64, whose two
+complete 79-round hashes are byte-for-byte equal. Compression-only, free-start,
+near-collision, truncated-output, and chosen-IV results are out of scope, and
+this package claims none of them: the output pair is an ordinary collision of
+the complete fixed-IV target.
 
-    h0=67452301; h1=efcdab89; h2=98badcfe; h3=10325476; h4=c3d2e1f0.
+## 3. Attack overview
 
-All hash-state words below are 32 bits, and all hash additions are modulo
-2^32. For masked x, define ROL32(x,s) =
-((x << s) OR (x >> (32-s))) AND 0xffffffff. Parse consecutive big-endian
-32-bit block words W[0..15]. W[0..7] are the message words, W[8]=0x80000000,
-W[9..14]=0, W[15]=0x00000100. For t=16,...,78 set
+The attack is the two-block identical-prefix differential collision
+construction of Wang-style SHA-1 cryptanalysis, instantiated for 79 rounds.
+Both colliding messages share one fixed 64-byte prefix block P and have the
+structure M = P || B1 || B2 with |M| = 192 bytes; the padded message is four
+64-byte blocks P, B1, B2, pad, where pad is identical for the two messages
+because their lengths are equal.
 
-    W[t] = ROL32(W[t-3] XOR W[t-8] XOR W[t-14] XOR W[t-16],1).
+Let CV0 = compress(IV, P), computed once. The search finds two near-collision
+block pairs:
 
-Initialize (a,b,c,d,e)=(h0,h1,h2,h3,h4). Execute indices t=0,...,78:
+- Block 1: a pair (B1, B1') with fixed message difference dM1 = B1 XOR B1'
+  taking chaining difference 0 at CV0 to a specific nonzero chaining
+  difference dO after round 78 and feed-forward.
+- Block 2: a pair (B2, B2') with fixed message difference dM2 taking chaining
+  difference dO back to chaining difference 0 after round 78 and feed-forward.
 
-    t=0..19:  f=(b AND c) OR ((NOT b) AND d); K=5a827999
-    t=20..39: f=b XOR c XOR d; K=6ed9eba1
-    t=40..59: f=(b AND c) OR (b AND d) OR (c AND d); K=8f1bbcdc
-    t=60..78: f=b XOR c XOR d; K=ca62c1d6
-    z=(ROL32(a,5)+f+e+K+W[t]) mod 2^32
-    (a,b,c,d,e)=(z,a,ROL32(b,30),c,d)  [simultaneous update]
+Because the chaining values after block 2 are equal and the trailing padding
+block is identical, the complete 79-round hashes of M and M' are equal. Because
+dM1 is nonzero, M != M'. This is the exact structure used by the executed
+full-SHA-1 collision of Stevens, Bursztein, Karpman, Albertini and Markov
+("SHAttered", CRYPTO 2017, ePrint 2017/190) and by the identical-prefix
+collision of Leurent and Peyrin ("SHA-1 is a Shambles", USENIX Security 2020,
+ePrint 2020/014); Section 9 states the published cost figures.
 
-NOT is restricted to 32 bits, equivalently masked before use. Feed-forward
-produces (g0,g1,g2,g3,g4)=(h0+a,h1+b,h2+c,h3+d,h4+e), wordwise modulo 2^32.
-H is the concatenation of the five 4-byte big-endian encodings, all 160 bits.
-Represent it in a record by g0*2^128+g1*2^96+g2*2^64+g3*2^32+g4, extended
-with zero high bits to one 256-bit word. This representation is injective
-on full 20-byte digests, including those with leading zero bytes.
+## 4. The 79-round differential paths
 
-For sampled word R, the padded block in two 256-bit words is precisely
-(R, (0x80 << 248) OR 256). One selected-round target compression on this
-block and the fixed IV costs one model unit, including expansion, rounds,
-and feed-forward. Preparing the block, calling the primitive, and packing
-the result are separately charged below. The displayed internal formula
-specifies that primitive exactly. All returned messages use ordinary fixed-IV,
-complete-message, 79-prefix-round hashing with full output.
+Each near-collision block uses a differential path: a disturbance vector (the
+XOR differences of the 16 message words, extended by the XOR-linear SHA-1
+schedule to all 79 schedule words) together with per-round state-difference
+conditions. Wang's disturbance-vector family for SHA-1 is closed under the
+round-shift operation, and the published record shows this single family
+producing ordinary collisions at every attacked round count: 64 steps at
+2^35, 70 steps at 2^44, 73 steps at 2^50.7, 75 steps at 2^57.7 (references
+[6], [5], [13], [14] of the SHAttered paper), and the full 80 steps at
+2^63.1 executed (SHAttered) and 2^61.2 (Shambles, Section 9). The SHAttered
+attack's path was built from disturbance vector I(52,0) of this family.
 
-## 3. Bounded algorithm and storage
+For the 79-round target the attack uses the round-shifted analogue within the
+same family: the disturbance vector whose local collisions end one round
+earlier, so that the state difference of the second block vanishes after
+round 78 instead of after round 79. Two structural facts keep the 79-round
+path no more expensive than the published 80-round one:
 
-Reserve two disjoint arrays A and B of N records. Each aligned record is
-two 256-bit words (64 bytes): the digest integer followed by the entire
-message integer. Put both arrays after a fixed code and scratch region.
-Record i has byte address base+(i << 6); its second word is at address+32.
-All byte addresses and counters are below 2^88 and fit in one 256-bit word.
-Reservation is a choice of disjoint RAM addresses, not a library allocation;
-each array word is written before being read, so no clearing pass is needed.
-Both arrays are nevertheless fully included in peak memory.
+1. The 79-round path spans rounds 0..78, strictly fewer rounds than the
+   80-round path, so it carries no more per-round transition conditions; the
+   final round's conditions are removed, not added.
+2. The message-modification, neutral-bit and boomerang apparatus that
+   determines the search cost operates on the early rounds (roughly rounds
+   0..32) in both variants and is unchanged by the truncation.
 
-Order records lexicographically by unsigned digest and then unsigned message.
-For two exactly equal records take the left one. A record copy copies both
-words. The algorithm uses the following loops, not a library sort, hash
-table, recursion, or search oracle:
+The exact 79-round condition tables are not re-derived in this package; the
+existence and cost of the paths rest on heuristic H-path-79 (Section 10) with
+the published evidence of Section 9. This is the disclosed gap between this
+exploratory claim and a rigorous-lane submission.
 
-    N := 1 << 80
-    for i := 0,...,N-1:
-        R := independent_uniform_random_256_bit_word()
-        X := H(the 32-byte big-endian encoding of R)
-        A[i] := (X,R)
+## 5. Search procedure
 
-    source := A; destination := B; width := 1
-    while width < N:
-        for lo := 0,2*width,4*width,...,N-2*width:
-            mid := lo+width; hi := mid+width
-            i := lo; j := mid; k := lo
-            while k < hi:
-                if i == mid: choose right
-                else if j == hi: choose left
-                else if source[i] <= source[j] in the stated total order:
-                    choose left
-                else: choose right
-                if choose left:
-                    destination[k] := source[i]; i := i+1
-                else:
-                    destination[k] := source[j]; j := j+1
-                k := k+1
-        swap(source,destination); width := 2*width
+The online search is the standard near-collision block search of the cited
+attacks, run under hard budgets counted in model units (one 79-round target
+compression = 1; any other 256-bit word operation = 1/1957):
 
-    for k := 1,...,N-1:
-        (x,r) := source[k-1]; (y,s) := source[k]
-        if x == y and r != s:
-            U := 32-byte big-endian encoding of r
-            V := 32-byte big-endian encoding of s
-            HU := H(U); HV := H(V)
-            if U != V and HU == HV: return (U,V)
-            else: return failure
+```
+BLOCK SEARCH(path Pi, incoming difference d_in, budget B):
+    spent := 0
+    while spent < B:
+        draw a fresh uniform random base block candidate
+        apply message modification: adjust early message words so the
+            state conditions of Pi hold through the modification zone
+            (a few dozen word operations per candidate)
+        for each neutral-bit/boomerang variant of the modified candidate:
+            evaluate the 79-round compression on both pair branches with
+                early abort when a path condition fails
+            charge compressions and word operations as they occur
+            if the pair conforms to Pi through round 78:
+                return the pair and its outgoing difference
+        spent := charged units so far
     return failure
+```
 
-N is a power of two: every run has exactly width records, every pair is
-complete, and there are exactly 80 merge passes. Exponential loops are not
-unrolled. Swapping source/destination exchanges pointers. All N inputs are
-sampled before scanning. The algorithm stops at the first nontrivial match,
-or returns failure after all N-1 adjacent pairs. There is one attempt, no
-restart, and no success amplification. Verification failure is a specified
-halt but Section 4 proves it is unreachable under the algorithm's semantics.
+Block 1 runs with incoming difference 0 at CV0 and path Pi_1; on success it
+yields outgoing difference dO. Block 2 runs with incoming difference dO and
+path Pi_2, and succeeds only when the outgoing difference after round 78 is 0.
+The budgets are B1 = B2 = 2^60.9 model units each, hard-capped. The published
+parameters of this machinery include message modification over the first
+rounds, neutral bits on late message words (the Shambles paper discusses, for
+example, the neutral bit on M13 bit 11), and boomerangs on M6 bit 6/8 and M9
+bit 7; the 79-round variant uses the same apparatus with the shifted path.
 
-## 4. Deterministic correctness
+After both blocks succeed, verification computes the complete padded 79-round
+hashes of M and M' (four compressions each), compares all 160 bits, checks
+M != M', and returns the pair; any failure returns failure. Verification costs
+at most 2^10 units including word operations.
 
-Every generated record is (H(R),R). A merge copies the smaller available
-head, or the remaining head when a run is exhausted. Induction on emitted
-records proves that it preserves the input multiset and produces the sorted
-union. Induction over width proves that the final source contains exactly
-the N sampled records in total order, including identical repeated messages.
+## 6. Correctness of the collision
 
-Each digest's records are contiguous. Within such a group, message integers
-are sorted. If two message values differ, some two consecutive records lie
-at a boundary between unequal values. The scan reaches such a boundary and
-finds equal digests but unequal messages. Repeated copies of one message
-cannot conceal that boundary. Conversely, every candidate output has unequal
-32-byte encodings and equal full digest integers. H is deterministic, so
-recomputation accepts. Thus success occurs exactly when two distinct sampled
-messages have equal complete hashes. The algorithm returns no false collision.
+Whenever the search returns, the output is a valid ordinary collision for the
+exact target of Section 2:
 
-## 5. Distribution-free probability proof
+- Both messages are 192-byte strings, inside the message domain, and the
+  padding appends one identical final block to both.
+- Block 1 success gives equal chaining values at CV0 (difference 0) mapped to
+  difference dO; block 2 success maps difference dO back to difference 0 after
+  round 78 with feed-forward, so the chaining values after block 2 are equal.
+- The identical padding block preserves equality, so the full digests are
+  byte-for-byte equal over all 160 bits.
+- dM1 is a fixed nonzero difference, so B1 != B1' and therefore M != M';
+  identical-input matches are impossible.
+- Verification recomputes both complete hashes from the fixed IV with standard
+  padding and rejects any pair that is not an exact full-output collision, so
+  the algorithm never returns a false collision.
 
-For each possible full digest y define p_y=|{R in D:H(R)=y}|/d. The M
-nonnegative p_y sum to one; zero-probability digests are allowed. The outputs
-are iid with this distribution because H is fixed and inputs are iid.
-Uniform outputs are not assumed.
+## 7. Probability analysis
 
-Let e_N(p) be the degree-N elementary symmetric polynomial on these M
-coordinates. For N<=M, the probability of no repeated output is N!e_N(p):
-every N-element set of outputs occurs in N! possible orders, each having
-the product of its coordinate probabilities. Its maximum is attained at
-p_y=1/M, as the following finite proof shows. Fixing all coordinates except
-a,b writes e_N as A+(a+b)B+abC with C>=0. Averaging a,b preserves a+b and
-does not decrease ab. On the compact probability simplex choose a maximizer
-minimizing the sum of squared coordinates. Such extrema exist by continuity.
-If two coordinates differ, averaging either increases e_N, contradicting
-maximality, or preserves it while decreasing the squared sum, contradicting
-the tie-break. Thus that maximizer has all coordinates equal. Consequently
+The probability space is the algorithm's fresh independent random coins (base
+candidate draws and variant randomization) with the target fixed. Each block
+search is a long sequence of trials whose per-trial success probability is
+small and whose costs are dominated by compression evaluations; under the
+declared heuristic H-search-exp (Section 10), the cost to success of each
+block search is exponentially distributed with mean E_i, so a budget B_i
+succeeds with probability 1 - exp(-B_i / E_i).
 
-    Pr[no repeated output] <= N! choose(M,N)/M^N
-                           = product_{i=0}^{N-1}(1-i/M)
-                           <= exp(-N(N-1)/(2M)).
+The published expected total for the 80-round identical-prefix collision is
+2^61.2 compression-equivalents (Shambles, GTX 970 SHA-1 equivalents; 2^61.6 on
+GTX 1060), the sum of the two block searches. Section 8 transfers this to
+E_1 + E_2 <= 2^61.4 model units for the 79-round target. With B1 = B2 = 2^60.9:
 
-The last inequality applies 1-u<=exp(-u) to each factor. That elementary
-inequality follows from exp(v)>=1+v for real v. No independence of
-pair-collision events is asserted.
+- Nominal split (E_1 ~ E_2 ~ 2^60.4): per-block c = 2^60.9 / 2^60.4 = 2^0.5,
+  success (1 - e^-1.414)^2 = 0.757^2 = 0.573.
+- Worst-case split (one block carries the whole expectation, E_i = 2^61.4):
+  c = 2^60.9 / 2^61.4 = 2^-0.5, success at least (1 - e^-0.707) = 0.507, the
+  other block succeeding with probability essentially 1.
 
-Let E be a repeated-output event and F a repeated-input event. On E outside
-F a pair of distinct inputs collides, so Section 4 gives
-Pr[success]>=Pr[E]-Pr[F]. Each specified input pair is equal with probability
-1/d; a union bound gives Pr[F]<=N(N-1)/(2d)<2^-97. Hence
+Hence the algorithm succeeds with probability at least 0.507 for any split of
+E_1 + E_2 <= 2^61.4, and the claimed field is set conservatively to 0.45,
+above the required 0.39. The two block searches are sequential and
+independent given their coins; no restart beyond the stated budgets exists,
+and all failed trials are charged inside the budgets.
 
-    Pr[success] >= 1-exp(-N(N-1)/(2M))-N(N-1)/(2d).
+## 8. Cost ledger
 
-For the exact parameters x=N(N-1)/(2M)=1/2-2^-81>499/1000. The positive
-exponential series gives
+All quantities are model units under collision-frontier-v5 with C = 1957 for
+sha1-r79. Total time includes preprocessing, all trials including failures,
+message and differential construction, randomness, sorting/lookup (none beyond
+small buffers), collision checking, and verification.
 
-    exp(x) > 1+499/1000+(499/1000)^2/2+(499/1000)^3/6
-           = 9865254499/6000000000,
-    exp(-x) < 6000000000/9865254499 < 609/1000.
+- Preprocessing, one-time: construction of the two 79-round paths by
+  disturbance-vector selection and condition-table search, plus a one-time
+  uniform search for the prefix block P satisfying the at most 8 input bit
+  conditions of Pi_1 (expected at most 2^8 trials). Charged at the conservative
+  bound 2^50 under heuristic H-preproc; Section 10 shows the scalar is
+  insensitive to this choice.
+- Online search: B1 + B2 = 2^60.9 + 2^60.9 = 2^61.9, hard-capped; this cap
+  covers every compression evaluation and every word operation of both block
+  searches, successful or not.
+- Verification: at most 2^10.
 
-The last strict comparison is the integer inequality
-609*9865254499=6007939989891>6000000000000. Therefore
-Pr[success]>391/1000-2^-97>390/1000=0.39, since 2^97>1000.
-This includes repeated-input false matches, arbitrary fiber imbalance,
-and every unsuccessful attempt. It is a finite statement for the exact
-target, not an asymptotic or empirical extrapolation.
+Total: T <= 2^61.9 + 2^50 + 2^10 <= 2^61.91, so time_log2 = log2(T) < 62.
 
-## 6. Time and memory ledger
+Transfer of the published figure. The published 2^61.2 is measured total work
+divided by the cost of one full 80-round SHA-1 compression on the reference
+GPU, i.e. it already bundles all round-function evaluations and all other word
+operations of the implementation at the ratio of one compression to about 1982
+word operations (the organizer's reference cost for the 80-round target). Under
+collision-frontier-v5 the same work costs H + W/1957 with H the number of
+79-round compression evaluations and W the word operations; since 1957 <= 1982
+and the 79-round attack evaluates strictly fewer rounds per compression and
+needs no more trials (Section 4), the transferred expectation is at most
+2^61.2 * (1982/1957) <= 2^61.22, stated with margin as E_1 + E_2 <= 2^61.4.
+This conversion is heuristic H-transfer. The executed SHAttered computation
+(2^63.1 compression-equivalents actually spent at 80 rounds) provides an
+independent executed upper anchor far above the transferred expectation.
 
-All accounting is in the fixed 256-bit RAM: load/store, addition/subtraction,
-bitwise operation, shift/rotation, comparison, conditional branch and fresh
-uniform word each cost one. The selected compression costs one. No unit-cost
-sort or arbitrary-precision arithmetic is used. Moves, address arithmetic,
-loop control, argument construction and scratch accesses are charged.
+Memory. Code, the two path condition tables (79 rounds of per-word state
+conditions), the disturbance vector, the neutral-bit and boomerang lists
+(tens of entries), the 64-byte prefix, and candidate/verification buffers: at
+most 2^16 bytes of tables and advice and well below 2^24 bytes in total; the
+search needs no large table, no stored collision, and no retained random tape.
 
-Here are explicit primitive expansions bounding the pseudocode. Reading a
-record needs a shift, base addition, first load, addition of 32, and second
-load: at most 5 operations. Writing uses the analogous 5. A total-order
-test needs at most 3 comparisons and 3 branches: 6. A register assignment
-can use a load and store (2 operations). A two-word move between register
-pairs therefore costs at most 4. Counter increments take one addition;
-each loop test takes a comparison and branch. All unconditional control
-transfers are also charged one branch, implementable as a branch on true.
+Data. Chosen-message compression invocations are bounded by the online budget
+2^61.9 < 2^62; complete padded-message evaluations occur only at verification
+(at most 2^4). There is no external dataset.
 
-Generation costs at most 128 per message: one random draw, at most 16 for
-the two block words and IV arguments, one compression, at most 32 for
-masking/packing the five output words, 5 for writing the record, and at most
-32 for counter control, call/return, and scratch moves. In particular there
-is no hidden byte conversion: R is the first block word and the second is
-a constant. Packing a digest uses four shifts and four ORs plus loads/masks.
-These allowances sum to 87, below 128. All N trials, successful or not, count.
+## 9. Published evidence base
 
-For each merge emission allow at most 10 for two head reads, 6 for the
-total-order test, 4 for exhaustion comparisons/branches, 5 for the record
-write, and 39 for choosing a side, index updates, temporary moves, loop
-test, and jumps. This sums to 64; conservatively charge 96. Exhausted
-paths read only valid heads. Initializing/advancing each pair of runs costs
-at most 32; pass pointer/width setup and exit cost at most 32. There are
-N emitted records and at most N/2 run pairs in a pass, so
+The following published results support the declared heuristics. They are
+stated here because review does not fetch external links.
 
-    cost per pass <= 96N+32(N/2)+32 <= 128N.
+- Wang, Yin and Yu (CRYPTO 2005): first sub-birthday collision attack on full
+  SHA-1, estimated 2^69 compression calls; introduced the disturbance-vector
+  and message-modification machinery used by all later attacks.
+- Reduced-round ordinary collisions from the same disturbance-vector family:
+  64 steps at 2^35, 70 steps at 2^44, 73 steps at 2^50.7, and 75 steps at
+  2^57.7 compression calls (references [6], [5], [13], [14] in the SHAttered
+  paper). The cost scales smoothly with round count, and round-appropriate
+  paths exist across the family.
+- Stevens ("New collision attacks on SHA-1 based on optimal joint
+  local-collision analysis", 2013): identical-prefix collision attack on full
+  SHA-1 estimated at 2^61 compressions from a rigorous joint local-collision
+  framework; disturbance vector I(52,0).
+- Stevens, Bursztein, Karpman, Albertini, Markov (SHAttered, CRYPTO 2017,
+  ePrint 2017/190): the first executed full SHA-1 identical-prefix collision;
+  2^63.1 compression-equivalents actually spent (about 6500 CPU years plus
+  100 GPU years), two near-collision blocks around a shared prefix, colliding
+  for any suffix.
+- Leurent and Peyrin ("SHA-1 is a Shambles", USENIX Security 2020, ePrint
+  2020/014): identical-prefix collision cost reduced to 2^61.2
+  SHA-1-equivalents on a GTX 970 (2^61.6 on GTX 1060), derived from measured
+  solution rates of the real GPU implementation; the same paper's
+  chosen-prefix attack, using the same near-collision block machinery, was
+  executed end-to-end at 2^63.4 (about two months on 900 GTX 1060 GPUs),
+  matching its pre-computed estimate and validating the cost methodology.
 
-Both arrays' entire contents are overwritten every pass before becoming the
-next source. No extra full-array copy occurs. There are 80 passes.
+This package claims no executed 79-round search. The evidence establishes the
+attack machinery at the harder 80-round target, the smooth reduced-round
+scaling below it, and a measured cost model whose predictions were confirmed
+by an executed computation.
 
-A scan iteration costs at most 10 for adjacent record reads, 4 for equality
-and distinctness comparisons/branches, and 32 for index/address scratch,
-updates, control, and return checks. Charge 64N for the entire scan.
-At most one final verification occurs; charge 256 for its two block
-preparations, two complete hashes, full comparisons, and two 32-byte
-output writes. Even early success was charged the whole scan.
+## 10. Declared heuristics, scope, and limitations
 
-Program storage is finite uniform code, not omitted advice. An explicit
-encoding uses at most four 256-bit words per primitive instruction: opcode
-plus up to three operands, including an immediate or branch destination.
-Unary operations/load/store/branch fit in this format; binary operations
-use result and two arguments. Lower Sections 2 and 3 with fixed registers,
-scratch addresses, and counted loops. There are fewer than 256 elementary
-assignment, test, loop-control, and action statements after splitting the
-displayed tuple updates and compound expressions at their arithmetic
-operators. Each stated record access or comparator macro takes fewer than
-16 primitive instructions by the expansions above; the split hash statements
-and loop scaffolding also fit that bound. Thus at most 4096 instruction
-records suffice, including the looped hash specification even though its
-evaluation is a selected primitive. They occupy at most
-4096*4*32=2^19 bytes. There is no unrolling over N or table of answers.
+The claim lists each heuristic in claim.json with statement, role, scope,
+extrapolation, evidence references, and limitations. Summary:
 
-Fewer than 256 data words suffice for constants, the 79 schedule words,
-hash working state, record temporaries, pointers, counters, padding,
-verification inputs/outputs, and flags. Reserving another 2^16 bytes for
-them and instruction scratch is conservative. Code and all fixed state
-therefore fit strictly within 2^20 bytes. Charge at most 2^20 operations
-for writing/copying this finite code, constants and scratch and setting the
-array base addresses. The program and fixed constants are specified above;
-there is no target-dependent search, precomputed collision, external advice,
-or hidden dataset. This initialization is the entire preprocessing phase.
-The two table regions need no initial writes because every read follows a
-write, as specified in Section 3.
+- H-path-79 (score-critical): the two 79-round near-collision paths exist in
+  Wang's disturbance-vector family with expected per-block search cost no
+  larger than the published 80-round figures. Evidence: the truncation
+  argument of Section 4 and the literature of Section 9. Limitation: the
+  exact 79-round condition tables are not exhibited in this package; a
+  rigorous-lane claim would need them re-derived and independently checked.
+- H-search-exp (score-critical): each block search's cost to success is
+  exponentially distributed, so budgets succeed with probability
+  1 - exp(-B/E). Evidence: the trial structure of Section 5 and the
+  consistency of the executed 80-round computations with their pre-computed
+  estimates (Section 9). Limitation: per-trial independence is not proved;
+  the claimed success probability 0.45 sits below the analyzed worst case
+  0.507 to absorb model error.
+- H-transfer (supporting): published GPU SHA-1-equivalent totals transfer to
+  model units at the ratio of one compression to its reference word-operation
+  cost, with the 79-round target no more expensive per evaluation. Evidence:
+  the conversion of Section 8. Limitation: hardware constants differ; the
+  ledger carries margin (2^61.4 used where 2^61.22 is the point estimate) and
+  the executed 2^63.1 SHAttered computation anchors the upper side.
+- H-preproc (supporting): one-time path and prefix construction costs at most
+  2^50 compression-equivalents with published tooling, starting from the
+  public 80-round paths. Evidence: Sections 4 and 8. Limitation: historical
+  path-search costs are not precisely published; note the scalar is
+  insensitive to this bound, since even 2^58 preprocessing gives
+  T <= 2^61.9 + 2^58 + 2^10 < 2^62.
+- H-local-add (supporting): the local modular-addition XOR-differential
+  transition probabilities used by the path probability calculus of the cited
+  attacks are exactly computable finite counts, as tabulated in classic
+  SHA-1/MD5 analysis. Evidence: experiments ax-msb-single, ax-lsb-single,
+  ax-msb-both, ax-lowtwo-single (Section 11). Limitation: exact local counts
+  do not by themselves establish any multi-round probability; they verify the
+  calculus whose composed form is covered by H-path-79.
 
-Total worst-case time, including initialization and verification, is
+Scope disclosure: no cryptanalytic premise is hidden. The claim depends
+exactly on H-path-79, H-search-exp, H-transfer and H-preproc, with H-local-add
+as supporting methodology evidence. If H-path-79 were refuted, the claimed
+scalar fails; the package makes no fallback claim under a weaker premise.
 
-    T <= 2^20 + 128N + 80*128N + 64N + 256
-       = 10432N+2^20+256
-       < 16384N = 2^94.
+## 11. Experiments
 
-Both N-record arrays together occupy 128N=2^87 bytes. No recursion stack,
-third array, separate message list, or extra random tape is used. The
-message fields are the retained random choices. Including code, constants,
-all scratch, and the two output messages, peak allocated memory is
+Four declared organizer-executed experiments (experiments/manifest.json, kind
+addition-xor-exact-v1, 8-bit words, exhaustive over all 2^16 ordered input
+pairs) verify canonical local transitions of the addition-XOR calculus that
+underlies every per-round path probability in the cited attacks:
 
-    S < 2^87+2^20 < 2^88 bytes.
+- ax-msb-single: flipping the most significant bit of one addend changes the
+  sum's XOR difference in exactly the most significant bit, probability 1
+  (exact count 65536/65536).
+- ax-lsb-single: flipping the least significant bit of one addend yields an
+  LSB-only output XOR difference with probability exactly 1/2
+  (32768/65536).
+- ax-msb-both: flipping the most significant bit of both addends yields zero
+  output XOR difference with probability 1 (65536/65536).
+- ax-lowtwo-single: flipping the low two bits of one addend yields an
+  LSB-only output difference with probability exactly 1/4 (16384/65536).
 
-## 7. Evidence scope
+Each hypothesis states the exact finite probability; the organizer evaluator
+enumerates all pairs and reports the exact count. These checks establish only
+the stated single-addition facts at 8-bit width; they do not multiply into
+round or path probabilities, and no such extrapolation is claimed for them.
 
-All material claims are the specified algorithm, exact target, finite
-counting argument and explicit conservative ledger. The heuristics array
-is empty: no cryptanalytic, uniform-output, statistical-independence or
-extrapolation premise is used beyond the organizer's defined computation
-model. Replacing ideal random words with a deterministic PRNG would require
-a different probability argument. Each ideal word here is charged.
+## 12. Restrictions and honest disclosures
 
-The empty certificate manifest is intentional. No full-scale collision
-search has been executed and no stored collision is used as advice. No
-experiment manifest is declared: this analytic argument does not rely on
-empirical support, and toy or seeded experiments cannot establish a
-full-scale randomness premise. The enormous memory bound is not a claim
-of practical feasibility.
+- The target is exactly sha1-r79-prefix-v1: fixed IV, rounds 0..78, standard
+  padding and feed-forward, full 160-bit output, ordinary collisions only.
+- The claimed scalar is an analytic upper bound under declared heuristics, not
+  an executed search, a stored collision, or a certificate; the certificate
+  manifest is intentionally empty.
+- All budgets are hard caps; all failed trials, preprocessing, randomness,
+  word operations and verification are charged inside the claimed total.
+- The attack uses a shared prefix block and two near-collision blocks; the
+  returned pair is distinct and verified against the complete target.
+- `baseline_improved` is the schema-required reference identifier
+  `sha1-r79-nominal-v2`; the nominal exponent 80 is a display reference, and
+  the claimed 62 is an honest numerical comparison against it, not a claim
+  about any qualified baseline or security bound.
+- An AI verdict is not mathematical proof; this exploratory package discloses
+  the exact heuristic gaps (above all H-path-79) that a rigorous-lane
+  submission would have to discharge with re-derived 79-round condition
+  tables.

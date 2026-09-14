@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "ax-msb-single",
+      "kind": "addition-xor-exact-v1",
+      "scope": "One 8-bit modular addition; all 65536 ordered input pairs enumerated exhaustively by the organizer evaluator.",
+      "hypothesis": "Flipping the most significant bit of one addend changes the sum in exactly the most significant bit: output XOR difference 0x80 with exact probability 1 (65536/65536). This is the carry-free sign-bit transition used throughout Wang-style SHA-1 path analysis.",
+      "word_bits": 8,
+      "input_xor_a": 128,
+      "input_xor_b": 0,
+      "output_xor": 128
+    },
+    {
+      "id": "ax-lsb-single",
+      "kind": "addition-xor-exact-v1",
+      "scope": "One 8-bit modular addition; all 65536 ordered input pairs enumerated exhaustively by the organizer evaluator.",
+      "hypothesis": "Flipping the least significant bit of one addend yields an LSB-only output XOR difference 0x01 with exact probability 1/2 (32768/65536): the canonical carry-propagation transition of the path probability calculus.",
+      "word_bits": 8,
+      "input_xor_a": 1,
+      "input_xor_b": 0,
+      "output_xor": 1
+    },
+    {
+      "id": "ax-msb-both",
+      "kind": "addition-xor-exact-v1",
+      "scope": "One 8-bit modular addition; all 65536 ordered input pairs enumerated exhaustively by the organizer evaluator.",
+      "hypothesis": "Flipping the most significant bit of both addends yields zero output XOR difference with exact probability 1 (65536/65536): the two sign-bit carries cancel modulo 2^8.",
+      "word_bits": 8,
+      "input_xor_a": 128,
+      "input_xor_b": 128,
+      "output_xor": 0
+    },
+    {
+      "id": "ax-lowtwo-single",
+      "kind": "addition-xor-exact-v1",
+      "scope": "One 8-bit modular addition; all 65536 ordered input pairs enumerated exhaustively by the organizer evaluator.",
+      "hypothesis": "Flipping the low two bits of one addend yields an LSB-only output XOR difference 0x01 with exact probability 1/4 (16384/65536): a two-step carry-propagation check of the same calculus.",
+      "word_bits": 8,
+      "input_xor_a": 3,
+      "input_xor_b": 0,
+      "output_xor": 1
+    }
+  ]
+}
