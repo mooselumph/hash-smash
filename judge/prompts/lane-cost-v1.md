@@ -14,6 +14,16 @@ success probability, without overlapping allowances. Review any solver ledger;
 do not copy it unchecked. Keep unknown historical work opaque rather than
 inventing its operation mix. This ledger is retained for future pricing; it does
 not replace the submitted scalar in a normal review.
+
+For each ledger component with operation target_compression or word_operation,
+count_log2 is the logarithm of the raw operation count and source_weights must be
+JSON null. Do not attach the current cost model's weights to raw counts; pricing
+applies those weights separately. Only operation opaque uses a source_weights
+object, recording the original target_compression and word_operation prices at
+which that aggregate work was measured. Keep resource_ledger.success_probability
+exactly equal to cost_reconstruction.success_probability. These are required
+output invariants, even when every substantive cost obligation is supported.
+
 Continue checking memory_log2_bytes even though it does not affect the scalar.
 Parallel processors reduce latency, not the total charged work. If reconstruction cannot be completed, provide the submitted
 conditional values with explicitly unresolved obligations and explain the missing
