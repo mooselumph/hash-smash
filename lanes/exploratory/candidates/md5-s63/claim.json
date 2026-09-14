@@ -6,22 +6,63 @@
   "rounds": 63,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 79,
+    "time_log2": 60,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 72,
-    "data_log2": 65,
-    "preprocessing_log2": 73,
-    "success_probability": 0.39,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 32,
+    "data_log2": 60,
+    "preprocessing_log2": 60,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 8
   },
   "restrictions": [
-    "Only 32-byte messages encoded from independently sampled uniform 256-bit words; q=2^64 fixed samples and no restart.",
-    "Exact md5-s63-prefix-v1 full-message hashing: fixed IV, required padding, steps 0 through 62, feed-forward, and all 128 digest bits.",
-    "Classical 256-bit word RAM with charged ideal independent uniform random-word primitive; no seeded PRNG or hash-distribution heuristic.",
-    "Resource fields are conservative upper bounds: time and preprocessing in charged RAM/target-compression units, memory and advice in bytes, data in complete input-message evaluations.",
-    "No nonuniform advice, precomputed collision, external corpus, or empirical premise. The nominal reference identifier does not assert an established baseline or an improvement."
+    "The online algorithm only loads and verifies one pinned pair of distinct 64-byte messages. It has no fresh generator and makes no claim about historical wall time, fresh success frequency, or measured peak RSS.",
+    "Exact md5-s63-prefix-v1 complete-message hashing: standard IV, RFC 1321 padding, steps 0 through 62 on every padded block, feed-forward after every reduced compression, and all 128 digest bits.",
+    "The published attack targets a stronger full-MD5 single-block compression collision. Applicability to the selected 63-step complete-message target is established separately by the zero late-state difference and organizer recomputation of the retained bytes.",
+    "All construction work, failed instantiations represented by the published average, model conversion, table activity, verification, code, messages, and retained advice are charged through the stated resource envelope and explicit heuristics.",
+    "The retained pair is nonuniform advice produced before online replay. Construction is charged as preprocessing; repeated experiment rows are deterministic transport replays, not independent generator samples.",
+    "The baseline_improved value is the required nominal reference identifier; it does not assert novelty, rigorous qualification, human acceptance, or a new cryptanalytic record."
   ],
   "baseline_improved": "md5-s63-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-HISTORICAL-WORK",
+      "statement": "All work needed to produce the retained Table 5 pair, including differential-path preparation, failed instantiations represented by the published average, lookup-table work, message construction, conversion to collision-frontier-v3 operations, and final verification, fits below 2^60 charged units; consequently fewer than 2^60 complete target inputs or construction items are processed.",
+      "role": "score-critical",
+      "scope": "Only the historical construction of the exact retained pair and the submitted time_log2, preprocessing_log2, and data_log2 fields. Deterministic online replay and exact digest equality do not depend on this premise.",
+      "extrapolation": "The primary paper reports an average 2^49.81 full-MD5 compression equivalents for its implemented single-block attack and identifies the displayed pair as its output. The 2^60 envelope adds about 2^10.19 of margin for conversion to the v3 word-RAM model, path preparation, table operations, unsuccessful work represented by the average, assembly, padding, and verification.",
+      "evidence_ids": [
+        "proof:97-165",
+        "proof:211-227"
+      ],
+      "limitations": "There is no fresh generator run, complete historical job ledger, instruction trace, or exact accounting of every unsuccessful development run. Compression-equivalent estimates are not definitionally identical to v3 units. If total construction work or data reached 2^60, the claim and score would fail. The fixed-witness experiment supplies no cost evidence. Exploratory premise only."
+    },
+    {
+      "id": "H-HISTORICAL-MEMORY",
+      "statement": "A serial schedule of the published construction that produced the retained pair has peak simultaneous algorithm memory below 2^32 bytes, including its lookup structures, code, constants, differential-path data, buffers, working state, allocator overhead, and retained output.",
+      "role": "score-critical",
+      "scope": "Only the peak-memory field for one serially scheduled implementation of the published construction. It is not a claim about aggregate installed RAM across historically parallel machines or the replay container limit.",
+      "extrapolation": "The published source's dominant lookup payload uses records of five 32-bit words and the implementation requires at least 2^24 accepted records before its main loop. The paper states that separate instantiations are freely parallelizable, so they may instead be scheduled serially with reusable storage. The 2^32-byte envelope allows substantial container, map, vector-capacity, code, and allocator overhead beyond the approximately 320 MiB payload at 2^24 records.",
+      "evidence_ids": [
+        "proof:117-121",
+        "proof:167-185",
+        "proof:229-246"
+      ],
+      "limitations": "Neither the paper nor the retained package supplies peak-RSS traces, an allocation ledger, the exact accepted-record count of the successful instantiation, or the historical worker seeds. The source has no submitted hard 2^32-byte allocation guard. If a serial schedule exceeded 2^32 live bytes, the memory field and score would fail. Exploratory premise only."
+    },
+    {
+      "id": "H-PUBLISHED-PAIR-BINDING",
+      "statement": "The paper's reported 2^49.81-compression construction applies to the exact 64-byte Table 5 pair retained here, rather than to an unrelated MD5 collision or target variant.",
+      "role": "supporting",
+      "scope": "Binding of the retained bytes to the published single-block attack and its resource regime. Exact collision under md5-s63-prefix-v1 is independently recomputed and does not rely on this premise.",
+      "extrapolation": "The primary paper presents the construction, complexity analysis, late-state differential, and exact pair together, states that the displayed pair was found by the implemented search, and publishes matching source and binary artifacts. The organizer independently checks the selected 63-step target on the retained bytes.",
+      "evidence_ids": [
+        "proof:27-137",
+        "proof:248-262",
+        "experiment:published-single-block-s63-replay"
+      ],
+      "limitations": "Fixed-witness agreement proves target compatibility and collision existence, not a replay of the generator or its historical costs. The package summarizes rather than reimplements the infeasible full search. Exploratory supporting premise only."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }
