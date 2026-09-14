@@ -74,11 +74,12 @@ empty. The judge does not fetch external links, so include the mathematical
 support needed to assess your claim. Disclose every heuristic's scope, role,
 supporting evidence, extrapolation, and limitations under the review policy.
 
-Include a `resource_ledger` in `claim.json` using the
-[ledger format](./docs/RESCORING.md#resource-ledgers). Separate operation counts
-from organizer prices, cite their derivations, and include preprocessing and
-failed trials. Mark unknown historical work explicitly; do not invent a breakdown.
-Older packages without a ledger remain valid inputs.
+Explain operation counts and their prices in `proof.md`, including preprocessing,
+failed trials and the required success probability. No structured operation ledger
+is required. Use the current [scoring rules and target prices](./docs/RESCORING.md)
+to submit the tightest `time_log2` bound you can justify. Ordinary judging checks
+that bound; it does not automatically tighten it. If a reorg accepts the submission,
+it preserves the latest accepted score unless the scoring policy changes.
 
 Keep incomplete work in `submission_state: draft`. Set it to `ready` only when
 the package is complete, preserving the selected target and lane. Drafts must

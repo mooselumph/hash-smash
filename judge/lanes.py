@@ -27,10 +27,7 @@ OBLIGATIONS = {
 
 
 def load_lane_schema() -> dict[str, Any]:
-    from verifier.resources import ledger_schema
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    schema["properties"]["cost_reconstruction"]["properties"]["resource_ledger"] = ledger_schema()
-    return schema
+    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
 def load_lane_prompt(stage: str, strategy: str) -> str:
@@ -117,9 +114,4 @@ def validate_lane_review(
             raise ReviewValidationError("lane_cost must reconstruct the resource claim")
         if not math.isclose(cost["normalized_score_log2"], cost["time_log2"], abs_tol=1e-6):
             raise ReviewValidationError("reconstructed score must equal time_log2")
-        if "resource_ledger" in cost:
-            from verifier.resources import validate_ledger
-            validate_ledger(cost["resource_ledger"])
-            if cost["resource_ledger"]["success_probability"] != cost["success_probability"]:
-                raise ReviewValidationError("resource ledger must preserve reconstructed success probability")
     return review

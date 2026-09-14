@@ -187,7 +187,7 @@ def _safe_config(config: Any) -> dict[str, Any]:
         (REPO_ROOT / "schemas" / "review-lanes-v1.schema.json").read_bytes()
     )
     value["rescore_schema_sha256"] = sha256_bytes(
-        (REPO_ROOT / "schemas/review-rescore-v1.schema.json").read_bytes()
+        (REPO_ROOT / "schemas/review-rescore-v2.schema.json").read_bytes()
     )
     value["aggregation_sha256"] = sha256_bytes(canonical_json_bytes({
         name: sha256_bytes((REPO_ROOT / "judge" / name).read_bytes())
@@ -257,18 +257,12 @@ def run_judge(paths: RunPaths) -> int:
             dossier = run_paired_review(evidence, client_factory(base_config), role_clients=role_clients)
         dossier["aggregate"] = select_lane_aggregate(dossier, p.track.lane)
         judge_label = f"paired:{provider}:{base_config.model}"
-    except rescore.RescoreNeedsEvidence as error:
-        aggregate = {"status": "rescore_needs_evidence", "reasons": error.result.review["calculation_trace"]}
-        atomic_write_json(p.aggregate, aggregate)
-        atomic_write_json(p.dossier, {
-            "schema_version": "judge-rescore-failure-v1", "aggregate": aggregate,
-            "review": error.result.review, "provenance": error.result.provenance,
-            "source": evidence["rescore_source"], "judge_configuration": safe_config,
-        })
-        print(json.dumps(aggregate, sort_keys=True))
-        return 2
-    except JudgeInfraError:
-        _write_infrastructure_failure("cost-only judge provider failed", p)
+    except JudgeInfraError as error:
+        reason = f"reorg judge failed after {error.attempts} attempts"
+        if error.diagnostics:
+            reason += ": " + json.dumps(error.diagnostics[-1], sort_keys=True)
+        _write_infrastructure_failure(reason, p)
+        print(json.dumps({"status": "judge_infra_failed", "reason": reason}, sort_keys=True))
         return 3
     except (OSError, ValueError) as error:
         reason = f"judge configuration failed: {type(error).__name__}: {error}"
@@ -303,6 +297,7 @@ def run_judge(paths: RunPaths) -> int:
                 "status": status,
                 "judge": judge_label,
                 "dossier": _display_path(p.dossier),
+                "infrastructure_failures": dossier.get("infrastructure_failures", {}),
             },
             sort_keys=True,
         )
@@ -334,14 +329,9 @@ def run_score(paths: RunPaths) -> int:
             or aggregate.get("dossier_sha256") != sha256_bytes(canonical_json_bytes(core))
             or dossier.get("aggregate") != aggregate):
         raise VerificationError("paired dossier/configuration integrity mismatch")
-    projection = None
+    rescored = None
     if "rescore_source" in evidence:
-        anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier}, p.rescore_archives)
-        projection = {
-            "ledger": dossier["rescore"]["review"]["resource_ledger"],
-            "weights": rescore.weights(evidence), "source": evidence["rescore_source"],
-            "declared_cost_model": anchor["evidence"]["benchmark"]["cost_model"],
-        }
+        rescored = rescore.score_result(evidence, dossier, p.rescore_archives)
     else:
         outcomes = aggregate_paired_reviews(dossier["reviews"], binding=binding,
             claim=evidence["submission"]["intake_report"]["claim"],
@@ -351,7 +341,7 @@ def run_score(paths: RunPaths) -> int:
     selected = select_lane_aggregate(dossier, p.track.lane)
     if any(aggregate.get(key) != value for key, value in selected.items()):
         raise VerificationError("score aggregate differs from selected lane dossier")
-    score = build_score(p.candidate, aggregate, p.score, track=p.track, resource_projection=projection)
+    score = build_score(p.candidate, aggregate, p.score, track=p.track, rescore_result=rescored)
     print(
         json.dumps(
             {

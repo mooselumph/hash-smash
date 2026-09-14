@@ -1,14 +1,14 @@
-"""Organizer-pinned, cost-only reviews with immutable qualification ancestry."""
+"""Organizer-pinned reorg judgments: historical reasoning and a new final result."""
 
 from copy import deepcopy
 import json
 from pathlib import Path
 
+from verifier.costs import UNIT_WEIGHTS, validate_weights
 from verifier.errors import VerificationError
 from verifier.io import canonical_json_bytes, load_json_bytes, sha256_bytes
-from verifier.resources import UNIT_WEIGHTS, ledger_schema, legacy_ledger, price_ledger, validate_ledger, validate_weights
 from verifier.schema_validation import require_sha256
-from .paired_review import aggregate_paired_reviews, evidence_binding, select_lane_aggregate
+from .paired_review import evidence_binding, select_lane_aggregate
 from .schema_validation import _validate
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,41 +16,68 @@ ARCHIVES = ROOT / ".yukon/work/rescore-archives"
 PLAN = ROOT / "reorg/plan.json"
 
 
-class RescoreNeedsEvidence(VerificationError):
-    def __init__(self, result):
-        super().__init__("cost-only review needs further evidence")
-        self.result = result
-
-
 def digest(value):
     return sha256_bytes(canonical_json_bytes(value))
 
 
 def review_schema():
-    schema = json.loads((ROOT / "schemas/review-rescore-v1.schema.json").read_text())
+    schema = json.loads((ROOT / "schemas/review-rescore-v2.schema.json").read_text())
     paired = json.loads((ROOT / "schemas/review-lanes-v1.schema.json").read_text())
     schema["properties"]["binding"] = paired["properties"]["binding"]
-    schema["properties"]["resource_ledger"] = {**ledger_schema(), "type": ["object", "null"]}
     return schema
 
 
-def validate_review(review):
+def validate_review(review, evidence=None):
+    """Validate a new result, never replay historical review rules."""
     _validate(review, review_schema(), "$")
     for key, value in review["binding"].items():
         require_sha256(value, "binding." + key)
-    if review["status"] == "complete":
-        validate_ledger(review["resource_ledger"])
-    elif review["resource_ledger"] is not None:
-        raise VerificationError("an incomplete rescore cannot supply a ledger")
+    if evidence is not None and review["binding"] != evidence_binding(evidence):
+        raise VerificationError("reorg judgment has a mismatched binding")
+    if (review["status"] == "complete") != (review["time_log2"] is not None):
+        raise VerificationError("accepted reorg judgments require a score; other outcomes require null")
     return review
 
 
-def weights(evidence):
-    return validate_weights(evidence["benchmark"]["cost_model"].get("operation_weights", dict(UNIT_WEIGHTS)))
+def scoring_policy(evidence):
+    """Public accounting version and effective target prices, independent of judge hashes."""
+    model = evidence["benchmark"]["cost_model"]
+    return {"id": model["id"], "operation_weights": validate_weights(model.get("operation_weights", dict(UNIT_WEIGHTS)))}
+
+
+def score_reference(judgments):
+    """Use the latest accepted judgment, or the original submitted bound."""
+    return next((packet for packet in reversed(judgments)
+                 if packet["dossier"]["lanes"][packet["evidence"]["benchmark"]["lane"]]["eligible"]),
+                judgments[0])
+
+
+def recorded_bound(packet):
+    dossier = packet["dossier"]
+    value = (dossier["rescore"]["review"]["time_log2"] if "rescore" in dossier
+             else dossier["claim"]["claim"]["time_log2"])
+    _validate(value, {"type": "number", "minimum": 0}, "$.recorded_bound")
+    return value
+
+
+def review_lanes(review, evidence):
+    """Only the selected lane receives a current qualification decision."""
+    selected = evidence["benchmark"]["lane"]
+    accepted = review["status"] == "complete"
+    status = (evidence["benchmark"]["qualification_policy"]["pass_status"] if accepted
+              else "reorg_rejected" if review["status"] == "rejected" else "rescore_needs_evidence")
+    return {
+        lane: ({"status": status, "eligible": accepted,
+                "reasons": [] if accepted else review["calculation_trace"]}
+               if lane == selected else
+               {"status": "not_reviewed", "eligible": False,
+                "reasons": ["This reorg reviewed only the selected lane; sibling judgments remain in history."]})
+        for lane in ("exploratory", "rigorous")
+    }
 
 
 def find_source(track, package_sha256):
-    """Only protected organizer configuration can select an inherited review."""
+    """Only protected organizer configuration can select a previous judgment."""
     if not PLAN.exists():
         return None
     plan = load_json_bytes(PLAN.read_bytes(), str(PLAN))
@@ -89,17 +116,13 @@ def load_archive(source, archive_root=None):
     return packet
 
 
-def history_packets(source, archive_root=None):
-    """Retain exactly the verified ancestry needed by the next workflow run."""
-    packet = load_archive(source, archive_root)
-    verify_packet(packet, archive_root)
-    packets = {}
-    while True:
-        packets[source] = packet
-        if "rescore" not in packet["dossier"]:
-            return packets
-        source = packet["evidence"]["rescore_source"]
-        packet = load_archive(source, archive_root)
+def _same_submission(current, previous):
+    a, b = current["submission"]["intake_report"], previous["submission"]["intake_report"]
+    if a["claim"] != b["claim"] or a["package_sha256"] != b["package_sha256"]:
+        raise VerificationError("reorg history changed the submission")
+    for key in ("track_id", "lane", "target_id", "target_profile"):
+        if current["benchmark"][key] != previous["benchmark"][key]:
+            raise VerificationError("reorg history changed the target or lane")
 
 
 def _transition(current, previous, authorization):
@@ -109,38 +132,16 @@ def _transition(current, previous, authorization):
         "source": current["rescore_source"], "source_config_sha256": b["target_config_sha256"],
         "destination_config_sha256": a["target_config_sha256"],
     }
-    if authorization != expected or a["claim"] != b["claim"] or a["package_sha256"] != b["package_sha256"]:
-        raise VerificationError("cost-only transition is not authorized for this exact submission")
-    # Configuration pins explicitly authorize the initial accounting-code migration.
-    # Independently reject changes to the mathematical target and work semantics.
-    for key in ("track_id", "lane", "target_id", "target_profile", "selection", "frontier"):
-        if current["benchmark"][key] != previous["benchmark"][key]:
-            raise VerificationError("cost-only transition changed the target or lane")
-    for key in ("id", "lane", "pass_status"):
-        if current["benchmark"]["qualification_policy"][key] != previous["benchmark"]["qualification_policy"][key]:
-            raise VerificationError("cost-only transition changed qualification policy")
-    # v4 -> v5 introduces prices; later v5 reorgs may change those prices only.
-    old_cost, new_cost = deepcopy(previous["benchmark"]["cost_model"]), deepcopy(current["benchmark"]["cost_model"])
-    if old_cost.get("id") not in {"collision-frontier-v4", "collision-frontier-v5"} or new_cost.get("id") != "collision-frontier-v5":
-        raise VerificationError("unsupported cost-only model transition")
-    if old_cost["id"] == new_cost["id"]:
-        if ({k: v for k, v in current["benchmark"].items() if k != "cost_model"}
-                != {k: v for k, v in previous["benchmark"].items() if k != "cost_model"}):
-            raise VerificationError("a v5 cost-only transition cannot change qualification or checker code")
-    if old_cost["id"] != new_cost["id"]:
-        legacy = json.loads((ROOT / "cost-models/collision-frontier-v4.json").read_text())
-        if old_cost != legacy:
-            raise VerificationError("v4 migration requires the exact historical work model")
-        for field in ("id", "version", "computation_model", "nominal_reference"):
-            old_cost.pop(field, None)
-            new_cost.pop(field, None)
-    for field in ("operation_weights", "reference_operation_costs"):
-        old_cost.pop(field, None)
-        new_cost.pop(field, None)
-    if old_cost != new_cost:
-        raise VerificationError("cost-only transition changed more than operation weights")
-    weights(current)
-    weights(previous)
+    if authorization != expected:
+        raise VerificationError("reorg transition is not authorized for this exact submission")
+    _same_submission(current, previous)
+    # Prevent an unversioned accounting change from silently preserving a score.
+    old_model, new_model = previous["benchmark"]["cost_model"], current["benchmark"]["cost_model"]
+    if old_model["id"] == new_model["id"]:
+        for field in ("score", "time_unit", "minimum_success_probability", "primitive_operations",
+                      "total_time_includes", "probability_space", "memory_scoring", "parallel_computation"):
+            if old_model.get(field) != new_model.get(field):
+                raise VerificationError("changed accounting rules require a new public cost-model ID")
 
 
 def _check_integrity(packet):
@@ -161,74 +162,76 @@ def _check_integrity(packet):
         raise VerificationError("archived aggregate differs from its dossier")
 
 
-def verify_packet(packet, archive_root=None, *, depth=0):
-    """Recheck the entire retained chain, without asking a model to rejudge it."""
-    if depth >= 32:
-        raise VerificationError("rescore history exceeds 32 records")
-    _check_integrity(packet)
-    evidence, dossier = packet["evidence"], packet["dossier"]
-    if "rescore" not in dossier:
-        decisions = aggregate_paired_reviews(dossier["reviews"], binding=dossier["binding"], claim=dossier["claim"],
-                                             infrastructure_failures=dossier.get("infrastructure_failures"))
-        if decisions != dossier["lanes"]:
-            raise VerificationError("stored decisions differ from deterministic aggregation")
-        if dossier["schema_version"] != "judge-paired-dossier-v1":
-            raise VerificationError("qualification anchor must be a full paired review")
-        return packet, []
-    record = dossier["rescore"]
-    if record["operation_weights"] != weights(evidence):
-        raise VerificationError("rescore history contains inconsistent operation weights")
-    source = load_archive(evidence["rescore_source"], archive_root)
-    anchor, history = verify_packet(source, archive_root, depth=depth + 1)
-    _transition(evidence, source["evidence"], record["authorization"])
-    if dossier["lanes"] != anchor["dossier"]["lanes"] or dossier["heuristic_assessments"] != anchor["dossier"]["heuristic_assessments"]:
-        raise VerificationError("rescore changed inherited qualification")
-    check_cost_review(record["review"], evidence)
-    return anchor, history + [record]
+def verify_packet(packet, archive_root=None):
+    """Verify pinned artifacts and submission identity; return oldest first.
+
+    Historical conclusions are evidence, not inputs to today's review validators.
+    Ledger-based reorgs are deliberately excluded: start from the original review.
+    """
+    judgments = []
+    while True:
+        if len(judgments) >= 32:
+            raise VerificationError("rescore history exceeds 32 records")
+        _check_integrity(packet)
+        judgments.append(packet)
+        record = packet["dossier"].get("rescore")
+        if record is None:
+            if packet["dossier"]["schema_version"] != "judge-paired-dossier-v1" or "rescore_source" in packet["evidence"]:
+                raise VerificationError("reorg history must start from an original ordinary judgment")
+            return list(reversed(judgments))
+        if record["review"].get("schema_version") != "review-rescore-v2":
+            raise VerificationError("ledger-based reorg judgments are excluded; pin the original ordinary judgment instead")
+        previous = load_archive(packet["evidence"]["rescore_source"], archive_root)
+        _same_submission(packet["evidence"], previous["evidence"])
+        packet = previous
+
+
+def history_packets(source, archive_root=None):
+    return {digest(packet): packet for packet in verify_packet(load_archive(source, archive_root), archive_root)}
 
 
 def context(evidence, authorization, archive_root=None):
     previous = load_archive(evidence["rescore_source"], archive_root)
-    anchor, history = verify_packet(previous, archive_root)
+    judgments = verify_packet(previous, archive_root)
     _transition(evidence, previous["evidence"], authorization)
-    lane = evidence["benchmark"]["lane"]
-    if not anchor["dossier"]["lanes"][lane]["eligible"]:
-        raise VerificationError("cost-only rescoring requires a qualified anchor")
-    fallback = legacy_ledger(anchor["dossier"]["claim"], weights(anchor["evidence"]), rigorous=lane == "rigorous")
+    scored = score_reference(judgments)
     return {
-        "binding": evidence_binding(evidence), "qualification_anchor": anchor,
-        "cost_history": history, "fallback_ledger": fallback,
-        "previous_weights": weights(previous["evidence"]), "new_weights": weights(evidence),
+        "binding": evidence_binding(evidence),
+        "judgments": [{"benchmark": p["evidence"]["benchmark"], "dossier": p["dossier"]} for p in judgments],
+        "experiment_report": judgments[0]["evidence"]["submission"].get("experiment_report"),
+        "previous_score": recorded_bound(scored),
+        "score_policy_changed": scoring_policy(evidence) != scoring_policy(scored["evidence"]),
     }
 
 
-def check_cost_review(review, evidence):
-    validate_review(review)
-    if review["binding"] != evidence_binding(evidence) or review["status"] != "complete":
-        raise VerificationError("cost-only review needs evidence or has a mismatched binding")
-    ledger = review["resource_ledger"]
-    if ledger["success_probability"] != evidence["submission"]["intake_report"]["claim"]["claim"]["success_probability"]:
-        raise VerificationError("cost-only review changed success probability")
-    return price_ledger(ledger, weights(evidence), rigorous=evidence["benchmark"]["lane"] == "rigorous")
+def score_result(evidence, dossier, archive_root=None):
+    """Validate this run's result before it can emit a score."""
+    record = dossier["rescore"]
+    supplied = context(evidence, record["authorization"], archive_root)
+    review = validate_review(record["review"], evidence)
+    if dossier["lanes"] != review_lanes(review, evidence):
+        raise VerificationError("reorg decisions differ from the current judgment")
+    if review["status"] != "complete":
+        raise VerificationError("reorg judgment did not accept the submission; no score is available")
+    if not supplied["score_policy_changed"] and review["time_log2"] != supplied["previous_score"]:
+        raise VerificationError("unchanged scoring policy must preserve the previous score")
+    return {"time_log2": review["time_log2"], "source": evidence["rescore_source"],
+            "previous_score": supplied["previous_score"], "score_policy_changed": supplied["score_policy_changed"],
+            "declared_cost_model": supplied["judgments"][0]["benchmark"]["cost_model"]}
 
 
 def run_review(evidence, authorization, client, archive_root=None):
     supplied = context(evidence, authorization, archive_root)
     payload = {**deepcopy(evidence), "review_context": supplied}
     if len(canonical_json_bytes(payload)) > 2 * 1024 * 1024:
-        raise VerificationError("cost-only review history exceeds the 2 MiB evidence budget")
+        raise VerificationError("reorg judgment history exceeds the 2 MiB evidence budget")
     result = client.review("lane_rescore", payload)
-    validate_review(result.review)
-    if result.review["binding"] != evidence_binding(evidence):
-        raise VerificationError("cost-only review has a mismatched binding")
-    if result.review["status"] == "needs_evidence":
-        raise RescoreNeedsEvidence(result)
-    check_cost_review(result.review, evidence)
-    anchor = supplied["qualification_anchor"]["dossier"]
+    if isinstance(result.review, dict) and result.review.get("status") == "complete" and not supplied["score_policy_changed"]:
+        result.review["time_log2"] = supplied["previous_score"]
+    validate_review(result.review, evidence)
     return {
-        "schema_version": "judge-rescore-dossier-v1", "policy_id": anchor["policy_id"],
-        "binding": evidence_binding(evidence), "claim": deepcopy(anchor["claim"]),
-        "lanes": deepcopy(anchor["lanes"]), "heuristic_assessments": deepcopy(anchor["heuristic_assessments"]),
-        "rescore": {"authorization": authorization, "operation_weights": weights(evidence),
-                    "review": result.review, "provenance": result.provenance},
+        "schema_version": "judge-rescore-dossier-v1", "policy_id": evidence["benchmark"]["qualification_policy"]["id"],
+        "binding": evidence_binding(evidence), "claim": deepcopy(evidence["submission"]["intake_report"]["claim"]),
+        "lanes": review_lanes(result.review, evidence), "heuristic_assessments": {},
+        "rescore": {"authorization": authorization, "review": result.review, "provenance": result.provenance},
     }

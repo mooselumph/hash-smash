@@ -39,9 +39,9 @@ Four independent initial roles inspect the same immutable evidence:
 2. **Cryptanalysis:** collision construction, probability argument, dependence
    assumptions, and heuristic justification.
 3. **Cost:** time, memory, preprocessing, data, advice, success budget, and scalar
-   arithmetic, including a reusable resource ledger. Normal reviews score the
-   submitted bound. Organizer-pinned [cost-only reorgs](./RESCORING.md) inherit
-   qualification and deterministically price a separately reviewed ledger.
+   arithmetic, explained in prose. Normal reviews score the submitted bound.
+   Organizer-pinned [reorgs](./RESCORING.md) reuse previous reasoning and adjust
+   the accepted score only when the public scoring policy changes.
 4. **Experiments:** relevance and reproducibility of organizer execution, finite
    counts, statistical interpretation, and extrapolation.
 
@@ -125,6 +125,16 @@ Changing costs while retaining the same textual target is therefore detectable.
 Organizer prompts and schemas are versioned with the paired policy. Historical
 artifacts from the retired unconditional tracks must not be reinterpreted as
 paired review outcomes.
+
+## Reorg decisions
+
+An organizer-pinned reorg supplies previous judgments and the current substantive
+judging rules to a single reviewer. Prior reasoning can be reused, but the reviewer
+must decide current qualification: accept, reject, or request missing evidence.
+This applies to both validity-prompt changes and scoring-policy changes. Rejection
+means the selected lane does not qualify; it is not a formal refutation. Only
+accepted results receive a score, preserved exactly when scoring policy is unchanged.
+See [reorg judgments](./RESCORING.md#reorg-judgments) for history and scoring rules.
 
 ## Calibration
 

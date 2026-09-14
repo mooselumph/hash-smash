@@ -94,7 +94,7 @@ def validate_claim(value: Any, *, track: LaneTrack) -> dict[str, Any]:
             "baseline_improved",
             "submission_state", "lane", "heuristics",
         },
-        {"certificate_manifest", "experiment_manifest", "resource_ledger"},
+        {"certificate_manifest", "experiment_manifest"},
     )
     _exact_integer(claim["schema_version"], 3, "$.schema_version")
     _exact_string(claim["target_profile"], track.profile_id, "$.target_profile")
@@ -174,11 +174,6 @@ def validate_claim(value: Any, *, track: LaneTrack) -> dict[str, Any]:
         for ref in refs:
             if not isinstance(ref, str) or not re.fullmatch(r"(?:experiment:[A-Za-z0-9][A-Za-z0-9._-]{0,63}|proof:[1-9][0-9]*(?:-[1-9][0-9]*)?)", ref):
                 _fail(path + ".evidence_ids", "reference must be experiment:<id> or proof:<line>[-<line>]")
-    if "resource_ledger" in claim:
-        from .resources import validate_ledger
-        ledger = validate_ledger(claim["resource_ledger"])
-        if ledger["success_probability"] != costs["success_probability"]:
-            _fail("$.resource_ledger", "must use the submitted success probability")
     return claim
 
 
