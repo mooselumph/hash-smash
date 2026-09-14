@@ -2,7 +2,6 @@
 
 from copy import deepcopy
 import json
-import math
 import shutil
 import unittest
 from unittest.mock import patch
@@ -18,21 +17,8 @@ from tests.test_frontier_pipeline import fake_provider, read_json
 from verifier.errors import VerificationError
 from verifier.frontier_tracks import LaneTrack, ROOT, frontier_tracks
 from verifier.io import atomic_write_json
-from verifier.resources import UNIT_WEIGHTS, legacy_ledger, price_ledger
+from verifier.costs import UNIT_WEIGHTS
 from verifier.schema_validation import validate_claim
-
-
-def component(name, operation, count, *, basis=None, status="supported"):
-    return {"id": name, "phase": "all trials", "operation": operation, "count_log2": count,
-            "bound_kind": "upper_bound", "status": status, "source_weights": basis,
-            "evidence": ["proof.md:L1-L2"], "assumptions": []}
-
-
-def ledger(probability=0.39):
-    return {"schema_version": "resource-ledger-v1", "success_probability": probability,
-            "coverage": "Complete organizer fixture computation.",
-            "components": [component("hashes", "target_compression", 20),
-                           component("overhead", "word_operation", 30)]}
 
 
 class CostClient:
@@ -218,9 +204,6 @@ class RescoringTests(unittest.TestCase):
         result = read_json(paths.score)
         self.assertEqual(result["score"], 128)
         self.assertNotIn("resourceLedger", result["metrics"])
-        opaque = legacy_ledger(read_json(paths.candidate / "claim.json"),
-                               {"target_compression": 1, "word_operation": 1 / 512}, rigorous=False)
-        self.assertEqual(price_ledger(opaque, {"target_compression": 1, "word_operation": 1 / 256}), 129)
 
     def test_same_policy_preserves_latest_score_even_if_reviewer_tightens_it(self):
         paths, _ = self.source()
@@ -405,31 +388,13 @@ class RescoringTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 rescore.run_review(evidence, rescore.find_source(paths.track, evidence["submission"]["intake_report"]["package_sha256"]), client)
 
-    def test_solver_ledger_is_optional_but_validated_and_never_a_score_override(self):
+    def test_obsolete_solver_ledger_has_a_clear_intake_error(self):
         paths = self.paths()
         claim = read_json(paths.candidate / "claim.json")
         validate_claim(claim, track=paths.track)
-        claim["resource_ledger"] = ledger()
-        atomic_write_json(paths.candidate / "claim.json", claim)
-        with fake_provider():
-            self.assertEqual(pipeline.run_all(paths), 0)
-        self.assertEqual(read_json(paths.score)["score"], 128)
-        claim["resource_ledger"]["components"][0]["count_log2"] = float("inf")
-        with self.assertRaises(VerificationError):
+        claim["resource_ledger"] = {"obsolete": "Remove this field and explain the calculation in proof.md."}
+        with self.assertRaisesRegex(VerificationError, "resource_ledger"):
             validate_claim(claim, track=paths.track)
-
-    def test_projection_rejects_estimates_duplicates_and_bad_bases(self):
-        for mutate in (
-            lambda x: x["components"][0].update(bound_kind="estimate"),
-            lambda x: x["components"][0].update(status="unresolved"),
-            lambda x: x["components"][1].update(id="hashes"),
-            lambda x: x["components"][0].update(source_weights=UNIT_WEIGHTS),
-            lambda x: x["components"][0].update(operation="opaque", source_weights=None),
-        ):
-            value = ledger()
-            mutate(value)
-            with self.assertRaises(VerificationError):
-                price_ledger(value, UNIT_WEIGHTS)
 
     def test_every_active_target_has_a_reproducible_price(self):
         estimates = reference_costs()

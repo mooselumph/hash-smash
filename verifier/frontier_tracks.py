@@ -124,7 +124,7 @@ class LaneTrack:
             raise VerificationError(f"{self.id}: frontier registry/profile mismatch")
         if cost.get("id") != COST_MODEL_ID:
             raise VerificationError("unexpected frontier cost model")
-        from .resources import validate_weights
+        from .costs import validate_weights
         reference_cost = self.reference_operation_cost(cost)
         if type(reference_cost) not in (int, float) or reference_cost < 1:
             raise VerificationError("selected target needs a reference operation cost")
@@ -146,7 +146,7 @@ class LaneTrack:
         policy_files += sorted((ROOT / "judge" / "strategies").glob("*.md"))
         policy_files += [ROOT / "schemas" / name for name in (
             "review-lanes-v1.schema.json", "claim-frontier-v3.schema.json", "experiment-manifest-v1.schema.json",
-            "resource-ledger-v1.schema.json", "review-rescore-v2.schema.json")]
+            "review-rescore-v2.schema.json")]
         policy_files += [ROOT / "judge/rescore.py", ROOT / "judge/output.py", ROOT / "judge/prompts/rescore-v1.md"]
         return {
             "track_id": self.id, "lane": self.lane, "target_id": self.target_id,

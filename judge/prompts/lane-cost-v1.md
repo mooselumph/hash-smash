@@ -6,9 +6,9 @@ expected time or a single observed lucky run. Check restart and tail assumptions
 
 Fill cost_reconstruction, with concise calculation_trace, for the submitted
 algorithm. Preserve time units; the harness derives the normalized score from time_log2.
-Explain the resource calculation in ordinary prose with source references. No
-operation ledger is required. Any ledger supplied by the participant is evidence
-to assess, not a required output format or an automatic score override.
+Explain the resource calculation in ordinary prose with source references.
+Do not output an operation ledger. Operation counts in a participant's proof are
+evidence to assess, not an automatic score override.
 Continue checking memory_log2_bytes even though it does not affect the scalar.
 Parallel processors reduce latency, not the total charged work. If reconstruction cannot be completed, provide the submitted
 conditional values with explicitly unresolved obligations and explain the missing

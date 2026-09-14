@@ -40,9 +40,10 @@ additional charged work. Include preprocessing, failed trials and recovery at th
 claimed success probability. State the tightest bound you can support; the judge
 does not automatically tighten the submitted scalar.
 
-Explain the calculation in the proof. An operation ledger is not required from a
-solver or judge. Existing optional `resource_ledger` claim fields remain readable
-for compatibility, but no ledger is a new review output or score override.
+Explain the calculation in the proof. Submissions and judge outputs have no
+`resource_ledger` field; there is no intermediate ledger schema or pricing engine.
+Remove that obsolete field from replacement packages and keep their cost reasoning
+in `proof.md`.
 
 ## Reorg judgments
 

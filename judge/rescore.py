@@ -4,7 +4,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
-from verifier.resources import UNIT_WEIGHTS, validate_weights
+from verifier.costs import UNIT_WEIGHTS, validate_weights
 from verifier.errors import VerificationError
 from verifier.io import canonical_json_bytes, load_json_bytes, sha256_bytes
 from verifier.schema_validation import require_sha256

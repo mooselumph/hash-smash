@@ -174,7 +174,6 @@ def _schema_for_stage(stage: str) -> dict[str, Any]:
             omitted.add("cost_reconstruction")
         else:
             cost = schema["properties"]["cost_reconstruction"]
-            cost["properties"].pop("resource_ledger", None)
             cost["properties"].pop("normalized_score_log2", None)
             cost["required"].remove("normalized_score_log2")
         omitted.update({"obligations", "heuristics", "findings"} if stage in {"lane_defender", "lane_adjudicator"}

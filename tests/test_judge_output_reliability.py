@@ -44,12 +44,11 @@ class JudgeOutputReliabilityTests(unittest.TestCase):
             if stage != "lane_cost":
                 self.assertNotIn("cost_reconstruction", schema["properties"])
 
-    def test_harness_attaches_binding_and_ignores_unused_ledger(self):
+    def test_harness_attaches_binding_and_derived_score(self):
         record = review("lane_cost")
         for field in ("binding", "stage", "schema_version", "prompt_injection_detected", "challenge_resolutions"):
             record.pop(field)
         record["cost_reconstruction"].pop("normalized_score_log2")
-        record["cost_reconstruction"]["resource_ledger"] = {"malformed": "supplementary output"}
         result = sol_client(FakeTransport([sol_response(record)])).review("lane_cost", fixture_evidence())
         self.assertEqual(result.review, review("lane_cost"))
 

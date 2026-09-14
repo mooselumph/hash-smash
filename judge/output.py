@@ -33,8 +33,6 @@ def complete_review(value, stage, evidence):
         review.setdefault("cost_reconstruction", None)
     elif isinstance(review.get("cost_reconstruction"), dict):
         cost = review["cost_reconstruction"]
-        # A supplementary ledger is no longer a review requirement or score input.
-        cost.pop("resource_ledger", None)
         if "time_log2" in cost:
             cost["normalized_score_log2"] = cost["time_log2"]
     if stage in {"lane_defender", "lane_adjudicator"}:

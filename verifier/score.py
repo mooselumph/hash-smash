@@ -106,7 +106,7 @@ def build_score(
     if dossier_sha256 is not None:
         metrics["dossierSha256"] = dossier_sha256
     if rescore_result is not None:
-        from .resources import UNIT_WEIGHTS
+        from .costs import UNIT_WEIGHTS
         original_model = rescore_result["declared_cost_model"]
         metrics.update(declaredTimeLog2=float(costs["time_log2"]),
                        declaredPreprocessingLog2=metrics.pop("preprocessingLog2"),
