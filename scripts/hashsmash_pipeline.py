@@ -257,16 +257,6 @@ def run_judge(paths: RunPaths) -> int:
             dossier = run_paired_review(evidence, client_factory(base_config), role_clients=role_clients)
         dossier["aggregate"] = select_lane_aggregate(dossier, p.track.lane)
         judge_label = f"paired:{provider}:{base_config.model}"
-    except rescore.RescoreNeedsEvidence as error:
-        aggregate = {"status": "rescore_needs_evidence", "reasons": error.result.review["calculation_trace"]}
-        atomic_write_json(p.aggregate, aggregate)
-        atomic_write_json(p.dossier, {
-            "schema_version": "judge-rescore-failure-v1", "aggregate": aggregate,
-            "review": error.result.review, "provenance": error.result.provenance,
-            "source": evidence["rescore_source"], "judge_configuration": safe_config,
-        })
-        print(json.dumps(aggregate, sort_keys=True))
-        return 2
     except JudgeInfraError as error:
         reason = f"reorg judge failed after {error.attempts} attempts"
         if error.diagnostics:
@@ -342,7 +332,7 @@ def run_score(paths: RunPaths) -> int:
     rescored = None
     if "rescore_source" in evidence:
         anchor, _ = rescore.verify_packet({"evidence": evidence, "dossier": dossier}, p.rescore_archives)
-        previous = rescore.load_archive(evidence["rescore_source"], p.rescore_archives)
+        previous = rescore.score_reference(rescore.load_archive(evidence["rescore_source"], p.rescore_archives), p.rescore_archives)
         rescored = {
             "time_log2": rescore.accepted_score({"evidence": evidence, "dossier": dossier}),
             "source": evidence["rescore_source"],

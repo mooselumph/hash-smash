@@ -2,6 +2,8 @@
 
 import json
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 from judge.lanes import LANE_STAGES
 from judge.paired_review import run_paired_review
@@ -16,6 +18,22 @@ def text_response(text):
 
 
 class JudgeOutputReliabilityTests(unittest.TestCase):
+    def test_reorg_receives_current_validity_instructions_not_only_their_hash(self):
+        from judge.prompts import load_system_prompt
+        original = Path.read_text
+
+        def changed_prompt(path, *args, **kwargs):
+            text = original(path, *args, **kwargs)
+            if path.name == "lane-cryptanalysis-v1.md":
+                text += "\nOrganizer fixture: assess the newly required validity condition."
+            return text
+
+        with patch.object(Path, "read_text", changed_prompt):
+            prompt = load_system_prompt("lane_rescore")
+        self.assertIn("assess the newly required validity condition", prompt)
+        self.assertIn("old judgment is reusable reasoning, not a binding verdict", prompt)
+        self.assertGreater(prompt.index("REORG PROCEDURE"), prompt.index("newly required validity condition"))
+
     def test_wire_contract_contains_only_role_outputs(self):
         for stage in (*LANE_STAGES, "lane_rescore"):
             schema = _schema_for_stage(stage)

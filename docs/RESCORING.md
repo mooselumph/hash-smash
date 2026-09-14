@@ -1,4 +1,4 @@
-# Computation accounting and cost-only reorgs
+# Computation accounting and reorg judgments
 
 ## Prices
 
@@ -51,17 +51,20 @@ Yukon continues dispatching its ordinary workflow. An organizer-reviewed
 and source/destination configuration. Unlisted submissions receive ordinary review.
 
 The reorg judge receives the original submission, original qualification judgment,
-latest judgment and intervening cost reviews. It reuses validity reasoning where
-applicable and revisits only what the changed policy or configuration requires.
-If the retained reasoning is insufficient, it reports `needs_evidence` rather than
-inventing assumptions or issuing a score. Target, algorithm, success probability
-and lane remain bound to the unchanged submission.
+latest judgment, intervening reviews and current judging instructions. Previous
+judgments provide reusable reasoning, not a binding verdict. The judge can accept
+or reject under the current rules, revisiting what changed prompts, accounting or
+configuration require. A pricing-only change will usually leave validity reasoning
+applicable, but does not guarantee acceptance. Missing information can instead
+produce `needs_evidence`. Neither rejection nor missing evidence produces a score.
+Target, algorithm, success probability and lane remain bound to the submission.
 
-The score rule is explicit:
+For accepted results, the score rule is explicit:
 
 - Same scoring policy: retain the latest accepted score exactly. A first reorg
   retains the submitted score; a later reorg retains the previous reorg's score.
   A tighter reconstruction or unrelated prompt/checker change does not alter it.
+  An intervening rejected or incomplete review does not erase that scored judgment.
 - Changed scoring policy: the judge gives a revised computation bound and a short
   calculation with evidence references. No prescribed intermediate ledger is needed.
 
@@ -72,9 +75,11 @@ prices, comments, judge prompts or general configuration hashes do not by themse
 change a submission's scoring policy. Organizer pins still authorize the exact
 configuration transition independently of this score comparison.
 
-The final review contains only status, a computation bound (or null when evidence
-is insufficient), and a concise explanation. The harness supplies stage/version/
-binding metadata and preserves the previous score when policy is unchanged.
+The final review contains only status, a computation bound (null unless accepted),
+and a concise explanation. The harness supplies stage/version/binding metadata and
+preserves the previous score on acceptance when policy is unchanged. Rejected and
+incomplete judgments remain in history. Only the selected lane is reviewed; sibling
+lane decisions are not carried forward as current decisions.
 Memory, data and advice metrics remain reported separately. Scores record the
 original declared bound, previous score, `rescoreMode` and source packet.
 

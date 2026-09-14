@@ -126,6 +126,16 @@ Organizer prompts and schemas are versioned with the paired policy. Historical
 artifacts from the retired unconditional tracks must not be reinterpreted as
 paired review outcomes.
 
+## Reorg decisions
+
+An organizer-pinned reorg supplies previous judgments and the current substantive
+judging rules to a single reviewer. Prior reasoning can be reused, but the reviewer
+must decide current qualification: accept, reject, or request missing evidence.
+This applies to both validity-prompt changes and scoring-policy changes. Rejection
+means the selected lane does not qualify; it is not a formal refutation. Only
+accepted results receive a score, preserved exactly when scoring policy is unchanged.
+See [reorg judgments](./RESCORING.md#reorg-judgments) for history and scoring rules.
+
 ## Calibration
 
 `tests/test_paired_judges.py` uses synthetic organizer records, never solver drafts,

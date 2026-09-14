@@ -1,4 +1,4 @@
-"""Cost-only migration boundaries, using organizer fixtures and fake judges."""
+"""Reorg judgment and accounting boundaries, using organizer fixtures and fake judges."""
 
 from copy import deepcopy
 import json
@@ -174,7 +174,8 @@ class RescoringTests(unittest.TestCase):
         self.assertNotIn("preprocessingLog2", result["metrics"])
         self.assertEqual(result["metrics"]["declaredPreprocessingLog2"], 0)
         self.assertEqual(result["metrics"]["rescoreSourceSha256"], entry["source"])
-        self.assertEqual(read_json(paths.dossier)["lanes"], anchor["dossier"]["lanes"])
+        self.assertEqual(read_json(paths.dossier)["lanes"]["exploratory"], anchor["dossier"]["lanes"]["exploratory"])
+        self.assertEqual(read_json(paths.dossier)["lanes"]["rigorous"]["status"], "not_reviewed")
         self.assertNotIn("resourceLedger", result["metrics"])
         self.assertEqual(result["metrics"]["rescoreMode"], "policy_change")
 
@@ -256,6 +257,50 @@ class RescoringTests(unittest.TestCase):
         changed["benchmark"]["cost_model"]["id"] = "collision-frontier-v6"
         self.assertNotEqual(rescore.scoring_policy(evidence), rescore.scoring_policy(changed))
 
+    def reject_reorg_then_reconsider(self, *, change_prices):
+        paths, _ = self.source()
+        self.run_cost(paths, CostClient(66.28))
+        prior = read_json(paths.dossier)
+        entry = archive(paths.evidence, paths.dossier, self.archives)
+        changed = paths.track.benchmark()
+        changed["qualification_policy"]["sha256"] = "e" * 64
+        if change_prices:
+            changed["cost_model"]["operation_weights"]["word_operation"] *= 2
+        with patch.object(LaneTrack, "benchmark", return_value=changed):
+            entry["destination_config_sha256"] = paths.track.config_sha256()
+            atomic_write_json(self.plan, {"entries": [entry]})
+            client = CostClient(mutate=lambda r: r.update(
+                status="rejected", time_log2=None,
+                calculation_trace=["The previous argument does not meet the current criterion; proof.md:L1-L2."]))
+            with fake_provider(factory=lambda _: client):
+                self.assertEqual(pipeline.run_all(paths), 2)
+            supplied = client.calls[0][1]["review_context"]
+            self.assertEqual(supplied["previous_judgment"]["dossier"], prior)
+            self.assertEqual(supplied["score_policy_changed"], change_prices)
+            dossier = read_json(paths.dossier)
+            self.assertEqual(dossier["aggregate"]["status"], "reorg_rejected")
+            self.assertFalse(dossier["lanes"]["exploratory"]["eligible"])
+            self.assertEqual(dossier["lanes"]["rigorous"]["status"], "not_reviewed")
+            self.assertFalse(paths.score.exists())
+            with self.assertRaises(VerificationError):
+                pipeline.run_score(paths)
+            self.assertFalse(paths.score.exists())
+
+            # A rejection is a full historical judgment, not an infrastructure failure.
+            latest = archive(paths.evidence, paths.dossier, self.archives)
+            atomic_write_json(self.plan, {"entries": [latest]})
+            reconsidered = CostClient(12)
+            self.run_cost(paths, reconsidered)
+            supplied = reconsidered.calls[0][1]["review_context"]
+            self.assertEqual(supplied["previous_judgment"]["dossier"]["rescore"]["review"]["status"], "rejected")
+            self.assertEqual(read_json(paths.score)["score"], 12 if change_prices else 66.28)
+
+    def test_validity_prompt_change_can_reject_and_accept_without_repricing(self):
+        self.reject_reorg_then_reconsider(change_prices=False)
+
+    def test_price_change_can_reject_and_later_accept_with_a_revised_score(self):
+        self.reject_reorg_then_reconsider(change_prices=True)
+
     def test_stale_pin_and_nonpricing_semantic_change_fail_before_model_call(self):
         paths, entry = self.source()
         self.run_cost(paths, CostClient(21.0))
@@ -291,7 +336,7 @@ class RescoringTests(unittest.TestCase):
         with self.assertRaises(VerificationError):
             rescore.verify_packet(packet)
 
-    def test_incomplete_cost_review_retains_qualification_and_emits_no_score(self):
+    def test_incomplete_cost_review_retains_history_and_emits_no_score(self):
         paths, entry = self.source()
         anchor = rescore.load_archive(entry["source"])
         client = CostClient(mutate=lambda review: review.update(status="needs_evidence", time_log2=None))
@@ -299,7 +344,7 @@ class RescoringTests(unittest.TestCase):
             self.assertEqual(pipeline.run_all(paths), 2)
         self.assertFalse(paths.score.exists())
         self.assertEqual(read_json(paths.aggregate)["status"], "rescore_needs_evidence")
-        self.assertEqual(read_json(paths.dossier)["review"]["status"], "needs_evidence")
+        self.assertEqual(read_json(paths.dossier)["rescore"]["review"]["status"], "needs_evidence")
         self.assertEqual(rescore.load_archive(entry["source"]), anchor)
 
     def test_reorg_cannot_add_success_probability_or_emit_invalid_score(self):
@@ -366,6 +411,12 @@ class RescoringTests(unittest.TestCase):
             body = json.loads(transport.calls[0]["body"])
             self.assertNotIn("tools", body)
             self.assertIn("previous_score", json.dumps(body))
+            for status in ("rejected", "needs_evidence"):
+                declined = {**record, "status": status, "time_log2": None}
+                transport = openrouter.FakeTransport([response(declined)])
+                result = make_client(transport).review("lane_rescore", evidence)
+                self.assertEqual(result.review, declined)
+                self.assertEqual(len(transport.calls), 1)
             bad = deepcopy(record)
             bad["time_log2"] = -1
             with self.assertRaises(JudgeInfraError):

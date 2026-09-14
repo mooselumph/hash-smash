@@ -78,8 +78,8 @@ Explain operation counts and their prices in `proof.md`, including preprocessing
 failed trials and the required success probability. No structured operation ledger
 is required. Use the current [scoring rules and target prices](./docs/RESCORING.md)
 to submit the tightest `time_log2` bound you can justify. Ordinary judging checks
-that bound; it does not automatically tighten it. A reorg preserves the latest
-accepted score unless the scoring policy changes.
+that bound; it does not automatically tighten it. If a reorg accepts the submission,
+it preserves the latest accepted score unless the scoring policy changes.
 
 Keep incomplete work in `submission_state: draft`. Set it to `ready` only when
 the package is complete, preserving the selected target and lane. Drafts must

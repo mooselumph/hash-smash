@@ -134,6 +134,13 @@ The default `single` mode uses independent calls to one client. Both modes use t
 same proof obligations and adjudication rules; neither uses majority voting.
 The dossier records effective models, prompt hashes and role configuration.
 
+Organizer-pinned [reorgs](../docs/RESCORING.md#reorg-judgments) supply the original
+submission, previous judgments and current judging instructions to one reviewer.
+It can accept, reject, or request missing evidence. Previous reasoning is reusable;
+the verdict is reconsidered under current rules. Accepted results preserve the last
+accepted score unless the scoring policy changed. Other results emit no score and
+remain in history.
+
 ## Diagnostics and tests
 
 The provider contract contains only the selected role's substantive outputs.
