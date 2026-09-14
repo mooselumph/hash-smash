@@ -119,5 +119,7 @@ to 32 records and 2 MiB of model input, with an explicit error on overflow.
 
 The initial migration plan is retained in
 [the historical plan](../reorg/history/pre-blake3-keccak800-plan.json). The active
-plan is empty. This source change does not alter stored Yukon scores or initiate
-a reorg; future inheritance requires fresh organizer-reviewed pins.
+plan pins those 25 original judgments to the current simplified judge configuration.
+These cover 16 baselines and 9 previously scored submissions. Other submissions
+and the four new exploratory baselines receive ordinary review. Merging the plan
+does not itself alter Yukon scores; the managed reorg activates replay.

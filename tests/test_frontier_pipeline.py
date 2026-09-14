@@ -159,7 +159,7 @@ class FrontierPipelineTests(unittest.TestCase):
         manifest = read_json(ROOT / "benchmark.json")
         self.assertEqual(manifest["schemaVersion"], 2)
         self.assertEqual(manifest["name"], "hashsmash")
-        self.assertEqual(len(manifest["tracks"]), 12)
+        self.assertEqual(len(manifest["tracks"]), 20)
         for row in manifest["tracks"]:
             track = get_frontier_track(row["name"])
             self.assertEqual(row["benchmarkCommand"], ["python3", "scripts/hashsmash_pipeline.py", "all", "--track", track.id])
@@ -171,7 +171,9 @@ class FrontierPipelineTests(unittest.TestCase):
             manifest_ids.add(track.id)
         for lane in ("exploratory", "rigorous"):
             self.assertFalse((ROOT / "lanes" / lane / "benchmark.json").exists())
-        self.assertEqual(manifest_ids, {track.id for track in frontier_tracks() if track.lane == "exploratory"})
+        self.assertEqual(manifest_ids, {track.id for track in frontier_tracks()} - {
+            "blake3-r1-rigorous", "blake3-r2-rigorous", "keccak800-r5-rigorous", "keccak800-r6-rigorous",
+        })
         for undefined in (
             "poseidon-r8-exploratory", "blake3-r6-rigorous", "keccak800-r7-exploratory",
             "md5-s8", "md5-s24", "md5-s64", "sha1-r8", "sha1-r40", "sha1-r80",

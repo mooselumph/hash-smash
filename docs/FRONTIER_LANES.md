@@ -1,8 +1,8 @@
 # Paired collision-frontier lanes
 
 Roster update: 2026-09-13. There are **28 planned slots, 24 locally runnable lanes,
-and 4 deferred Poseidon slots**. The root Yukon manifest includes **12 exploratory
-tracks**; rigorous packages remain available locally. This source change does not
+and 4 deferred Poseidon slots**. The root Yukon manifest includes **20 registered
+tracks: 12 exploratory and 8 existing rigorous tracks**. The four new rigorous lanes remain local. This source change does not
 itself import or open tracks.
 See [FRONTIER_VALIDATION.md](./FRONTIER_VALIDATION.md) for test evidence and limits.
 
@@ -168,8 +168,8 @@ fingerprint. Do not generalize a checked output predicate to unmeasured heuristi
 ## Yukon manifest and deployment gates
 
 Import the repository root once as `hashsmash`. The root schema-v2
-[`benchmark.json`](../benchmark.json) contains twelve exploratory tracks. Twelve rigorous siblings remain locally
-runnable with independent packages and review decisions. Every track uses its full
+[`benchmark.json`](../benchmark.json) contains twelve exploratory and eight existing rigorous tracks. The four new
+BLAKE3/Keccak[800] rigorous siblings remain local with independent review decisions. Every track uses its full
 `<target>-<lane>` ID, such as `sha256-r31-exploratory` or
 `sha256-r31-rigorous`, in both Yukon and organizer commands. No `rootDir`
 override or separate lane import is needed.
@@ -186,9 +186,9 @@ score paths in the manifest are repository-relative. For example, the explorator
 SHA-256 r31 track edits `lanes/exploratory/candidates/sha256-r31` and uploads only
 `lanes/exploratory/.yukon/scores/sha256-r31-exploratory.json` at that exact path.
 
-Yukon currently permits at most 20 tracks in a manifest. Twelve exploratory tracks
-fit this limit. Importing both lanes for all targets would exceed it; rigorous
-tracks are therefore excluded from the manifest. Poseidon still requires an exact
+Yukon currently permits at most 20 tracks in a manifest. The manifest retains all
+20 registered tracks because managed reorgs cannot change membership. The four
+new BLAKE3/Keccak[800] rigorous tracks are excluded to stay within this limit. Poseidon still requires an exact
 definition before any of its four reserved slots can run. Splitting this repository into multiple lane imports is
 not the deployment contract.
 
@@ -213,7 +213,7 @@ Before activating the imported exploratory lanes:
    supported Yukon change allowing an initially empty frontier. Drafts/nominal
    references cannot be passed off as successful baselines.
 4. Arrange the Yukon dev GitHub App/importer access and confirm the deployment supports
-   schema v2. A fresh import queues twelve baseline workflows; each must qualify. An
+   schema v2. A fresh import queues twenty baseline workflows; each must qualify. An
    append import queues only newly declared tracks. Run an end-to-end dev import, submission and
    promotion test, including preservation of sibling tracks across both lanes.
 5. Calibrate both lane policies on labeled real cryptanalysis, with human review of

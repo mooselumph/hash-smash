@@ -5,7 +5,7 @@ This is an organizer baseline-authoring handoff, reached through the
 provider review are for explicitly assigned import preparation. Ranked Yukon
 solvers follow [TASK.md](../TASK.md) and submit through Yukon instead.
 The catalog now contains 24 local research lanes; the import manifest includes
-only the 12 exploratory lanes. Four Poseidon slots remain undefined. The new
+12 exploratory and the 8 already registered rigorous lanes. Four Poseidon slots remain undefined. The new
 organizer assignment covers BLAKE3 1/2 and Keccak[800] 5/6 baselines.
 
 `submission_state: ready` means that a complete package is submitted for review.
@@ -38,7 +38,7 @@ Read `docs/BUILDER_GUIDE.md`, `docs/FRONTIER_LANES.md`, `docs/JUDGE_LANES.md`,
 `docs/HEURISTIC_EXPERIMENTS.md`, `schemas/claim-frontier-v3.schema.json`,
 `cost-models/collision-frontier-v5.json`, the assigned `tracks/<track>/TASK.md`,
 and that track's exact target profile. Yukon and organizer commands use the same
-full track ID including the lane, for example `sha256-r31-exploratory`. The twelve exploratory
+full track ID including the lane, for example `sha256-r31-exploratory`. The twenty imported
 tracks belong to one repository-root manifest; baseline validations remain
 independent. Appending new tracks validates those additions without requiring
 new imports of already registered siblings.
@@ -53,7 +53,7 @@ new imports of already registered siblings.
    profile. A compression-only, free-start, truncated-output, or different-round
    result is not a substitute. The judge does not fetch external links: include
    the argument needed to assess cited results in the package.
-2. **A justified resource ledger in `claim.json` and the proof.** Replace the
+2. **Justified resource bounds in `claim.json` and the proof.** Replace the
    nominal placeholder numbers with upper bounds justified under the 256-bit
    word-RAM cost model. Charge preprocessing, message construction, all trials
    including failures, randomness, sorting/lookups, verification and restarts.
