@@ -5,9 +5,18 @@ a separately reported resource bound.
 
 This independent exploratory package targets blake3-r2-prefix-v1. It proposes
 a classical randomized algorithm with success at least 1/2, total charged time
-at most 2^149 units, and peak memory at most 2^137 bytes under
+at most 2^140 units, and peak memory at most 2^137 bytes under
 collision-frontier-v5. These are conservative analytical upper bounds, not
-measured execution costs. The claimed scalar is 149.
+measured execution costs. The claimed scalar is 140.
+
+The algorithm, domain, probability argument and RAM loop envelopes are those of
+the organizer generic-birthday package. The only material change is to price
+that same envelope under the published v5 weights: one selected 2-round BLAKE3
+compression costs 1, and every other listed 256-bit RAM primitive costs 1/C
+with C=430 for blake3-r2. Charging those word operations at 1 instead of 1/C
+produced the looser scalar 149; that envelope is retained as an operation
+count, then converted. The nominal display exponent 128 is not used as a
+qualified baseline.
 
 The proof uses no distributional property of the selected hash: every fixed function from
 the chosen message domain to 256-bit strings satisfies its probability bound.
@@ -263,25 +272,53 @@ Final verification uses at most two complete hash wrappers, message
 distinctness, full digest comparisons and output serialization: less than
 2*65536+1024 <2^18. There is no restart cost because no restart occurs.
 
-The table uses a conservative unit-price envelope: charge every word operation
-one unit for this upper-bound calculation although v5 charges only 1/C <= 1.
-This includes all memory traffic, control, code initialization and randomness.
-The wrapper budget includes a spare unit for each target compression. Thus
-summing all phases, including batches that fail to find a collision,
+The table is an operation-count envelope, not a v5 price. Collision-frontier-v5
+charges one selected-round target compression as 1 and every other listed
+256-bit RAM primitive as 1/C, with C=430 for blake3-r2
+(operation_weights.word_operation = 1/430). The generate wrapper still includes
+a spare unit counted as a word operation, not as a second compression.
 
-    T <= (128 + 65536 + 129*4096 + 2048)n + 2^24 + 2^18
+Separate the two disjoint categories. Target compressions are the n hashes of
+Step 1 plus the two verification hashes:
+
+    H = n + 2 < 2^130.
+
+All remaining listed RAM primitives, including the spare generate unit, the
+fixed-storage initialization 2^24, and verification's non-compression work, are
+bounded by the same table:
+
+    W <= (128 + 65536 + 129*4096 + 2048)n + 2^24 + 2^18
        = 596096n + 2^24 + 2^18
-       < 1048576n
+       < 2^20 n
        = 2^149.
+
+Hence the v5 charged time is
+
+    T = H + W/C
+      < (n + 2) + (596096n + 2^24 + 2^18)/430.
+
+Using n=2^129 and 596096/430 < 1386.27,
+
+    596096n / 430 < 1386.27 * 2^129,
+    (2^24 + 2^18)/430 < 2^16,
+    n + 2 < 2^129 + 2,
+
+    T < (1 + 1386.27) * 2^129 + 2^16
+      < 1388 * 2^129
+      < 2^{11} * 2^129
+      = 2^140,
+
+because 1388 < 2048 = 2^11. Equivalently,
+log2(1388) < 10.44, so T < 2^{139.44} < 2^140.
 
 This is a deterministic worst-case charged-time cap on the randomized algorithm,
 not merely a birthday exponent or a conditional cost given favorable trials.
-For reusable v5 accounting, the target-compression count is n+2 < 2^130;
-all non-compression primitive operations together are < 2^149 by the same
-expanded loops and table (excluding the separately counted compressions).
-These disjoint operation categories yield T <= 2^130 + 2^149/C < 2^149,
-since C >= 222. The submitted bound 149 is intentionally loose. The raw-count
-ledger can support subsequent repricing without inventing an operation mix.
+It includes preprocessing, failed samples, sorting, verification and the two
+final recompressions. The submitted bound 140 is still loose relative to
+2^{139.44}; it is the smallest integer ceiling of this envelope under C=430.
+A unit-price reading of the same table (every word operation charged 1) recovers
+the previous scalar 149 and is not the v5 score. The raw-count envelope can
+support subsequent repricing without inventing an operation mix.
 
 Each array uses n*3*32=96n bytes. With all fixed storage included,
 
@@ -296,14 +333,18 @@ The memory figure is an abstract RAM allowance, not a claim of physical feasibil
 
 The claim fields have these precise meanings:
 
-- time_log2=149 bounds total charged time by 2^149 units.
+- time_log2=140 bounds total charged v5 time by 2^140 units, i.e. T=H+W/C
+  with C=430 as derived above.
 - memory_log2_bytes=137 bounds simultaneous storage by 2^137 bytes.
 - data_log2=130 bounds complete-hash evaluations by n+2 <=2^130, including
   the two final re-evaluations. It counts evaluated message instances, not
   bytes or distinct messages. Every repeated sample is counted; external
   supplied data is zero and all retained data bytes are in peak memory.
-- preprocessing_log2=137 bounds fixed setup plus both-array initialization:
-  2^24+128n <2^137 units. It is already included in T, not an omitted phase.
+- preprocessing_log2=128 bounds fixed setup plus both-array initialization
+  after v5 word-operation pricing:
+  (2^24 + 128n)/430 < 128n/430 + 2^16 < 0.30 * 2^129 + 2^16 < 2^128.
+  This work is already included in T, not an omitted phase. The previous
+  unit-price reading 2^24+128n < 2^137 is the same physical work.
 - nonuniform_advice_log2_bytes=0 means at most 2^0=1 byte of advice; actual
   nonuniform advice is zero. The schema cannot express log2(0). Public
   constants and code are fully charged in the fixed storage and initialization.
@@ -322,7 +363,7 @@ experiment manifest or participant executable is supplied.
 The required baseline_improved identifier blake3-r2-nominal-v2 names the
 organizer's nominal display reference 128. It is not an established attack,
 qualified baseline or security bound; the identifier's field name is not a
-claim of improvement. This candidate's scalar bound 149 exceeds 128. No
+claim of improvement. This candidate's scalar bound 140 exceeds 128. No
 Pareto dominance claim follows from scalar scoring.
 
 submission_state=ready means this independent exploratory package is complete
