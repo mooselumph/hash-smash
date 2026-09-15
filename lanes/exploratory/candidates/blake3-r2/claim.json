@@ -6,11 +6,11 @@
   "rounds": 2,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 149,
+    "time_log2": 140,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 137,
     "data_log2": 130,
-    "preprocessing_log2": 137,
+    "preprocessing_log2": 128,
     "success_probability": 0.5,
     "nonuniform_advice_log2_bytes": 0
   },
@@ -20,7 +20,7 @@
     "Unkeyed BLAKE3-256; 2 prefix rounds, one 64-byte root block with flags11, length64, counter0.",
     "Classical 256-bit word RAM with independent uniform random words, fully charged iterative merge sort and two retained record arrays.",
     "Analytical generic construction; no full-scale execution, precomputed collision, or empirical heuristic is claimed.",
-    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 149."
+    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 140 after applying collision-frontier-v5 operation weights with C=430."
   ],
   "baseline_improved": "blake3-r2-nominal-v2",
   "heuristics": [],
