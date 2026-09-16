@@ -6,22 +6,95 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 52.5,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
+    "memory_log2_bytes": 31,
+    "data_log2": 63,
+    "preprocessing_log2": 40,
+    "success_probability": 0.5,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Classical probabilistic 256-bit word RAM under collision-frontier-v5 (C = 2224 operations per sha256-r32 compression); the only random coins are fresh uniform 64-byte first blocks B0; the tail table of 2^20 (W14,W15) values is scanned exhaustively per valid B0.",
+    "Structural two-block ordinary collision: m = B0 || M1 and m' = B0 || M1' (128 bytes each), padded by the target rule into a common third block; standard IV, rounds 0..31 on every block including the padding block, feed-forward, all 256 digest bits compared.",
+    "Reuses unchanged the 36-step SHA-256 local collision and characteristic of ePrint 2026/1120 (Tables 9 and 10; message differences in W5,W6,W7,W8,W9,W13,W14,W21,W23), whose support lies at step index <= 30, so 32-step evaluation enforces exactly its conditions; verified with the trusted reference on two published instances.",
+    "Charged time <= 2^52.5 target compressions for success probability 0.5: 2^51.1 full block-1 compressions (charged 1 each plus check operations), 2^56.5 tail candidates charged 32 word operations each (incremental step-16 evaluation from chaining-value-independent precomputed state), 2^40 preprocessing; reconstruction 2^51.8 with measured parameters (c_cv = 14.03 measured at 32 steps, d = 19.7 measured, c_unc = 57 counted and profiled), 2^52.4 with the published first-block density. Conservative fallback charging every tail candidate as a whole compression: 2^57.04.",
+    "Cryptanalytic claim below the nominal 128 reference; no full-scale execution is performed and no colliding certificate is provided."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json",
+  "heuristics": [
+    {
+      "id": "cost-transfer-32",
+      "role": "score-critical",
+      "statement": "The condition set of the published 36-step SHA-256 characteristic of ePrint 2026/1120 (Tables 9 and 10: 57 uncontrolled conditions at steps >= 16, 15 first-block conditions on (E3,W5,W6,W7), the dense-part conditions at steps <= 15, and the message-expansion cancellations at indices 16,20,22,24,25,28,29,30), evaluated at rounds 0..31, is the complete set of conditions for a second-block collision at 32 steps: truncation from 36 to 32 steps removes no needed condition and adds none, and W31 is difference-free automatically.",
+      "scope": "The specific 2026/1120 36-step SHA-256 characteristic evaluated at rounds 0..31 from a chaining value satisfying its first-block conditions.",
+      "extrapolation": "From the published, executed 36-step attack to 32 steps (fewer rounds; identical condition set because the characteristic's support ends at index 30 and W31..W35 are difference-free automatically). Not an extrapolation to more rounds or to other characteristics.",
+      "evidence_ids": [
+        "proof:334-358",
+        "proof:234-300",
+        "proof:182-233",
+        "proof:301-333"
+      ],
+      "limitations": "The published condition set is taken as complete for the published attack; the lab reproduced its counts and its conditional-probability profile but did not re-derive the characteristic with its own tool. The published paper reports the 36-step attack as executed and gives a colliding pair."
+    },
+    {
+      "id": "uncontrolled-independence",
+      "role": "score-critical",
+      "statement": "A tail candidate (B0, j), with B0 a valid first block and j an entry of the 2^20-element (W14,W15) table, satisfies the 57 uncontrolled conditions (Table 9 rows 16..23 and Table 10 relations at i >= 16) with probability 2^-57, and distinct candidates succeed independently, so 2^56.47 candidates give success probability 0.5 and each candidate is rejected at step 16 with probability 1 - 2^-13.",
+      "scope": "Steps 16..23 of the 32-step characteristic with the dense part fixed by the SAT solution; conditions on A16..A21, E16..E21, W21, W23.",
+      "extrapolation": "Standard differential-attack accounting (product of local condition probabilities), validated at 36 steps by the published colliding pair obtained with the same 57-condition accounting, and here by measured per-step conditional profiles (42.94 measured vs 43 counted state conditions on the verified pair's (W14,W15); 12.9/14.7/6.0/7.0 vs 13/15/6/7 over the refined set V') and by organizer-run local cancellation experiments.",
+      "evidence_ids": [
+        "proof:521-556",
+        "proof:182-233",
+        "proof:301-333",
+        "experiment:add-3bit-aligned-cancel-exact",
+        "experiment:expansion-cancel-W16",
+        "experiment:expansion-cancel-W20",
+        "experiment:expansion-cancel-W22",
+        "experiment:expansion-cancel-W25",
+        "experiment:expansion-cancel-W29",
+        "experiment:expansion-cancel-W30"
+      ],
+      "limitations": "Joint dependence across steps 16..21 and between state and W21/W23 conditions is not measured directly (the joint event has probability 2^-57); a parallel lab measurement with a different partition of the same conditions (proof Section 7.8) agrees on the total probability mass within about one bit. The sampled experiments test single 32-bit cancellations under uniform inputs, not the trail."
+    },
+    {
+      "id": "cv-coverage",
+      "role": "score-critical",
+      "statement": "A uniformly random first block B0 yields CV1 = C32(IV,B0) satisfying the 15 first-block conditions (E3[29]=1; signed differences of W5,W6,W7 as in Table 9; nine two-bit conditions of Table 10 on W5,W6,W7, with the dense part fixed) with probability at least 2^-14.1, so 2^14.1 block-1 compressions per valid first block suffice on average.",
+      "scope": "The block-1 search of the two-block conversion at 32 steps from the standard IV, with the dense part fixed to the verified pair's solution.",
+      "extrapolation": "Directly measured at 32 steps from the standard IV over 2^28 random blocks (16024 passes, 2^-14.03, +-0.02 bits); the published 36-step measurement over 2^40 blocks gave approximately 2^-15. The measured value is used; the cost with the published value is also reported (2^52.04).",
+      "evidence_ids": [
+        "proof:468-484",
+        "proof:359-447"
+      ],
+      "limitations": "The lab measurement is for one dense solution (the verified pair's); another SAT solution would have its own density with the same counted conditions. The one-bit difference from the published figure is explained by the E3/W7 redundancy but the published measurement was not reproduced at 36 steps."
+    },
+    {
+      "id": "tail-freedom-20",
+      "role": "score-critical",
+      "statement": "The set V' of (W14,W15) values satisfying every chaining-value-independent condition of the characteristic on steps 14..17 (printed row-14/15 glyphs, the W16 and W29 cancellations, the prescribed modular differences of E15, A15, E16, A16, and the step-17 admissibility test) has at least 2^19.5 elements (measured 2^19.7; published 2^20), is enumerable once in preprocessing within 2^40 compression equivalents, and for its elements the 57 uncontrolled conditions behave as counted.",
+      "scope": "Rows 14..17 of the 2026/1120 characteristic with the dense part fixed to the verified pair's solution; the expansion cancellations that depend only on W14 and the dense part.",
+      "extrapolation": "Measured by exhaustive enumeration of W14 (32 admissible values) and sampled enumeration of W15 (2^24 and 2^20 tries per W14), giving |V| = 2^21.0 and, after the step-17 sampling test passed by 6 of 16 admissible W14, |V'| = 2^19.7; the published attack used 2^20. Chaining-value independence follows from the step equations (Section 6, Step 1').",
+      "evidence_ids": [
+        "proof:485-520",
+        "proof:359-447"
+      ],
+      "limitations": "The step-17 membership test is a sampling test (2^18 samples per candidate), not an explicit bit condition; the 6/16 fraction carries about +-0.4 bits; the enumeration was done for one dense solution. Each bit less of d adds 0.7 bits to the cost (d = 18.5 gives 2^52.5)."
+    },
+    {
+      "id": "partial-step-pricing",
+      "role": "supporting",
+      "statement": "An incremental evaluation of one compression step (and a few expansion adds) from precomputed chaining-value-independent state, carried out with ordinary 256-bit word operations, is charged at 1/2224 per operation under collision-frontier-v5, while every compression evaluated in full is charged one unit; the tail candidates are charged 32 operations each and the block-1 trials one unit each plus their check operations.",
+      "scope": "The cost ledger of Section 7.5; the tail scan of Section 6, Step 3.",
+      "extrapolation": "Direct reading of the cost model (one selected compression costs one unit; every other primitive word operation costs 1/C, with C derived from the operation count of one compression). No lane packing or parallel discount is used; total work is summed over all trials.",
+      "evidence_ids": [
+        "proof:557-609",
+        "proof:448-458",
+        "proof:610-619"
+      ],
+      "limitations": "If partial evaluations were priced as whole compressions the bound becomes 2^56.5, and 2^57.04 under all conservative choices (Section 7.6); the claim's 2^52.5 depends on this pricing."
+    }
+  ]
 }

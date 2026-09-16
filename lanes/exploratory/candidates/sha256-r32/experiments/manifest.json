@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "add-3bit-aligned-cancel-exact",
+      "kind": "addition-xor-exact-v1",
+      "scope": "One 8-bit modular addition; all 65536 ordered input pairs; identical three-bit XOR differences 0x15 on both addends; output XOR 0.",
+      "hypothesis": "Two addends carrying the same three-bit non-adjacent, non-MSB XOR difference cancel modularly with probability exactly 2^-3 (8192 of 65536 pairs): each difference bit needs opposite signs in the two addends. This is the exact finite-width analogue of the W20, W22 and W29 message-expansion cancellations of the characteristic (identical XOR patterns of weight 3 on both operands), whose 32-bit versions are declared as sampled experiments.",
+      "word_bits": 8,
+      "input_xor_a": 21,
+      "input_xor_b": 21,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W16",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands W9 and sigma1(W14) of the expanded word W16 = W0 + sigma0(W1) + W9 + sigma1(W14) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W16 is difference-free) with probability exactly 4/64 = 2^-4, the value obtained by enumerating all sign patterns of the 3+3 difference bits; the expected number of successes in 256 samples is 16. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 527360,
+      "input_xor_b": 529408,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W20",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands sigma0(W5) and W13 of the expanded word W20 = W4 + sigma0(W5) + W13 + sigma1(W18) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W20 is difference-free) with probability exactly 8/64 = 2^-3, the value obtained by enumerating all sign patterns of the 3+3 difference bits; the expected number of successes in 256 samples is 32. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 71305216,
+      "input_xor_b": 71305216,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W22",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands W6 and sigma0(W7) of the expanded word W22 = W6 + sigma0(W7) + W15 + sigma1(W20) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W22 is difference-free) with probability exactly 8/64 = 2^-3, the value obtained by enumerating all sign patterns of the 3+3 difference bits; the expected number of successes in 256 samples is 32. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 71305216,
+      "input_xor_b": 71305216,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W25",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands W9 and sigma1(W23) of the expanded word W25 = W9 + sigma0(W10) + W18 + sigma1(W23) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W25 is difference-free) with probability exactly 4/64 = 2^-4, the value obtained by enumerating all sign patterns of the 3+3 difference bits; the expected number of successes in 256 samples is 16. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 527360,
+      "input_xor_b": 529408,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W29",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands W13 and sigma0(W14) of the expanded word W29 = W13 + sigma0(W14) + W22 + sigma1(W27) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W29 is difference-free) with probability exactly 8/64 = 2^-3, the value obtained by enumerating all sign patterns of the 3+3 difference bits; the expected number of successes in 256 samples is 32. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 71305216,
+      "input_xor_b": 71305216,
+      "output_xor": 0
+    },
+    {
+      "id": "expansion-cancel-W30",
+      "kind": "addition-xor-sampled-v1",
+      "scope": "One 32-bit modular addition of the two active operands W14 and W23 of the expanded word W30 = W14 + sigma0(W15) + W23 + sigma1(W28) in the 32-step characteristic; 256 organizer-seeded uniform ordered input pairs; XOR input differences exactly those of the verified pair (sigma0, sigma1 are GF(2)-linear so the operand XOR differences are fixed); output XOR 0.",
+      "hypothesis": "Over uniform inputs the two signed differences cancel modularly (so the expanded word W30 is difference-free) with probability exactly 2/4 = 2^-1, the value obtained by enumerating all sign patterns of the 1+1 difference bits; the expected number of successes in 256 samples is 128. This is a local finite-sample check of one cancellation of the characteristic, not evidence about the whole trail.",
+      "word_bits": 32,
+      "input_xor_a": 536870912,
+      "input_xor_b": 536870912,
+      "output_xor": 0
+    }
+  ]
+}
