@@ -6,21 +6,22 @@
   "rounds": 80,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 94,
+    "time_log2": 80.404,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 88,
     "data_log2": 81,
-    "preprocessing_log2": 20,
+    "preprocessing_log2": 10,
     "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Exactly sha1-r80-prefix-v1: fixed standard IV, all 80 prefix rounds, standard padding and feed-forward, full 160-bit digest.",
-    "One batch of 2^80 independent uniform 32-byte messages using fresh 256-bit model random words; no PRNG or SHA-1 randomness hypothesis.",
-    "Two 64-byte-record buffers, iterative lexicographic mergesort, full distinct-message check and at most two complete hash recomputations.",
-    "Worst-case charged resource upper bounds include all failed draws, code, constants, scratch state, sorting, verification and preprocessing; no restarts or nonuniform advice.",
-    "data_log2 bounds complete message evaluations; preprocessing_log2 bounds primitive setup work; advice_log2_bytes=0 bounds actual zero advice by one byte because the schema excludes negative logarithms.",
-    "Analytic baseline only: no full-size execution, explicit collision certificate, nominal-reference improvement or cryptanalytic novelty is claimed."
+    "Exactly sha1-r80-prefix-v1: fixed standard IV, all 80 prefix rounds on every padded block, standard padding and feed-forward, full 160-bit output.",
+    "One batch of 2^80 independent uniform 32-byte messages from fresh model random words. No PRNG, output-uniformity or SHA-1 random-function premise.",
+    "Two arrays of 64-byte records and 65536 word counters; ten stable 16-bit least-significant-digit radix passes; full adjacent distinct-message check and at most two verification hashes.",
+    "Worst-case total time includes one compression per sampled message, all other work priced at 1/1982 per word operation, every failed draw, bucket initialization, memory traffic, code setup and final verification.",
+    "Peak memory below 2^88 bytes is a theoretical RAM bound, not a physically executable resource claim. Memory does not contribute to the selected time score.",
+    "data_log2 bounds complete message evaluations; preprocessing_log2 uses target-compression equivalents; advice_log2_bytes=0 bounds actual zero advice by one byte because the schema excludes log2(0).",
+    "Generic analytic baseline improvement only: no actual collision, full-scale execution, new SHA-1 weakness, reproduction of a published differential attack or improvement over the nominal exponent 80 is claimed."
   ],
   "baseline_improved": "sha1-r80-nominal-v2",
   "heuristics": [],
