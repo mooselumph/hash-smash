@@ -1,10 +1,11 @@
 # SHA-256, 31 prefix rounds: unconditional collision construction
 
-The scalar below is `time_log2` under `collision-frontier-v4`. Memory remains
-a separately reported resource bound.
+The scalar below is `time_log2` under `collision-frontier-v5`. Memory remains
+a separately reported resource bound. One selected-round compression costs 1;
+every other 256-bit word operation costs 1/2140 for `sha256-r31`.
 
 This independent **exploratory** package selects `sha256-r31-exploratory`, target
-`sha256-r31-prefix-v1`, cost model `collision-frontier-v4`, and policy
+`sha256-r31-prefix-v1`, cost model `collision-frontier-v5`, and policy
 `paired-lanes-v1`. It submits a complete analytic algorithm, not an already
 computed collision. Readiness requests review; it does not assert an AI outcome
 or human acceptance. The full argument also addresses the rigorous review obligations.
@@ -15,11 +16,11 @@ or experimental-extrapolation premise is used. The required `baseline_improved`
 value `sha256-r31-nominal-v2` only identifies the organizer's nominal display
 reference; it is not an established attack, qualified baseline, or security
 bound. This package does not claim improvement over that reference. Its declared
-scalar is 148, with all bounds explained below.
+scalar is 135, with all bounds explained below.
 
 ## 1. Exact message and complete-hash definition
 
-Write BE_k(v) for the k-byte big-endian encoding of integer v. Set q = 2^129,
+Write BE_k(v) for the k-byte big-endian encoding of integer v. Set q = 2^128,
 D = 2^512, and N = 2^256. A sampled message is
 
     m(x,y) = BE_32(x) || BE_32(y),  0 <= x,y < 2^256.
@@ -128,7 +129,7 @@ address calculations, loads, stores, comparisons and branches are charged.
 Since q is a power of two, all run lengths divide q and no middle/end index
 exceeds q. Each pass writes its complete destination before that array becomes
 a source. No uninitialized B record is read; large arrays need no hidden
-clearing pass. Exactly 129 passes each emit q records. Inductively each pass
+clearing pass. Exactly 128 passes each emit q records. Inductively each pass
 merges sorted runs into sorted runs twice as long. Starting with singleton
 runs, the final L contains the same record multiset in sorted order.
 
@@ -188,13 +189,32 @@ For two different positions the chance of equal 512-bit messages is exactly
 1/D. The union bound over binomial(q,2) position pairs gives the repeated-input
 term. There is no rejection sampling or uncharged sampling without replacement.
 
-For our parameters q(q-1)/(2N)=2-2^-128>1 and
-q(q-1)/(2D)=2^-255-2^-384<2^-255. For an elementary rational certification of
-the declared decimal, exp(1)>1+1+1/2+1/6=8/3, so exp(-1)<3/8. Hence
+For our parameters q=2^128, N=2^256, D=2^512:
 
-    Pr(success) > 5/8 - 2^-255 > 3/5 = 0.60 > 0.39,
+    q(q-1)/(2N) = (1-2^-128)/2 = 1/2 - 2^-129,
+    q(q-1)/(2D) < 2^-257.
 
-where 2^-255<1/40=5/8-3/5. `success_probability: 0.6` is a lower bound on
+For an elementary rational certification, e = sum_{k>=0} 1/k! exceeds its first
+five terms:
+
+    e > 1 + 1 + 1/2 + 1/6 + 1/24 = 65/24 = 2.70833...
+
+Since (1.645)^2 = 2706025/1000000 = 2.706025 < 65/24, monotonicity of the
+square root gives sqrt(e) > 1.645, hence exp(1/2) > 1.645 and
+exp(-1/2) < 1/1.645. Moreover 1.645 * 0.608 = 1.00016 > 1, so
+1/1.645 < 0.608. With delta = 2^-129, exp(delta) <= 1 + 2^-128 by the standard
+tail bound for tiny arguments, so
+
+    exp(-q(q-1)/(2N)) = exp(-1/2) * exp(delta)
+      < 0.608 * (1 + 2^-128) < 0.608 + 2^-120.
+
+Hence
+
+    Pr(success) > 1 - 0.608 - 2^-120 - 2^-257 > 0.392 - 0.001 > 0.391 > 0.39.
+
+In fractions: 1 - 1/1.645 = 129/329, and 129*100 = 12900 > 39*329 = 12831,
+so 129/329 > 39/100 with margin 69/32900, which dwarfs the 2^-120 and 2^-257
+corrections. `success_probability: 0.39` is a conservative lower bound on
 algorithmic success under its fresh coins, not equality with actual success,
 confidence in this proof, or confidence in an AI review. The entire q-sample
 construction and every sorting pass are paid on failed runs too. There are no
@@ -203,9 +223,12 @@ restarts to account for beyond the single fully charged execution.
 ## 5. Auditable resource implementation
 
 These are worst-case bounds for every random tape in the specified classical
-256-bit word RAM. Each selected compression costs one unit. Every other word
+256-bit word RAM under `collision-frontier-v5` for `sha256-r31` (C = 2140).
+Each selected compression costs one unit. Every other word
 load, store, arithmetic/Boolean operation, shift, comparison, branch, and random
-word costs one. Constants and bytes are retained in the bounds below.
+word costs 1/2140 units. Constants and bytes are retained in the bounds below.
+Section 5.1 first counts ordinary word operations W; section 5.3 converts with
+H + W/2140, where H is the compression count.
 
 ### 5.1 Instruction and interface budgets
 
@@ -247,15 +270,17 @@ initialized padding block, record addressing/stores and loop control. Transfers
 of primitive input/output state and scalar scratch are covered by the eight-operation
 allowance. Fetching and dispatching the two random-word instructions and two
 compression calls can each be allowed eight operations. This is at most
-8*200+8*4<2048 charged operations per sampled message.
+8*200+8*4<2048 ordinary word operations per sampled message, excluding the two
+compression units themselves which are counted in H.
 The second block is a fixed scratch constant; a packed-block interface costs
 no more. Expansion and 31 rounds are inside each compression's unit cost.
 
 Each scan position needs at most 64 core operations (six field loads, bounded
 address calculations, equality tests, branches and index updates). Its cap of
-2048 charged operations includes copying a prospective output pair. Final
+2048 ordinary operations includes copying a prospective output pair. Final
 verification happens at most once; two hashes through the same wrapper, full
-digest/message comparisons and output stores cost less than 8192 operations.
+digest/message comparisons and output stores cost less than 8192 ordinary
+operations plus 4 compression units.
 The possible final FAIL path is within the same cap.
 
 ### 5.2 Code, setup, peak storage, and address width
@@ -278,8 +303,8 @@ words, eight-word input/output states, indices, saved records, counters and
 output. These listed objects require fewer than 256 words; the larger cap
 covers all spills and even unused schedule positions. A loader may read/write
 every code/constant word, initialize all fixed scratch, and establish array
-base addresses in fewer than 2^20 charged instructions. This is the declared
-`preprocessing_log2: 20`, also included in total time. No message-dependent
+base addresses in fewer than 2^20 ordinary word operations. This is the declared
+`preprocessing_log2: 20`, also included in total time via W/2140. No message-dependent
 setup, precomputed search or stored collision is omitted.
 
 The two arrays occupy exactly 6q words=192q bytes. Large arrays are not assumed
@@ -289,29 +314,43 @@ before any read from it. Fixed code, constants and scratch occupy less than
 in the message fields and constant-size copies; there is no stored random tape.
 Thus peak memory on every execution is
 
-    M <= 192q + 2^20 < 512q = 2^138 bytes.
+    M <= 192q + 2^20 = 192*2^128 + 2^20 < 256*2^128 = 2^136 bytes,
 
-This proves `memory_log2_bytes: 138`. All indices, byte/word addresses and
-counter bounds are below 2^138, far below 2^256, so address and counter
+since 192q + 2^20 < 192q + q = 193q < 256q for q = 2^128.
+
+This proves `memory_log2_bytes: 136`. All indices, byte/word addresses and
+counter bounds are below 2^136, far below 2^256, so address and counter
 arithmetic never wraps. D and N are proof notation, not RAM operands; the
 algorithm stores q, which fits in one word and can be formed by a shift.
 
 ### 5.3 Total time and auxiliary claim fields
 
-Including setup, all trials, all 129 merge passes, scanning and verification,
+Counting ordinary word operations W and compressions H separately under v5
+(C = 2140 for sha256-r31), with q = 2^128 and 128 merge passes:
 
-    T <= 2^20 + 2048q + 129*2048q + 2048q + 8192
-       = 2^20 + 131*2048q + 8192
-       < 2^19*q = 2^148 charged units.
+    W <= 2^20 + 2048q + 128*2048q + 2048q + 8192
+      = 2^20 + 130*2048q + 8192
+      = 2^20 + 266240q + 8192,
+    H = 2q + 4  (two compressions per sampled message plus final verification).
 
-This proves `time_log2: 148` in the model's `target-compressions` unit, which
-also charges every ordinary primitive operation. The submitted upper bounds
-rather than the sharper internal ledger define scalar 148. Setup is inside T.
+Total charged time in compression equivalents is H + W/2140:
 
-To fix units for the otherwise untyped data field, `data_log2: 137` bounds
+    T = 2q + 4 + (2^20 + 266240q + 8192)/2140
+      < 2q + 4 + (2^20 + 8192)/2140 + 124.42q
+      < 126.5q + 1000
+      < 127q = 127 * 2^128 < 128 * 2^128 = 2^135,
+
+since 266240/2140 = 124.41..., (2^20+8192)/2140 < 494, and 2q+4+494+124.42q
+< 126.5q+1000 < 127q for q = 2^128. In exact integers:
+T < 2^135, so log2(T) < 135.
+
+This proves `time_log2: 135` in the model's `target-compressions` unit.
+The submitted upper bound 135 defines the scalar. Setup is inside T via W.
+
+To fix units for the otherwise untyped data field, `data_log2: 136` bounds
 **bytes of complete padded input presented to hashing**, including final
 verification. At most q+2 complete 64-byte messages are evaluated and 2q+4
-compression calls process 128(q+2) padded bytes, less than 256q=2^137 bytes.
+compression calls process 128(q+2) padded bytes = 2^135 + 256 < 2^136 bytes.
 Original message data is only 64(q+2) bytes. No external message corpus is
 required. The same numeric cap also upper-bounds counts of messages,
 compressions and random words. Sort copies are internal traffic, fully charged
