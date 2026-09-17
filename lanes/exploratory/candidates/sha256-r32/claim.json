@@ -6,22 +6,29 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 137.0,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
+    "memory_log2_bytes": 20,
+    "data_log2": 60,
+    "preprocessing_log2": 10,
+    "success_probability": 0.5,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Internal robustness-evaluation submission; non-improving claim (137 > current 136).",
+    "The construction below is deliberately incomplete and is NOT a genuine cryptanalytic result."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
-  "heuristics": [],
+  "heuristics": [
+    {
+      "id": "asserted-shortcut",
+      "role": "score-critical",
+      "statement": "A structural shortcut reduces the generic birthday cost to 2^137 for sha256-r32.",
+      "scope": "Claimed for the fixed sha256-r32 target.",
+      "evidence_ids": ["proof:1-15"],
+      "extrapolation": "Asserted; no characteristic or probability argument is supplied.",
+      "limitations": "No differential characteristic, no probability analysis, and no operation ledger are provided; the premise is unsupported by design."
+    }
+  ],
   "certificate_manifest": "certificates/manifest.json"
 }
