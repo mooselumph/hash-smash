@@ -6,22 +6,93 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 71.5,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
+    "memory_log2_bytes": 31,
+    "data_log2": 77,
+    "preprocessing_log2": 40,
+    "success_probability": 0.5,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Classical probabilistic 256-bit word RAM under collision-frontier-v5 (C = 2224 operations per sha256-r32 compression); the only random coins are N_b = 2^70.887 fresh uniform 64-byte first blocks; one fixed second-block template (W14*, W15* of the verified pair) is tested for each of at most M = 2^56.785 accepted blocks; the budget is fixed before the run and fully charged.",
+    "Structural two-block ordinary collision: m = B0 || M1 and m' = B0 || M1' (128 bytes each), padded by the target rule into a common third block; standard IV, rounds 0..31 on every block including the padding block, feed-forward, all 256 digest bits compared.",
+    "Reuses unchanged the 36-step SHA-256 local collision and characteristic of ePrint 2026/1120 (Tables 9 and 10; message differences in W5,W6,W7,W8,W9,W13,W14,W21,W23), whose support lies at step index <= 30, so 32-step evaluation enforces exactly its conditions; verified with the trusted reference on two published instances.",
+    "Charged time <= 2^71.5 target compressions as a worst case over the fixed budget: 2^70.89 first-block compressions charged 1.0674 each (all trials, accepted or not), 2^56.8 accepted-block template tests charged 4396 operations each, 2^40 preprocessing; worst-case total 2^70.98. Success probability >= 0.503 for this budget using only the independence of distinct first blocks (Chernoff lower tail on the accepted count, (1-pi)^M for the template tests); no independence among candidates of one first block is assumed. The parameters q = 2^-14.1 and pi = 2^-57.3 lie below the one-sided 99.9%-per-factor lower confidence bounds of the measurements (2^-14.07 and 2^-57.19).",
+    "Cryptanalytic claim below the nominal 128 reference; no full-scale execution is performed and no colliding certificate is provided. Parameter measurements (first-block density, per-step profile of the template) are lab-run and are declared as heuristics with their scope. An earlier version of this analysis credited 2^21 second-block candidates per first block as independent trials (claimed 2^53); a direct lab measurement refuted that premise and it is withdrawn."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json",
+  "heuristics": [
+    {
+      "id": "cost-transfer-32",
+      "role": "score-critical",
+      "statement": "The condition set of the published 36-step SHA-256 characteristic of ePrint 2026/1120 (Tables 9 and 10: 57 uncontrolled conditions at steps >= 16, 15 first-block conditions on (E3,W5,W6,W7), the dense-part conditions at steps <= 15, and the message-expansion cancellations at indices 16,20,22,24,25,28,29,30), evaluated at rounds 0..31, is the complete set of conditions for a second-block collision at 32 steps: truncation from 36 to 32 steps removes no needed condition and adds none, and W31 is difference-free automatically.",
+      "scope": "The specific 2026/1120 36-step SHA-256 characteristic evaluated at rounds 0..31 from a chaining value satisfying its first-block conditions.",
+      "extrapolation": "From the published, executed 36-step attack to 32 steps (fewer rounds; identical condition set because the characteristic's support ends at index 30 and W31..W35 are difference-free automatically). Not an extrapolation to more rounds or to other characteristics.",
+      "evidence_ids": [
+        "proof:381-414",
+        "proof:242-308",
+        "proof:190-241",
+        "proof:309-380"
+      ],
+      "limitations": "The published condition set is taken as complete for the published attack; the lab reproduced its counts and its conditional-probability profile but did not re-derive the characteristic with its own tool. The published paper reports the 36-step attack as executed and gives a colliding pair."
+    },
+    {
+      "id": "cv-coverage",
+      "role": "score-critical",
+      "statement": "A uniformly random 64-byte first block B0 is accepted by the 15-condition first-block filter (E3[29]=1; signed differences of W5,W6,W7 as in Table 9; nine two-bit conditions of Table 10 on W5,W6,W7; dense part fixed) with probability q_true >= q = 2^-14.1; acceptance events of distinct trials are independent (fresh uniform blocks).",
+      "scope": "The block-1 trials of Section 6 Step 2 at 32 rounds from the standard IV, with the dense part fixed to the verified pair's solution.",
+      "extrapolation": "Measured directly in this setting by the program cvrate.c reproduced in full in proof Appendix B.1 with its recorded output (2^28 uniform blocks compressed with 32 rounds from the standard IV, seed 7, 16024 accepted, q = 2^-14.03; one-sided Clopper-Pearson lower bound at alpha = 1e-3: 2^-14.07, proof Section 7.9); the program self-tests against the published 36-step first block and the 32-step second-block collision that the trusted verifier confirms (proof Section 5(b)). The published 36-step measurement over 2^40 blocks gave 2^-15. The lower bound 2^-14.1 is used in the Chernoff bound of Section 7.7 and in N_b.",
+      "evidence_ids": [
+        "proof:553-569",
+        "proof:750-778",
+        "proof:1090-1189",
+        "proof:415-528",
+        "proof:674-722"
+      ],
+      "limitations": "The measurement is reproduced in the package (source and output) but was run in the lab, not by the organizer, and the organizer's experiment harness checks only digest-XOR events, which cannot express this acceptance predicate; one dense solution; if the true density were 2^-15 the budget N_b would have to be 2^0.9 larger (total 2^71.88, above the claim), so the claim rests on the measured value and its confidence bound."
+    },
+    {
+      "id": "template-tail",
+      "role": "score-critical",
+      "statement": "For a uniformly random accepted first block (15-condition filter of proof Section 6, Step 2, dense part fixed), the fixed second-block template (W14*, W15*) = (89c67ae2, ac5eb7f9) passes all 57 uncontrolled conditions (Table 9 rows 16..23 and Table 10 relations at i >= 16) with probability pi_true >= pi = 2^-57.3, where pi_true equals the chain-rule product of the per-step conditional probabilities measured under uniformly distributed conforming prefixes and uniform expanded words W16..W23 (proof Section 7.10). One candidate per block; no independence among candidates of the same block is assumed.",
+      "scope": "The dense solution and template of the verified pair (ePrint 2026/1120 Table 2 second block); steps 16..23; the block enters only through W0..W7 and hence W16..W23.",
+      "extrapolation": "Measured per step with the program localrate.c reproduced in proof Appendix B.2 with its recorded outputs (mode 1: 2^26 samples per step for steps 16 and 17, 2^22 for steps 16..21): 12.996 / 14.989 / 6.002 / 7.004 / 0.999 / 1.001 bits against the counts 13 / 15 / 6 / 7 / 1 / 1; product with the 14 counted W21/W23 conditions 2^-56.99; one-sided Clopper-Pearson lower bounds at alpha = 1e-3 per factor combine to 2^-57.19 (proof Section 7.9, script Appendix B.5). The published 36-step attack used the same 57-condition set and produced a colliding pair. The composition assumes, from step 17 onward and for the W21/W23 conditions, that the free bits of a conforming prefix and the block-dependent expanded words behave as uniform (proof Section 7.10).",
+      "evidence_ids": [
+        "proof:602-627",
+        "proof:779-843",
+        "proof:750-778",
+        "proof:1190-1314",
+        "proof:570-601",
+        "proof:190-241",
+        "proof:309-380",
+        "experiment:add-3bit-aligned-cancel-exact",
+        "experiment:add-carry-cancel-exact",
+        "experiment:expansion-cancel-W16",
+        "experiment:expansion-cancel-W20",
+        "experiment:expansion-cancel-W22",
+        "experiment:expansion-cancel-W25",
+        "experiment:expansion-cancel-W28",
+        "experiment:expansion-cancel-W29",
+        "experiment:expansion-cancel-W30"
+      ],
+      "limitations": "The joint event (probability about 2^-57) is not observed; the replacement of the true conditional distribution by uniform bits from step 17 onward is assumed, not measured; the measurement is lab-run, not organizer-run; the declared experiments are local checks of single 32-bit cancellations and do not establish pi. Each bit less of pi adds one bit to the total (pi = 2^-58 gives 2^71.68, above the claim)."
+    },
+    {
+      "id": "sat-preprocessing-bound",
+      "role": "supporting",
+      "statement": "The dense system of the characteristic (all Table 9/10 conditions at steps 0..15 on W8..W13, A0..A13, E4..E13 of both messages) is satisfiable, and the one-time preprocessing of Step 1 costs at most 2^40 compression-equivalents: the exhibited assignment of Section 4.4 is a solution (witnessed by the trusted-verifier collision and the condition checks of Section 4.4), and a fresh solve of the same instance is reported at 2^39.8 in ePrint 2026/1120 Section 4.2.",
+      "scope": "The one-time offline preprocessing of Section 6 for this characteristic; independent of the online random coins.",
+      "extrapolation": "Existence and cost are witnessed rather than extrapolated: the dense assignment is exhibited and verified in the package, so the preprocessing charge is an upper bound on a computation that can be avoided entirely by reusing the witness (2^7 bytes of fixed published data, Section 7.7); the 2^39.8 figure for a fresh solve is the published one for the identical instance (the dense part lives at steps 0..15 and does not depend on the round count).",
+      "evidence_ids": [
+        "proof:242-308",
+        "proof:415-528",
+        "proof:628-662",
+        "proof:674-722"
+      ],
+      "limitations": "The fresh-solve figure is not independently timed; the preprocessing term is 2^40 of a 2^70.98 total, so a fresh-solve cost up to 2^30 larger would leave the claimed bound unchanged, and reusing the exhibited witness removes the term."
+    }
+  ]
 }
