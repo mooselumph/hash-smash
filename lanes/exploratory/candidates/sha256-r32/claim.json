@@ -6,20 +6,21 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 127.7,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
+    "memory_log2_bytes": 136.01,
+    "data_log2": 134.01,
+    "preprocessing_log2": 17.0,
+    "success_probability": 0.393,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Generic, distribution-free birthday attack; uses no structural property of 32-round SHA-256 and produces no concrete collision.",
+    "Complete analytic candidate; charged time is a worst-case upper bound over the algorithm's own coins, not a full-scale execution.",
+    "The declared accounting is REGISTER-FREE: every two-input gate is charged load + load + operation + store, so the entire 256-to-768-word bitsliced working state is materialized in RAM and no bounded register file is assumed. There is no register-residency premise. A tighter register-resident figure (125.983) is reported as an explicitly optional variant the claim does not rely on.",
+    "Each of the q records stores three 256-bit words (digest, u, v); the per-record cost charges the packed compression, the digest transpose, the message-identity transpose that materializes (u, v), the record store, the register-free loop-control overhead of every non-unrolled pass, and the counting-sort grouping over the three-word records; the proof enumerates every cost-model primitive category and shows each is charged.",
+    "The compression gate count is charged on the fully hand-derivable UNFOLDED basis (56,224 compression gates + 8,192 digest-transpose + 16,384 message-transpose per batch), matched to the last gate by an inlined instrumented counter; every loop has a compile-time-fixed trip count with no data-dependent branch, so the total is exactly (per-record count) times q, an identity rather than an extrapolation.",
+    "Declared time_log2 = 127.7 is a conservative upper bound over every register-free row, including the per-bit-plane rotation surcharge (127.665); it remains below the prior generic exponent 128.22 by about 0.52 bit."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
   "heuristics": [],
