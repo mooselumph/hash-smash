@@ -58,7 +58,9 @@ new imports of already registered siblings.
    word-RAM cost model. Charge preprocessing, message construction, all trials
    including failures, randomness, sorting/lookups, verification and restarts.
    Peak memory includes code, advice, retained messages, tables and working state.
-   Explain the data and advice fields and the units of every bound. The emitted
+   Explain the advice field and the units of every required bound. `data_log2` is
+   optional legacy metadata; omit it from new claims. Existing claims may retain
+   it without a separate data-bound justification. The emitted
    score is `time_log2`; a birthday exponent is not a complete
    total-computation implementation ledger. Memory remains a required reviewed metric.
 3. **A success-probability argument of at least 0.39.** Specify the algorithm's

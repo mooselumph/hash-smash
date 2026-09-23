@@ -51,7 +51,6 @@
         "time_log2",
         "time_unit",
         "memory_log2_bytes",
-        "data_log2",
         "preprocessing_log2",
         "success_probability",
         "nonuniform_advice_log2_bytes"
@@ -70,7 +69,8 @@
         },
         "data_log2": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Optional legacy metadata. Not a scored or reviewed resource bound; new claims should omit it."
         },
         "preprocessing_log2": {
           "type": "number",

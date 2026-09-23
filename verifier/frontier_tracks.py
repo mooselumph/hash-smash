@@ -107,7 +107,7 @@ class LaneTrack:
             "schema_version": 3, "submission_state": "draft", "target_profile": self.profile_id,
             "attack_class": "ordinary-collision", "rounds": self.rounds,
             "claim": {"time_log2": self.digest_bits / 2, "time_unit": "target-compressions",
-                      "memory_log2_bytes": 0, "data_log2": self.digest_bits / 2,
+                      "memory_log2_bytes": 0,
                       "preprocessing_log2": 0, "success_probability": 0.39,
                       "nonuniform_advice_log2_bytes": 0},
             "restrictions": [], "baseline_improved": self.reference_id,

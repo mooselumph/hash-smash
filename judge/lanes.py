@@ -19,6 +19,7 @@ OBLIGATIONS = {
         "heuristics_disclosed", "evidence_relevant",
     ),
     "lane_cryptanalysis": ("collision_correctness", "probability_analysis", "heuristic_justification"),
+    # Retain the legacy ID; it now covers preprocessing and advice only.
     "lane_cost": ("time_bound", "memory_bound", "data_preprocessing_advice", "success_budget", "score_arithmetic"),
     "lane_experiments": ("experiment_relevance", "experiment_reproducibility", "statistics", "extrapolation"),
     "lane_defender": (),

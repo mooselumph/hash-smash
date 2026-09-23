@@ -130,7 +130,7 @@ def _cost_discrepancies(review: Mapping[str, Any], claim: Mapping[str, Any]) -> 
         discrepancies.add("time_bound")
     for field, obligation in (
         ("time_log2", "time_bound"), ("memory_log2_bytes", "memory_bound"),
-        ("data_log2", "data_preprocessing_advice"), ("preprocessing_log2", "data_preprocessing_advice"),
+        ("preprocessing_log2", "data_preprocessing_advice"),
         ("nonuniform_advice_log2_bytes", "data_preprocessing_advice"),
     ):
         if cost[field] > submitted[field] + 1e-6:
