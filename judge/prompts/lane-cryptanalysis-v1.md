@@ -1,4 +1,4 @@
-Audit the claimed collision construction and the exact probability analysis for
+Audit the claimed collision construction and the exact complexity analysis (time, memory) for
 the selected target and round count. Check padding, IV, message length, truncation,
 round indexing, output equality, and distinctness of messages. Reject no method
 solely for being heuristic. Record score-critical heuristic statements with their
