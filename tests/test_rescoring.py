@@ -146,6 +146,30 @@ class RescoringTests(unittest.TestCase):
             references.unlink()
             self.assertIsNone(rescore_artifacts.selection(paths))
 
+    def test_retiring_completed_plan_routes_same_package_to_ordinary_review(self):
+        paths, entry = self.source()
+        entry["destination_config_sha256"] = "c" * 64
+        atomic_write_json(self.plan, {"entries": [entry]})
+        with self.assertRaisesRegex(VerificationError, "does not authorize"):
+            rescore_artifacts.selection(paths)
+
+        historical_plan = self.root / "history/completed-plan.json"
+        historical_plan.parent.mkdir()
+        historical_plan.write_bytes(self.plan.read_bytes())
+        atomic_write_json(self.plan, {"entries": []})
+        candidate_before = (paths.candidate / "claim.json").read_bytes()
+        with patch.object(rescore, "load_archive", side_effect=AssertionError("retired history loaded")), \
+                fake_provider() as (client, _):
+            self.assertIsNone(rescore_artifacts.selection(paths))
+            self.assertEqual(pipeline.run_all(paths), 0)
+
+        self.assertEqual([stage for stage, _ in client.calls], list(fixtures.INITIAL_STAGES))
+        self.assertNotIn("rescore_source", read_json(paths.evidence))
+        self.assertNotIn("rescore", read_json(paths.dossier))
+        self.assertNotIn("rescoreMode", read_json(paths.score)["metrics"])
+        self.assertEqual(read_json(historical_plan), {"entries": [entry]})
+        self.assertEqual((paths.candidate / "claim.json").read_bytes(), candidate_before)
+
     def test_reorg_supplies_original_reasoning_and_only_calls_one_judge(self):
         paths, entry = self.source()
         anchor = rescore.load_archive(entry["source"])

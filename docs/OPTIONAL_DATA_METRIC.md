@@ -24,6 +24,13 @@ edit existing candidate packages or published results as part of this change.
 Existing scores and review records remain historical results under their original
 configuration. New evaluations use the updated optional-field contract.
 
+The earlier simplified-judgment reorg is complete. Its 25 plan entries are
+preserved unchanged in
+[the archived plan](../reorg/history/completed-simple-judgments-plan.json), while
+`reorg/plan.json` is empty. This prevents an explicit future evaluation of those
+packages from selecting obsolete configuration pins. Existing artifact references
+and published results are retained; clearing the plan starts no reviews or reorg.
+
 Exact configuration/evidence fingerprints remain enforced. This update accepts
 legacy candidate inputs; it does not make an old frozen review reusable under a
 new harness configuration. Do not patch old hashes or dossiers to bypass this

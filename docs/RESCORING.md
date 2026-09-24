@@ -118,8 +118,15 @@ explicitly; restore a trusted backup or choose a fresh review. History is bounde
 to 32 records and 2 MiB of model input, with an explicit error on overflow.
 
 The initial migration plan is retained in
-[the historical plan](../reorg/history/pre-blake3-keccak800-plan.json). The active
-plan pins those 25 original judgments to the current simplified judge configuration.
-These cover 16 baselines and 9 previously scored submissions. Other submissions
-and the four new exploratory baselines receive ordinary review. Merging the plan
-does not itself alter Yukon scores; the managed reorg activates replay.
+[the historical plan](../reorg/history/pre-blake3-keccak800-plan.json). The completed
+simplified-judgment migration is retained unchanged in
+[its archived plan](../reorg/history/completed-simple-judgments-plan.json), covering
+16 baselines and 9 previously scored submissions. Its artifact references remain
+in `reorg/artifacts.json` for provenance.
+
+The active `reorg/plan.json` now has no entries. Future evaluations use ordinary
+review, including packages formerly pinned by the completed migration. Clearing
+the completed plan does not dispatch workflows, replay submissions, or change
+published scores. Historical plans are not loaded by the pipeline. A future reorg
+requires a new reviewed active plan authorizing its exact configuration; never
+silently reuse or update an old destination hash after a harness change.
