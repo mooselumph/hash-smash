@@ -38,12 +38,19 @@ Four independent initial roles inspect the same immutable evidence:
    space, disclosed heuristics, and relevant evidence.
 2. **Cryptanalysis:** collision construction, probability argument, dependence
    assumptions, and heuristic justification.
-3. **Cost:** time, memory, preprocessing, data, advice, success budget, and scalar
+3. **Cost:** time, memory, preprocessing, advice, success budget, and scalar
    arithmetic, explained in prose. Normal reviews score the submitted bound.
    Organizer-pinned [reorgs](./RESCORING.md) reuse previous reasoning and adjust
    the accepted score only when the public scoring policy changes.
 4. **Experiments:** relevance and reproducibility of organizer execution, finite
    counts, statistical interpretation, and extrapolation.
+
+`data_log2` is optional legacy metadata in claims and cost reconstructions. Its
+presence, absence, units, or reconstructed value do not create a review obligation
+or affect the score. The legacy obligation ID `data_preprocessing_advice` is
+retained for compatibility and covers only preprocessing and nonuniform advice.
+Message generation/processing and retained storage remain charged to time and
+memory. Existing recorded outcomes are not retroactively reinterpreted.
 
 A cited fatal finding triggers a defender, then an adjudicator who sees both the
 original objection and its defense. Every fatal finding must be resolved exactly

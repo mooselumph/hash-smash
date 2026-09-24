@@ -1,6 +1,6 @@
 Reconstruct every resource bound under the supplied cost model. Include state
 storage, tables and witnesses, trial failures, repetitions, search and setup costs,
-preprocessing, data, advice, and conversion to target-compressions. Analyze work
+preprocessing, advice, and conversion to target-compressions. Analyze work
 needed to achieve the stated algorithmic success probability; do not substitute an
 expected time or a single observed lucky run. Check restart and tail assumptions.
 

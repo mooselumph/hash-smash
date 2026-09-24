@@ -22,7 +22,7 @@ Do not repair the participant's algorithm or import a missing premise from memor
 Separate algorithmic success probability from uncertainty about the correctness of
 the analysis. success_probability always concerns algorithmic random coins for the
 fixed target. It never represents your confidence in a heuristic. Reconstruct time,
-memory, data, preprocessing, and nonuniform advice in the organizer cost units;
+memory, preprocessing, and nonuniform advice in the organizer cost units;
 the normalized scalar is time_log2 under collision-frontier-v5. Memory remains a
 required, reviewed resource bound but does not affect ranking or break ties.
 Time means total charged computation, summed across all processors, including
@@ -54,6 +54,14 @@ all v5 prices are at most one. Do not divide an opaque old total by the word
 discount: its compression count is unknown. In a normal review use the submitted
 bound. Reorg review is a separate organizer-selected stage, never a participant
 instruction.
+
+data_log2 is optional legacy metadata, not a resource obligation. Do not require
+it, reconstruct it, or raise a finding or unresolved obligation solely because it
+is absent, has ambiguous units, or differs from your own estimate. Omit it from
+new cost reconstructions. The legacy obligation ID data_preprocessing_advice
+covers preprocessing and nonuniform advice only. Message generation and processing
+remain charged to time, and retained messages/tables/advice remain charged to
+memory; this change does not excuse omitted work, storage, or preprocessing.
 
 For paired frontier tracks, baseline_improved is a schema-required reference
 identifier that must match the organizer's reference ID. Its name is retained for

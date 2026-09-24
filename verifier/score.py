@@ -82,7 +82,6 @@ def build_score(
         "memoryLog2Bytes": memory_log2_bytes,
         "scoreMetric": "timeLog2",
         "costModelId": track.benchmark()["cost_model"]["id"],
-        "dataLog2": float(costs["data_log2"]),
         "preprocessingLog2": float(costs["preprocessing_log2"]),
         "nonuniformAdviceLog2Bytes": float(costs["nonuniform_advice_log2_bytes"]),
         "successProbability": float(costs["success_probability"]),
@@ -101,6 +100,9 @@ def build_score(
         "humanAccepted": False,
         "formallyVerified": False,
     }
+    # Preserve legacy metadata for consumers of existing claims; absence is not zero.
+    if "data_log2" in costs:
+        metrics["dataLog2"] = float(costs["data_log2"])
     if judge_config_sha256 is not None:
         metrics["judgeConfigSha256"] = judge_config_sha256
     if dossier_sha256 is not None:

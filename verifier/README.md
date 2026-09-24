@@ -49,6 +49,14 @@ nominal-reference values never emit scores. Follow the
 [qualification sequence](../docs/CANDIDATE_QUALIFICATION.md) to generate and review
 the complete evidence before scoring.
 
+Claims may omit the legacy `data_log2` field. If present, it must still be a finite
+nonnegative number and is preserved as optional `metrics.dataLog2` metadata, but
+is not scored or reviewed as a resource bound. If absent, score output omits that
+metric rather than synthesizing zero. New draft claims omit it. Exact claim and
+configuration bindings still apply, including any supplied legacy metadata.
+See the [rollout and UI handoff](../docs/OPTIONAL_DATA_METRIC.md) for retiring the
+displayed metric without a Yukon reorg.
+
 Run the organizer tests with:
 
 ```sh

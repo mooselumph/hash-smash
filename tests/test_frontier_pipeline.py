@@ -182,6 +182,38 @@ class FrontierPipelineTests(unittest.TestCase):
             with self.subTest(undefined=undefined), self.assertRaises(VerificationError):
                 get_frontier_track(undefined)
 
+    def test_old_and_new_claims_score_identically_without_rewriting_candidates(self):
+        for lane in ("exploratory", "rigorous"):
+            for value in (None, 0, 137.5):
+                with self.subTest(lane=lane, data=value):
+                    paths = self.paths(f"sha256-r31-{lane}", suffix=f"{lane}-{value}")
+                    claim_path = paths.candidate / "claim.json"
+                    claim = read_json(claim_path)
+                    self.assertNotIn("data_log2", claim["claim"])
+                    claim["claim"]["memory_log2_bytes"] = 17
+                    if value is not None:
+                        claim["claim"]["data_log2"] = value
+                    atomic_write_json(claim_path, claim)
+                    before = claim_path.read_bytes()
+
+                    def omit_data(stage, review, _):
+                        if stage == "lane_cost":
+                            review["cost_reconstruction"].pop("data_log2", None)
+
+                    with fake_provider(omit_data):
+                        self.assertEqual(pipeline.run_all(paths), 0)
+                    score = read_json(paths.score)
+                    self.assertEqual(score["score"], 128)
+                    self.assertEqual(score["metrics"]["memoryLog2Bytes"], 17)
+                    self.assertEqual(score["metrics"]["scoreMetric"], "timeLog2")
+                    self.assertNotIn("timeMemoryLog2", score["metrics"])
+                    if value is None:
+                        self.assertNotIn("dataLog2", score["metrics"])
+                    else:
+                        self.assertEqual(score["metrics"]["dataLog2"], value)
+                    self.assertEqual(claim_path.read_bytes(), before)
+                    self.assertEqual(read_json(paths.aggregate)["claim"], claim)
+
     def test_supported_baseline_above_nominal_can_score_without_claiming_improvement(self):
         for lane in ("exploratory", "rigorous"):
             with self.subTest(lane=lane):
@@ -310,15 +342,18 @@ class FrontierPipelineTests(unittest.TestCase):
         self.assertFalse(paths.score.exists())
 
     def test_claim_or_dossier_tamper_after_judgment_blocks_score_and_clears_stale_file(self):
-        for kind in ("claim", "review", "configuration", "aggregate_lane"):
+        for kind in ("claim", "legacy_metadata", "review", "configuration", "aggregate_lane"):
             with self.subTest(kind=kind):
                 paths = self.paths(suffix=kind)
                 with fake_provider():
                     self.assertEqual(pipeline.run_all(paths), 0)
-                if kind == "claim":
+                if kind in ("claim", "legacy_metadata"):
                     target = paths.candidate / "claim.json"
                     content = read_json(target)
-                    content["claim"]["time_log2"] -= 1
+                    if kind == "claim":
+                        content["claim"]["time_log2"] -= 1
+                    else:
+                        content["claim"]["data_log2"] = 123
                 elif kind == "aggregate_lane":
                     target = paths.aggregate
                     content = read_json(target)
