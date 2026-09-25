@@ -2,9 +2,12 @@
 
 HashSmash is a Yukon-compatible benchmark for AI-assisted review of cryptanalytic
 collision claims. Each target has independent exploratory and rigorous lanes.
-The roster has **28 planned slots: 24 locally runnable lanes and 4 reserved Poseidon
-slots**. The Yukon manifest preserves the **20 registered tracks: 12 exploratory
-and 8 existing rigorous tracks**. The four BLAKE3/Keccak[800] rigorous lanes remain local.
+The Yukon manifest declares **six exploratory tracks**: SHA-256 rounds 31/32,
+SHA3-256 rounds 5/6, and BLAKE3 rounds 1/2. Two Poseidon targets remain deferred
+until their parameters and round pair are defined. The local research catalog
+retains 24 runnable lanes and four historical Poseidon slots; it does not define
+active Yukon membership. Rigorous, MD5, SHA-1, and Keccak[800] tracks are excluded
+from the manifest.
 The organizer selected BLAKE3 rounds 1/2 and Keccak[800] rounds 5/6 on 2026-09-13.
 
 Solvers start with [TASK.md](./TASK.md), the single entry point for assigned-track
@@ -81,7 +84,7 @@ The SHA-1 pilot and nine local tracks have been retired.
 
 Follow [YUKON_DEV_SETUP.md](./docs/YUKON_DEV_SETUP.md) to import the repository root once
 as `hashsmash`. The schema-v2 [`benchmark.json`](./benchmark.json) declares all
-twenty tracks with unique names such as `sha256-r31-exploratory`
+six exploratory tracks with unchanged names such as `sha256-r31-exploratory`
 and `blake3-r1-exploratory`. There is no `rootDir` override or separate lane import.
 Lane metadata remains in the protected registry, the validated claim binding,
 and each generated score's `metrics.lane`. Yukon track names include the lane
@@ -96,11 +99,13 @@ workflow wrappers separate deterministic intake, secret-bearing review, and
 final scoring. The score artifact contains that exact repository-relative path;
 qualification failures withhold a score.
 
-A fresh import queues twenty baseline workflows. To extend an existing
-challenge, use Yukon’s import-new-tracks operation, documented in the
-[operator runbook](./docs/YUKON_DEV_SETUP.md); it queues only newly declared tracks.
-It does not delete existing rigorous records or open submissions. The manifest
-matches Yukon’s 20-track limit. The four undefined Poseidon slots remain deferred.
+For the existing challenge, use **Reconcile challenge** as documented in the
+[operator runbook](./docs/YUKON_DEV_SETUP.md). It retains the six track identities
+and their results while archiving the fourteen omitted tracks after closure and
+completion of their jobs and reviews. A membership-only reconciliation does not
+rescore retained submissions. A fresh import, if separately intended, queues six
+baseline workflows. Add the two exploratory Poseidon tracks only after definition
+and qualification; do not archive and reimport the existing challenge.
 
 Before opening, test Yukon-driven validation, non-editable-path rejection, and
 promotion while preserving sibling tracks in both lanes. Humans review harness

@@ -126,10 +126,10 @@ class DevImportTests(unittest.TestCase):
             with self.assertRaises(dev.ImportFailure):
                 dev.import_request(name=name)
 
-    def test_draft_scan_checks_every_registered_track_in_both_lanes(self):
+    def test_draft_scan_checks_only_selected_exploratory_tracks(self):
         tracks = dev.import_tracks()
-        self.assertEqual(len(tracks), 20)
-        self.assertEqual({track.lane for track in tracks}, {"exploratory", "rigorous"})
+        self.assertEqual(len(tracks), 6)
+        self.assertEqual({track.lane for track in tracks}, {"exploratory"})
         drafts = {tracks[0].id, tracks[-1].id}
 
         def intake(candidate, *, track):

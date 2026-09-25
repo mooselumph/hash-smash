@@ -14,9 +14,10 @@ from verifier.io import load_json_bytes
 
 
 def import_tracks():
-    """Match the 20 registered dev tracks so managed reorgs preserve membership."""
+    """Declare the six retained exploratory tracks for manifest reconciliation."""
     return tuple(track for track in frontier_tracks()
-                 if track.lane == "exploratory" or track.algorithm in {"md5", "sha1", "sha256", "sha3_256"})
+                 if track.lane == "exploratory"
+                 and track.algorithm in {"sha256", "sha3_256", "blake3"})
 
 
 def manifest_for():
