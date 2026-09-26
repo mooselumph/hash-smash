@@ -6,23 +6,37 @@
   "rounds": 1,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 149,
+    "time_log2": 48,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 137,
-    "data_log2": 130,
-    "preprocessing_log2": 137,
-    "success_probability": 0.5,
+    "memory_log2_bytes": 54,
+    "preprocessing_log2": 17,
+    "success_probability": 0.9,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Messages are exactly 64 bytes, encoded from two independent uniform 256-bit words.",
-    "One batch of 2^129 samples; all repeated messages are retained and charged; no restart.",
-    "Unkeyed BLAKE3-256; 1 prefix rounds, one 64-byte root block with flags11, length64, counter0.",
-    "Classical 256-bit word RAM with independent uniform random words, fully charged iterative merge sort and two retained record arrays.",
-    "Analytical generic construction; no full-scale execution, precomputed collision, or empirical heuristic is claimed.",
-    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 149."
+    "Messages are exactly 64 bytes: eight fixed column words, then four 64-bit diagonal word pairs; both colliding messages share the column words and differ in the diagonal pairs.",
+    "One batch per half; sublists of 2^44 entries, 45 level-1 filter bits, pair cap 2^45 per side, match cap 2^8 per half; cap overflow or absence of a match halts with failure; no restart.",
+    "Unkeyed BLAKE3-256; 1 prefix round, one 64-byte root block with flags 11, length 64, counter 0; standard IV, tree, padding and full 256-bit output.",
+    "Classical probabilistic 256-bit word RAM; one target compression costs 1 unit; every other primitive word operation is charged 1/222; partial single-G evaluations are charged as word operations, never as compressions.",
+    "Success probability 0.9 rests on the declared heuristic H1 (four-sum abundance), supported by the declared mask experiments; collision correctness and all resource bounds are heuristic-free.",
+    "The nominal reference identifier does not assert an improvement by itself; the claimed scalar 48 is below the nominal display reference 128."
   ],
   "baseline_improved": "blake3-r1-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "four-sum-abundance-v1",
+      "statement": "For the fixed blake3-r1-prefix-v1 target, with the eight column message words and all sublist entries drawn from the algorithm's independent uniform coins, the four-sum match counts produced by the two-level Wagner search in each 128-bit digest half follow the ideal-model law: with sublist size s = 2^44 and c = 45 filter bits, each half yields at least one level-2 match with probability at least 0.999 (ideal-model mean 8 matches per half), and the 2^45 pair-count caps are exceeded with probability below 10^-6.",
+      "role": "score-critical",
+      "scope": "Used only for the success-probability analysis (proof Section 5). The exact XOR decomposition, collision correctness and soundness, and every resource bound are proved without this heuristic. It asserts no differential, linear, round-independence, or output-uniformity property of the target; it concerns only XOR-closure abundance of four explicitly constructed sublist multisets at the stated sizes.",
+      "extrapolation": "The same algorithm, same fixed target function, and same G-call subroutines are executed at 32 of the 128 constrained half bits (s = 2^11, c = 11) over 256 independent organizer-seeded trials per half, where the ideal model predicts per-trial success 1 - e^-2 = 0.8647; the claim extrapolates the validated scaling law lambda = s^4 / 2^(m+c) from m = 32 to m = 128 with list sizes scaled exactly as the law prescribes.",
+      "evidence_ids": [
+        "experiment:wagner-rhalf-mask32",
+        "experiment:wagner-lhalf-mask32",
+        "proof:190-231"
+      ],
+      "limitations": "Small-width measurements do not prove 128-bit abundance; the value distributions could deviate from the ideal model at larger width undetected by the experiments, and no full-scale execution is performed or claimed. Trial frequencies are organizer-recomputed mask events, not iid success-probability estimates, and program-internal counters are untrusted observations. Failure of this heuristic yields a failure verdict, never a false collision, because every returned pair is verified by two complete hash recomputations. The attack does not extend to two or more BLAKE3 rounds."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }
