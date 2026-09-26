@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "fresh-completions",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target sha256-r31-prefix-v1. One matched chaining value (the published first block M0) and the published second-block words W0..W12 and W14; each organizer trial seed selects new E13 and E15 values, hence new W13 and W15.",
+      "hypothesis": "Given a matched chaining value that satisfies the Table 6 conditions of steps 0-12, the Step 3 completion of section 5 of proof.md produces distinct ordinary collisions of the complete padded target on every trial, using a few hundred candidate E13 values.",
+      "program": "experiments/fresh_completions.py",
+      "event": {"kind": "full-collision"}
+    }
+  ]
+}
