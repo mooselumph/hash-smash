@@ -1,9 +1,12 @@
 # Paired collision-frontier lanes
 
-Roster update: 2026-09-13. There are **28 planned slots, 24 locally runnable lanes,
-and 4 deferred Poseidon slots**. The root Yukon manifest includes **20 registered
-tracks: 12 exploratory and 8 existing rigorous tracks**. The four new rigorous lanes remain local. This source change does not
-itself import or open tracks.
+Roster update: 2026-09-25. The root Yukon manifest selects **six exploratory
+tracks**: SHA-256 31/32, SHA3-256 5/6, and BLAKE3 1/2. The challenge will add two
+Poseidon targets after their parameters and round pair are defined. The historical
+local catalog below retains **24 runnable lanes and 4 deferred Poseidon slots**
+for research and compatibility; it is not the active Yukon roster. Reconciliation
+archives the fourteen omitted registrations while preserving the six retained
+track identities and results. Editing the manifest alone does not change Yukon.
 See [FRONTIER_VALIDATION.md](./FRONTIER_VALIDATION.md) for test evidence and limits.
 
 ## Roster and selection limits
@@ -168,8 +171,9 @@ fingerprint. Do not generalize a checked output predicate to unmeasured heuristi
 ## Yukon manifest and deployment gates
 
 Import the repository root once as `hashsmash`. The root schema-v2
-[`benchmark.json`](../benchmark.json) contains twelve exploratory and eight existing rigorous tracks. The four new
-BLAKE3/Keccak[800] rigorous siblings remain local with independent review decisions. Every track uses its full
+[`benchmark.json`](../benchmark.json) contains six exploratory SHA-256, SHA3-256,
+and BLAKE3 tracks. Other lanes remain local with independent review decisions.
+Every track uses its full
 `<target>-<lane>` ID, such as `sha256-r31-exploratory` or
 `sha256-r31-rigorous`, in both Yukon and organizer commands. No `rootDir`
 override or separate lane import is needed.
@@ -186,11 +190,12 @@ score paths in the manifest are repository-relative. For example, the explorator
 SHA-256 r31 track edits `lanes/exploratory/candidates/sha256-r31` and uploads only
 `lanes/exploratory/.yukon/scores/sha256-r31-exploratory.json` at that exact path.
 
-Yukon currently permits at most 20 tracks in a manifest. The manifest retains all
-20 registered tracks because managed reorgs cannot change membership. The four
-new BLAKE3/Keccak[800] rigorous tracks are excluded to stay within this limit. Poseidon still requires an exact
-definition before any of its four reserved slots can run. Splitting this repository into multiple lane imports is
-not the deployment contract.
+Yukon permits at most 20 active tracks. Use manifest reconciliation to retire
+the fourteen omitted registrations, preserving their history and all retained
+track records. Reorg remains a separate operation for configuration changes.
+Keep the retained names, including their lane suffixes: a rename creates a new
+identity. Poseidon requires exact definitions and qualified baselines before its
+two exploratory targets can be added. Do not split the repository into lane imports.
 
 Workflow separation is intentional: a credential-free job validates and executes
 experiments, a fresh secret-bearing job reviews immutable same-run artifacts
@@ -204,8 +209,8 @@ Candidate authors should follow [CANDIDATE_QUALIFICATION.md](./CANDIDATE_QUALIFI
 
 Before activating the imported exploratory lanes:
 
-1. Confirm the explicit MD5/SHA-1 control exception and SHA3-256 instantiation.
-2. Keep the four undefined Poseidon slots deferred. To activate them later,
+1. Preserve the selected SHA-256, SHA3-256, and BLAKE3 target definitions.
+2. Keep the undefined Poseidon slots deferred. To add two exploratory targets later,
    establish exact definitions and defensible or explicitly provisional round pairs, then
    update catalog, profiles, templates, schemas, manifest, wrappers and checker
    tests. `--require-complete` checks that eventual full roster only.
@@ -213,8 +218,8 @@ Before activating the imported exploratory lanes:
    supported Yukon change allowing an initially empty frontier. Drafts/nominal
    references cannot be passed off as successful baselines.
 4. Arrange the Yukon dev GitHub App/importer access and confirm the deployment supports
-   schema v2. A fresh import queues twenty baseline workflows; each must qualify. An
-   append import queues only newly declared tracks. Run an end-to-end dev import, submission and
+   schema v2 and reconciliation. A fresh import queues six baseline workflows;
+   reconciliation queues baselines only for new or eligible retried tracks. Run an end-to-end dev import, submission and
    promotion test, including preservation of sibling tracks across both lanes.
 5. Calibrate both lane policies on labeled real cryptanalysis, with human review of
    false positives, false negatives and disagreements. Toy/fake-provider tests establish

@@ -7,8 +7,10 @@ Builder work does not grant an unassigned candidate directory to edit.
 
 ## Context and ownership
 
-The [frontier guide](./FRONTIER_LANES.md) defines 24 locally runnable paired tracks and
-4 reserved Poseidon slots, for 28 eventual slots. The SHA-1 pilot and nine unpaired local
+The [frontier guide](./FRONTIER_LANES.md) retains a local research catalog of
+24 runnable paired tracks and 4 historical Poseidon slots. The active manifest
+selects six exploratory SHA-256, SHA3-256, and BLAKE3 tracks; two exploratory
+Poseidon targets remain deferred pending definition. The SHA-1 pilot and nine unpaired local
 tracks are retired. Preserve the single repository-root schema-v2
 [manifest](../benchmark.json), lane-suffixed public track IDs, and independent
 candidate, score, and report paths. Lane metadata is bound by the protected
@@ -91,6 +93,9 @@ provide local judge access. A local score does not replace Yukon's validation of
 the exact imported or submitted content.
 
 For deployment, use the [Dev runbook](./YUKON_DEV_SETUP.md): one import at the
-repository root, with no lane-specific import root. Keep all 20 imported baseline checks
-independent; the four new BLAKE3/Keccak[800] rigorous packages remain local. The 4 unresolved Poseidon slots stay inactive; current platform limits and
-target-definition prerequisites are documented there.
+repository root, with no lane-specific import root. Reconcile the existing
+challenge against the six-track manifest, preserving retained names, paths,
+settings, and results. Close the fourteen omitted tracks and resolve their jobs
+and reviews before archival. No reorg is needed for membership changes alone.
+Keep all undefined Poseidon slots inactive; only two exploratory targets are
+planned for the active challenge.

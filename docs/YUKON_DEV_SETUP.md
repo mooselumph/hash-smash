@@ -3,8 +3,10 @@
 This operator runbook is reached through the [builder guide](./BUILDER_GUIDE.md).
 It applies the reusable Yukon setup instructions to HashSmash's paired research
 candidates. There is
-one schema-v2 challenge imported from the repository root. Its manifest preserves twenty registered tracks: twelve exploratory and eight existing
-rigorous tracks. The four new BLAKE3/Keccak[800] rigorous packages remain local; do not create a second import root.
+one schema-v2 challenge imported from the repository root. Its desired manifest
+contains six exploratory tracks: SHA-256 31/32, SHA3-256 5/6, and BLAKE3 1/2.
+Use reconciliation to archive the fourteen omitted registrations while preserving
+the retained track identities and results. Do not create a second import root.
 
 ## Contract and current scope
 
@@ -12,9 +14,9 @@ rigorous tracks. The four new BLAKE3/Keccak[800] rigorous packages remain local;
 | --- | --- |
 | Challenge manifest name | `hashsmash` |
 | Manifest / import root | Repository-root `benchmark.json`; omit `rootDir` |
-| Schema / imported tracks | 2 / 20: 12 exploratory + 8 rigorous (24 local lanes total) |
+| Schema / imported tracks | 2 / 6 exploratory (24 local research lanes retained) |
 | Promotion mode | `manual` on every track; owner review before promotion |
-| Yukon and organizer track ID | `<target>-<lane>`, such as `sha1-r80-rigorous` |
+| Yukon and organizer track ID | `<target>-<lane>`, such as `sha256-r31-exploratory` |
 | Required exploratory / rigorous outcome | `plausible_not_refuted` / `ai_rigor_qualified` |
 | Editable path, relative to repository root | `lanes/<lane>/candidates/<target>` |
 | Score path, relative to repository root | `lanes/<lane>/.yukon/scores/<target>-<lane>.json` |
@@ -36,10 +38,10 @@ For the v3-to-v4 scoring migration, follow the
 [total-computation reorg plan](./TIME_ONLY_REORG.md), including the UI compatibility
 gate and candidate-only baseline restoration before replay.
 
-BLAKE3 rounds1/2 and Keccak[800] rounds5/6 are now concrete organizer-selected
-exploration targets. The four pending Poseidon slots remain excluded. The twenty
-registered entries fit Yukon's 20-track manifest limit; including all 24 local
-lanes would exceed it.
+BLAKE3 rounds 1/2 remain organizer-selected exploration targets. The challenge's
+eventual eight tracks include two exploratory Poseidon targets, still excluded
+until their parameters, round pair, and qualified baselines are ready. The broader
+local catalog is retained for research; it does not define live membership.
 Do not manufacture boundaries or scores to make `--require-complete` pass.
 
 HashSmash needs neither Willow's M3 Max runner group and JIT App nor its Rust
@@ -94,15 +96,13 @@ diagnose the harness, but it is outside the production registry and cannot seed
 this challenge. A draft rejection is an expected negative test, not a successful
 end-to-end baseline.
 
-## Import through Yukon dev
+## Fresh import through Yukon dev
 
 Confirm that the dev deployment supports schema v2 and that the importing account's
-**email** is in `YUKON_BENCHMARK_IMPORTER_EMAILS`. Before replacing an existing
-deployment, let active submissions finish and close/archive the prior challenge in
-the setter UI. This new repository requires its own import; an import from another
-repository URL does not move with a code copy. Yukon does not allow concurrent open
-challenges for the same source repository. Record the new benchmark IDs and update
-solver clone instructions after the fresh import.
+**email** is in `YUKON_BENCHMARK_IMPORTER_EMAILS`. For the existing
+`mooselumph/hashsmash` challenge, use reconciliation below instead of replacement.
+A fresh import creates new benchmark IDs and does not transfer submission history.
+Use this section only when a separate fresh registration is intended.
 
 Create the account's importer key in the dev setter UI's API keys view. Keep the key in a
 private file outside this repository (`chmod 600`), or supply `YUKON_API_KEY` in
@@ -116,14 +116,14 @@ python3 scripts/import_yukon_dev.py --source-branch main
 
 The request uses the fixed `https://api-dev.yukon.org` API, repository
 `https://github.com/mooselumph/hash-smash`, and source branch `main`. It omits
-`rootDir`, so Yukon reads the twenty-track schema-v2 manifest at the repository
+`rootDir`, so Yukon reads the six-track schema-v2 manifest at the repository
 root. The helper sends the supported `POST /api/benchmarks` JSON body directly.
 If using the setter UI instead, choose the same repository and branch, leave its
 root-directory field empty, and use the challenge name `hashsmash`.
 
-Submitting a fresh import queues twenty baseline workflows against
+Submitting a fresh import queues six baseline workflows against
 the resolved source commit. Each imported baseline must qualify. For an existing
-challenge, use the append operation below rather than recreating it.
+challenge, use reconciliation below rather than recreating it.
 
 After baseline readiness and credential setup, run the real import:
 
@@ -148,36 +148,61 @@ IDs in dev before retrying after a network error or interruption. To retry a fai
 baseline, archive/delete that failed import in the setter UI, fix the actual
 cause, and import again; never delete/recreate the GitHub repository.
 
-## Append newly declared tracks to an existing challenge
+## Reconcile the existing challenge
 
-Yukon's `POST /api/benchmarks/:id/import-tracks` reads the challenge's saved
-repository, branch and root, and appends only newly declared schema-v2 tracks.
-It preserves already imported records and queues independent baseline jobs for
-the additions. It takes no per-track filter and does not delete tracks omitted
-from the current manifest. Existing rigorous records therefore remain in Yukon;
-this manifest change does not close or archive them.
+The desired six-track roster preserves these exact existing names:
 
-After the human-reviewed source change is merged into the saved source branch,
-inspect an offline plan using the actual existing challenge reference:
+- `sha256-r31-exploratory`, `sha256-r32-exploratory`
+- `sha3-256-r5-exploratory`, `sha3-256-r6-exploratory`
+- `blake3-r1-exploratory`, `blake3-r2-exploratory`
 
-```sh
-python3 scripts/import_yukon_dev.py --append-to SETTER/CHALLENGE
-```
+Archive all eight registered rigorous tracks, the four exploratory MD5/SHA-1
+tracks, and the two exploratory Keccak[800] tracks. Keep their candidate files,
+workflows, and target definitions for historical/local use. Retained manifest
+entries, candidate paths, scoring rules, and judge behavior must not change in
+this membership-only operation. Keep the lane suffixes: renaming archives the
+old identity and creates a fresh one without transferring its submissions.
 
-Replace the uppercase placeholder with the confirmed lowercase setter/challenge
-name or an existing benchmark UUID. The helper checks the twenty manifest candidates; the four local-only rigorous
-packages do not block imports.
-The plan's workflow count is null because the server determines which tracks
-are new. To send the reviewed request and wait for those jobs, add `--submit --wait`.
-The append request uses the saved source; `--source-branch` and `--name` overrides
-are not supported. It never opens submissions. An empty returned track list means
-there were no additions; do not retry an uncertain mutation without inspecting Yukon.
+1. Record track IDs, settings, scores, submission histories, and source revision.
+   Close the fourteen retiring tracks using `POST /api/benchmarks/:id/close`.
+   Wait for queued/running jobs, including promotions, to finish and resolve pending
+   manual reviews on those tracks. Retained tracks' pending reviews can remain.
+2. Land the reduced manifest and its generator through a human-reviewed harness PR
+   on the challenge's saved `main` branch. Editing the manifest alone does not alter
+   registrations. Avoid changes to shared scoring code during this operation.
+3. In the dev author workspace, select **Reconcile challenge**, then **Review changes**.
+   Expect `retain` to contain the six names above, `archive` to contain fourteen
+   names, and `add`/`retry` to be empty. Check the resolved source commit.
+4. Apply that exact preview. Verify there are six live tracks with unchanged IDs,
+   settings, scores, and submission records, and no new baseline/replay jobs.
+   Removed tracks are soft-archived: their history remains stored, but normal
+   benchmark endpoints no longer expose them. Save an audit copy before archival.
 
-Appending the four exploratory targets preserved the sixteen existing tracks.
-The manifest now includes all twenty saved records, as required by managed reorgs.
-A reorg validates all twenty baselines before replaying submissions; a failed new
-baseline can therefore block the batch. Use append for future additions and keep
-all existing records in the manifest before a whole-challenge reorg.
+The owner/importer API is `POST /api/benchmarks/:ref/reconcile`. Use the encoded
+challenge reference `mooselumph%2Fhashsmash`. Send `{}` for a read-only preview;
+it returns `plan.sourceRef`, `plan.revision`, and `add`, `retry`, `archive`, `retain`
+arrays. Send `{"expectedRevision":"<preview revision>"}` to apply. A changed source
+revision or challenge state returns 409; inspect and preview again after any
+uncertain response rather than blindly retrying a mutation. Neither call needs
+provider credentials. Keep the Yukon bearer credential out of logs.
+
+Reconciliation preserves retained tracks in place; it does not rescore them or
+refresh their registered configuration. Do not reorg for this membership-only
+change. If a future change also modifies retained evaluation configuration,
+reconcile first, wait for added/retried baselines, then reorg the live challenge
+and explicitly reopen/resume afterward. A retained failed reorg must be recovered
+with matching live membership before reconciliation can proceed.
+
+Add two exploratory Poseidon tracks in a later manifest change after defining
+and qualifying them. Reconcile, wait for both new baselines to pass, then open
+them explicitly. New-baseline failures do not undo any simultaneous archival.
+An archived name reintroduced later creates a new identity; it is not an undo.
+
+The older `POST /api/benchmarks/:ref/import-tracks` remains additive. The helper's
+`--append-to` option uses that older endpoint and **cannot retire tracks**. Public
+UI registries, existing CLI selections, and reward configuration are separate
+operator concerns; reconciliation does not rewrite them. See the
+[Yukon reconciliation contract](https://github.com/Layr-Labs/yukon/blob/b45ba9a554b81f238123f7639526b55abc5c9d43/apps/benchmark-author-ui/README.md#reconcile-challenge).
 
 ## Yukon verification before opening
 
@@ -214,7 +239,7 @@ changing scientific acceptance thresholds.
 
 ## Convert an existing registration to manual review
 
-The root manifest sets `"promotionMode": "manual"` on all twenty imported track entries.
+The root manifest sets `"promotionMode": "manual"` on all six selected track entries.
 Yukon defaults omitted modes to `automatic`; editing this file alone does not
 change existing registrations. Follow the released
 [manual submission review contract](https://github.com/Layr-Labs/yukon/blob/v2026.09.10-1/docs/manual-submission-review.md).

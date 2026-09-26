@@ -33,7 +33,7 @@ class NoRedirect(request.HTTPRedirectHandler):
 def import_request(branch="main", name=None):
     if not branch or len(branch) > 255 or any(ord(char) < 32 for char in branch):
         raise ImportFailure("invalid source branch")
-    # Omit rootDir so Yukon reads the one root manifest containing both lanes.
+    # Omit rootDir so Yukon reads the one root manifest containing the selected exploratory tracks.
     payload = {"sourceUrl": SOURCE_URL, "sourceBranch": branch}
     if name is not None:
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*", name):
