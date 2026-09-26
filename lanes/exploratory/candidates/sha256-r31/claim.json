@@ -6,22 +6,73 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 48.25,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.6,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 31,
+    "preprocessing_log2": 45.01,
+    "success_probability": 0.39,
+    "nonuniform_advice_log2_bytes": 12
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "Two-block ordinary collisions M0||M1, M0||M1' of 128 bytes on the complete padded sha256-r31 target from the standard IV; the difference is confined to W5..W9 of the second block (Li-Liu-Wang 2024 Table 6, restated in proof.md section 3).",
+    "One fixed public starting point (proof.md section 4); a 2560-entry pair table keyed by A(-1); four W5 difference classes; B = 2^48 first blocks M0(i) = BE_32(i)||BE_32(r) with one fresh uniform word r.",
+    "Every returned pair is verified by recomputing both complete hashes; heuristics affect only success probability and cost.",
+    "Pricing: collision-frontier-v5, one selected compression = 1, other word operations 1/2140, with two operations charged per executed instruction (primitive plus fetch).",
+    "The time bound includes a declared 2^45-unit charge for the historical computation that produced the public characteristic and starting point (H-HISTORICAL-COST), supported by the authors' reported 76.8 thread-hours and a timed re-run of their public characteristic-search models.",
+    "Exploratory heuristic estimate; not a full-scale execution and not a rigorous proof of the success probability."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-UNIFORM",
+      "statement": "For distinct first blocks M0(i), the chaining words (h0, h1, h2) = (A-1, A-2, A-3) of f(IV, M0(i)) behave as independent uniform words for the bitmap, V6 and V5 membership events, independently across i; with H-STEP3 and H-PAIR-OVERLAP this gives per-block success probability at least 2^-48 * 0.5410.",
+      "role": "score-critical",
+      "scope": "The 31-round compression from the standard IV on 2^48 counter-indexed first blocks; events defined by 32-bit equalities and set memberships on the output words.",
+      "extrapolation": "Standard modelling assumption of two-block attacks (Mendel-Nad-Schlaeffer 2013; Li-Liu-Wang 2024); the full-match events (about 2^-46 per block) are not observed directly. Uniformity of the free words h3..h7 for Step 3 is tested on real chaining values by experiment real-state-completion.",
+      "evidence_ids": [
+        "experiment:real-state-completion",
+        "proof:287-353"
+      ],
+      "limitations": "Not proved and not tested at full scale; a structural bias of the reduced compression on these words would change the match rate. The rate enters the score logarithmically."
+    },
+    {
+      "id": "H-STEP3",
+      "statement": "Given a full match in class t, Step 3 of proof.md section 5.4 (with its caps) succeeds with probability at least 0.1053, 0.1148, 0.1148, 0.1059 for the four classes (99% Hoeffding lower bounds of 10^6-sample Monte Carlo over uniform C).",
+      "role": "score-critical",
+      "scope": "Step 3 on matched states from the fixed starting point, with uniformly distributed free chaining words A-4, E-4..E-1.",
+      "extrapolation": "Author Monte Carlo and 12,000 simulated matches; organizer-executed Step 3 on states with real free chaining words (real-state-completion; author runs 467/4096 = 0.114 and 25/256 vs model 0.112) and on one real matched state (fresh-completions, 256/256).",
+      "evidence_ids": [
+        "experiment:real-state-completion",
+        "experiment:fresh-completions",
+        "proof:287-353",
+        "proof:475-515"
+      ],
+      "limitations": "Real matches with real (h0,h1,h2) are not sampled (they need about 2^46 work); p_t per class is author Monte Carlo; the organizer run of real-state-completion estimates the class average with 256 trials."
+    },
+    {
+      "id": "H-PAIR-OVERLAP",
+      "statement": "For entries sharing an A(-1) key, sum_{j<k} P(E_j and E_k) <= 2^-48 * 0.01 per block, so the Bonferroni lower bound of proof.md section 6 applies.",
+      "role": "supporting",
+      "scope": "The 4976 same-key entry pairs of the 2560-entry table, under uniform h1 and h2.",
+      "extrapolation": "W6 joint probabilities computed exactly by enumeration of V6 (sum 1.7286 x 2^-9-normalised); W5 joint probabilities sampled on up to 64 admissible h1 per pair; measured total 0.0002 x 2^-48, bounded here by 50 times that.",
+      "evidence_ids": [
+        "proof:287-353"
+      ],
+      "limitations": "The W5 joint term is sampled (author code), not enumerated; a structured shift making two class sets overlap heavily for many h1 would increase the correction."
+    },
+    {
+      "id": "H-HISTORICAL-COST",
+      "statement": "The total historical computation that produced the public 31-step characteristic (Table 6) and the starting point is at most 2^45 target-compression units under collision-frontier-v5 pricing.",
+      "role": "score-critical",
+      "scope": "SAT/SMT characteristic search, starting-point solving, and the practical search that produced the published pair from which the starting point is read.",
+      "extrapolation": "Starting point: the authors report 76.8 thread-hours for the practical search that produced the published pair. Characteristic: the authors' public models find_dc_model_31_256.py and correct_dc_model_31_256.py were re-run and timed on one core (proof.md section 7); 100 times that measurement is charged for design iterations. Conversion: one core-hour <= 2^35.97 units.",
+      "evidence_ids": [
+        "proof:407-441",
+        "proof:15-37"
+      ],
+      "limitations": "The authors' own characteristic-search computation is not reported; the bound relies on the timed re-run of their public tool, a 100x allowance, and a generous cycle-to-operation conversion (5 GHz, 8 word operations per cycle). Sensitivity: a 2^47 charge would give time_log2 about 48.6."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }

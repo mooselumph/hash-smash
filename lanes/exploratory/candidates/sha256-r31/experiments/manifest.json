@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "fresh-completions",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target sha256-r31-prefix-v1. One real matched chaining value (published first block M0) with the published W0..W12; each organizer seed drives the complete Step 3 of proof.md section 5.4 (V16 scan from a seed offset, W14, W18, E13, E15).",
+      "hypothesis": "Given a matched chaining value satisfying Table 6 through step 12, Step 3 returns distinct ordinary collisions of the complete padded target on every trial.",
+      "program": "experiments/fresh_completions.py",
+      "event": {"kind": "full-collision"}
+    },
+    {
+      "id": "table-replay",
+      "kind": "python-message-pairs-v1",
+      "scope": "Replay of the pair table of proof.md section 5.2 from the starting point: per-W8 admissible-pair counts for the 112 listed W8 values against all 512 listed V7 words, and (trial 0) table size, key count and maximum key multiplicity. A trial returns a Step-3 completion pair only when all recomputed values equal the stated ones.",
+      "hypothesis": "Every recomputed table statistic equals the value stated in proof.md (2560 entries, 664 keys, maximum multiplicity 8, per-W8 counts), so every trial returns a full collision.",
+      "program": "experiments/table_replay.py",
+      "event": {"kind": "full-collision"}
+    },
+    {
+      "id": "real-state-completion",
+      "kind": "python-message-pairs-v1",
+      "scope": "Step 3 on states combining a real first-block chaining value f(IV, M0) for seed-derived M0 (free words A-4, E-1..E-4) with a seed-chosen table entry and admissible W6, W5 in a seed-chosen class. A trial returns a Step-3 completion pair from the published matched value only when Step 3 succeeds on that state.",
+      "hypothesis": "The checked success frequency estimates the per-match Step 3 success probability on real free chaining words; the model of proof.md section 6 predicts about 0.112 (class average).",
+      "program": "experiments/real_state_completion.py",
+      "event": {"kind": "full-collision"}
+    }
+  ]
+}
