@@ -6,20 +6,20 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 128.32,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
+    "memory_log2_bytes": 136,
     "preprocessing_log2": 20,
-    "success_probability": 0.6,
+    "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "Use only 48-byte messages BE_32(x)||BE_16(y), so each complete fixed-IV sha256-r31 hash is exactly one selected-round compression of one padded block, with full feed-forward and the full 256-bit digest.",
+    "Draw two fresh independent uniform 256-bit RAM words for each of exactly q = 2^128 messages; deterministic seed expansion is not a substitute.",
+    "Group equal digests with a two-pass stable LSD counting sort on 128-bit digest halves (2^128 counters), scan adjacent records, require distinct messages, and verify a returned pair by complete re-hashing.",
+    "Price one selected compression at 1 and every other primitive word operation at 1/2140 (collision-frontier-v5); the ordinary-operation budget also charges one instruction fetch per executed instruction.",
+    "Preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
+    "This is an unconditional analytic construction with no heuristics, experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference 128."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
   "heuristics": [],
