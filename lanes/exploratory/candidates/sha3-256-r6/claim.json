@@ -6,19 +6,19 @@
   "rounds": 6,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 150,
+    "time_log2": 128.5,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 130,
-    "preprocessing_log2": 142,
+    "memory_log2_bytes": 137,
+    "preprocessing_log2": 133,
     "success_probability": 0.5,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Classical 256-bit word RAM with fresh independent uniform random-word primitive.",
-    "One batch of 2^129 independent uniform 64-byte messages; no restarts or nonuniform advice.",
+    "Classical 256-bit word RAM with fresh independent uniform random-word primitive; each executed primitive word operation charged 1/1626 units under collision-frontier-v5.",
+    "One batch of n = 5*2^126 independent uniform 64-byte messages; no restarts or nonuniform advice.",
     "Complete fixed-IV SHA3-256 sponge: rate 1088, capacity 512, suffix 0x06, prefix rounds 0 through 5, all 256 output bits.",
-    "Generic analytic upper bound; infeasible resource use, no improvement over the nominal reference claimed."
+    "Two-pass least-significant-digit radix sort by 128-bit digits with stable counting sort; every loop trip count is a function of n alone, so all operation totals are worst-case over the algorithm's coins.",
+    "Generic analytic upper bound; infeasible resource use, no cryptanalytic property of six-round Keccak exploited, no improvement over the nominal reference 128 claimed."
   ],
   "baseline_improved": "sha3-256-r6-nominal-v2",
   "heuristics": [],
