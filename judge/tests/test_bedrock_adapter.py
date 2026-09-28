@@ -203,7 +203,7 @@ class BedrockAdapterTests(unittest.TestCase):
         result = client(transport, attempts=4, sleeps=sleeps).review("lane_evaluability", {})
         self.assertEqual(result.provenance["attempts"], 4)
         self.assertEqual(len(transport.calls), 4)
-        self.assertEqual(sleeps[1], 0.2)
+        self.assertEqual(sleeps[1], 120.0)
 
     def test_nonretryable_error_is_bounded_and_plain_body_is_not_echoed(self) -> None:
         error = HttpResponse(
