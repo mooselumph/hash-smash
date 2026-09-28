@@ -6,22 +6,61 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 50,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.6,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 30,
+    "preprocessing_log2": 50,
+    "success_probability": 1.0,
+    "nonuniform_advice_log2_bytes": 9
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "Ordinary fixed-IV collision via the published Li-Liu-Wang-Dong-Sun ASIACRYPT 2024 practical 31-step route (two-block SFS-to-collision), not a generic birthday search.",
+    "Online algorithm is deterministic replay of two distinct 128-byte advice messages; success_probability=1 after organizer certificate verification of the selected-target digests.",
+    "All historical construction (characteristic search, SAT/SMT, precomputation, matching, failed trials, verification) is charged inside preprocessing_log2 and total time_log2; a stored pair is not treated as free.",
+    "Declared time_log2=50 is a conservative public-envelope bound under H-FULL-ATTACK-ENVELOPE (EUROCRYPT 2024 published 2^49.8 complete constructive complexity), not the knife-edge ASIACRYPT matching-phase headline 2^40.5.",
+    "No v5 word-op discount is taken against published figures; publication units are charged as target-compression equivalents under H-PUB-UNITS.",
+    "baseline_improved names the required nominal reference identifier and does not assert a cryptanalytic improvement over that nominal as a proved security statement."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
-  "heuristics": [],
+  "heuristics": [
+    {
+      "id": "H-PUB-UNITS",
+      "statement": "Published SHA-256 collision-attack time figures cited here (EUROCRYPT 2024 time 2^49.8; ASIACRYPT 2024 slides time 2^40.5) are treated as upper bounds measured in selected-target compression-equivalent evaluations of sha256-r31, not as wall-clock seconds and not as discounted v5 word-RAM totals.",
+      "role": "score-critical",
+      "scope": "Conversion of the two cited publication time figures into collision-frontier-v5 target-compression units for this exact 31-round fixed-IV padded target.",
+      "extrapolation": "No discount of 1/C is applied even if some published work is non-compression RAM or SAT work; the declared envelope therefore overcharges relative to a literal word-op split.",
+      "evidence_ids": [
+        "proof:144-165",
+        "proof:166-230"
+      ],
+      "limitations": "Authors do not publish an organizer-model ledger. If a cited figure secretly counted only a strict subset of charged work, or used a cheaper unit than one compression, the unit map could understate cost; the separate H-FULL-ATTACK-ENVELOPE margin is the primary defense against that failure mode."
+    },
+    {
+      "id": "H-FULL-ATTACK-ENVELOPE",
+      "statement": "Every historical operation that produced the retained colliding pair \u2014 including differential-characteristic search, SAT/SMT tool runs, starting-point generation, table precomputation, matching, failed trials, additional experiments beyond a lucky first hit, message finalization, and verification \u2014 totals at most 2^49.9 organizer target-compression equivalents, dominated by the Li-Liu-Wang EUROCRYPT 2024 published complete constructive complexity 2^49.8 for ordinary 31-step SHA-256 collisions.",
+      "role": "score-critical",
+      "scope": "All offline/historical work charged to preprocessing and total time for this fixed-witness package; excludes only the online six-compression replay.",
+      "extrapolation": "The ASIACRYPT 2024 memory-efficient matching phase (slides: time 2^40.5, about 2^19.8 table tuples, 1.2 h on 64 threads) is treated as an optimization of the matching stage inside that envelope, not as a license to declare total historical cost near 2^40.5 without a discovery ledger.",
+      "evidence_ids": [
+        "proof:103-143",
+        "proof:144-165",
+        "proof:166-230",
+        "proof:231-240"
+      ],
+      "limitations": "No immutable job ledger, instruction trace, or organizer-unit conversion receipt for the authors' discovery work is available in the public sources used here. If characteristic search plus all omitted experiments truly exceeded 2^49.9 compression-equivalents, the time_log2=50 claim would fail while the certificate collision itself would remain valid. This package deliberately refuses knife-edge claims near 2^40.5\u20132^41 for that reason."
+    },
+    {
+      "id": "H-WITNESS-IDENTITY",
+      "statement": "The two 128-byte certificate messages are the public ordinary 31-step SHA-256 colliding pair associated with Li, Liu, Wang, Dong, and Sun, ASIACRYPT 2024 (also distributed in the authors' verification materials), and they collide under sha256-r31-prefix-v1.",
+      "role": "supporting",
+      "scope": "Identity and selected-target correctness of the retained advice pair only.",
+      "extrapolation": "Correctness of the online algorithm does not depend on this bibliographic identity: the organizer certificate checker recomputes both digests. The identity statement only ties the historical-cost heuristics to the public attack that produced the pair.",
+      "evidence_ids": [
+        "proof:42-76",
+        "proof:77-102"
+      ],
+      "limitations": "Bibliographic attribution does not measure resource cost. Cost obligations remain entirely with H-PUB-UNITS and H-FULL-ATTACK-ENVELOPE."
+    }
+  ],
   "certificate_manifest": "certificates/manifest.json"
 }
