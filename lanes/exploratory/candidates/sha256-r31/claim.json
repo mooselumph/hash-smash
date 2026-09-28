@@ -6,22 +6,57 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 50,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.6,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 30,
+    "preprocessing_log2": 49.9,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 9
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "The online algorithm is deterministic replay of exactly the two 128-byte messages in proof.md; it is not a submitted generator for new collisions.",
+    "The selected target has the standard fixed SHA-256 IV, original round indices 0 through 30 on every padded block, full eight-word feed-forward, FIPS padding, and all 256 output bits.",
+    "All historical characteristic search, failed work, table generation, matching, construction, and checking are charged once as preprocessing and included in total time; no cross-target amortization is claimed.",
+    "Declared time_log2=50 is a conservative public-envelope bound under H-HISTORICAL-TIME using the EUROCRYPT 2024 published complete constructive complexity 2^49.8; it deliberately refuses the knife-edge ASIACRYPT matching-phase headline 2^40.5.",
+    "The score is conditional on H-HISTORICAL-TIME and H-HISTORICAL-MEMORY; neither bound has an authoritative organizer-model trace or resource receipt.",
+    "The organizer experiment checks only the exact collision relation. Repeated replay rows do not measure success probability, expected work, preprocessing, memory, novelty, or generator reproducibility.",
+    "This exploratory package claims no new cryptanalysis, no full-SHA-256 or 32-round collision, no lower security bound, and no rigorous qualification.",
+    "Under collision-frontier-v5 the scored scalar is time_log2 only; memory is reported and reviewed but does not enter the scalar.",
+    "baseline_improved names the required nominal reference identifier and does not assert a proved cryptanalytic improvement over that nominal."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-HISTORICAL-TIME",
+      "statement": "All computational work that led to the fixed witness, including differential-trail discovery, SAT/SMT and other tool runs, failed or abandoned trials, table construction, matching, message construction, serialization, verification, and the publisher's disclosed additional experiments, is less than 2^49.9 collision-frontier-v5 charged target-compression units; total time after deterministic replay is less than 2^50 units.",
+      "role": "score-critical",
+      "scope": "Exactly the fixed two-message 31-round-prefix SHA-256 collision in proof.md, with all one-time historical construction paid once and no amortization across targets or outputs.",
+      "extrapolation": "The envelope is the Li-Liu-Wang EUROCRYPT 2024 published complete constructive complexity 2^49.8 for ordinary 31-step SHA-256 collisions, plus a 0.1-bit margin to 2^49.9. The ASIACRYPT 2024 matching-phase headline 2^40.5 and 1.2-hour/64-thread run are supporting evidence that a cheaper matching engine exists inside that envelope; they are not treated as a complete all-history ledger. Publication units are charged as target-compression equivalents with no 1/2140 word-op discount.",
+      "evidence_ids": [
+        "proof:119-163",
+        "proof:165-206",
+        "proof:252-294",
+        "proof:296-319",
+        "proof:321-349",
+        "proof:351-373"
+      ],
+      "limitations": "No immutable job ledger, instruction trace, immutable practical-generator build, or organizer-unit conversion receipt is available in the public sources used here. If characteristic search plus all omitted experiments truly exceeded 2^49.9 compression-equivalents, preprocessing_log2=49.9, time_log2=50, and the score fail while the collision itself remains valid. This package deliberately refuses knife-edge claims near 2^40.5-2^41 for that reason."
+    },
+    {
+      "id": "H-HISTORICAL-MEMORY",
+      "statement": "Peak simultaneously retained storage over every historical construction phase and deterministic replay is less than 2^30 bytes, including code, advice, tables, indices, messages, thread state, constants, allocator overhead, solver and tool state, and other working storage.",
+      "role": "score-critical",
+      "scope": "Exactly the construction history and replay of the fixed witness in proof.md, including characteristic search and all practical-attack phases rather than only the final online program.",
+      "extrapolation": "The ASIACRYPT slides report about 2^19.8 ten-word tuples. A packed 40-byte representation is about 2^25.12 bytes. The submitted 2^30 cap leaves more than an order of magnitude of headroom above that raw table for indices, code, allocator state, workers, SAT/SMT state, and other peaks. Memory is reported only under v5 and does not enter the scored scalar.",
+      "evidence_ids": [
+        "proof:119-163",
+        "proof:208-250",
+        "proof:252-294",
+        "proof:296-319"
+      ],
+      "limitations": "Public figures count entries, not peak RSS. A compatible layout is not proof of the layout used historically. If any historical charged phase reaches 2^30 bytes, the memory claim fails. Because memory is unscored under v5, a memory-only failure does not by itself change time_log2, but it is still a reviewed metric and a declared bound."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }
