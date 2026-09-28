@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "fresh-completions",
+      "kind": "python-message-pairs-v1",
+      "scope": "Selected target sha256-r31-prefix-v1. One real matched chaining value (published first block M0) with published W0..W12; each organizer seed drives complete Step 3 (V16 scan, W14, W18, E13, E15). Returns a NEW second-block pair, not the published ASIACRYPT pair.",
+      "hypothesis": "Given a matched chaining value satisfying Table 6 through step 12, Step 3 returns distinct ordinary collisions of the complete padded target on every trial (fresh M1/M1', not the published pair).",
+      "program": "experiments/fresh_completions.py",
+      "event": {"kind": "full-collision"}
+    }
+  ]
+}
