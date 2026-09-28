@@ -6,22 +6,34 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 129,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
+    "memory_log2_bytes": 48,
     "preprocessing_log2": 20,
     "success_probability": 0.6,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "van Oorschot--Wiener parallel collision search with distinguished points on the single-block iteration f(s) = SHA-256-r31(embed(s)), where embed injectively writes a 256-bit state into 32 of 55 content bytes (remaining 23 bytes a fixed public constant), so each f-evaluation is exactly one target compression and any image collision yields two distinct valid 55-byte messages with equal complete 256-bit digests.",
+    "Distinguishing predicate: low 88 bits zero, theta = 2^-88; trails capped at L_max = 20/theta; a repeated distinguished endpoint is resolved by lockstep re-walk to the exact colliding predecessor pair, which is then verified by complete re-hashing and message-inequality check.",
+    "Evaluation budget B = 2^128.5; report FAIL if exhausted. Correctness is unconditional; only the expected-running-time bound relies on the declared random-mapping heuristic H1.",
+    "preprocessing is inside total time; nonuniform_advice_log2_bytes = 0 reflects zero actual advice, no precomputed collision and no favorable seed; memory_log2_bytes = 48 covers at most 2^40.5 stored distinguished points plus fixed scratch.",
+    "time_log2 = 129 is a declared upper bound on the charged total (B compressions plus O(B/C) wrapper operations plus negligible collision-location cost). This uses no property of the round reduction and claims no improvement over the nominal reference."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
-  "heuristics": [],
+  "heuristics": [
+    {
+      "id": "H1-random-mapping",
+      "statement": "For the purpose of bounding the expected number of f-evaluations to the first image collision, the fixed single-block iteration f(s) = SHA-256-r31(embed(s)) behaves as a uniform random mapping on its 2^256-point state space, so the expected work to a collision is sqrt(pi*N/2) = sqrt(pi/2)*2^128 < 2^128.33 evaluations and Pr(collision within B = 2^128.5 evaluations) ~ 1 - exp(-B^2/(2N)) > 0.63.",
+      "role": "score-critical",
+      "scope": "Applies only to the average-case expected-time and success-probability analysis of the distinguished-point search. It is not used for correctness: any returned pair is a verified collision independent of H1, and the algorithm reports FAIL rather than a false collision if the budget is exhausted.",
+      "extrapolation": "The random-mapping model is applied at the full 2^256 state space and the full evaluation budget B = 2^128.5; no finite experiment is extrapolated, and no per-round or structural property of the 31-round reduction is assumed. The bound is the standard birthday/rho scaling evaluated at these sizes.",
+      "evidence_ids": [
+        "proof:2",
+        "proof:3"
+      ],
+      "limitations": "H1 is an average-case premise about one specific fixed function, not a worst-case theorem; a pathological f with anomalously long tails, short cycles, or many fixed points could inflate the expected time. It is unproven for SHA-256-r31, which is precisely why this is an exploratory rather than a rigorous claim and why a companion unconditional birthday construction at the same time (with much larger memory) exists."
+    }
+  ],
   "certificate_manifest": "certificates/manifest.json"
 }
