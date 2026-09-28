@@ -5,6 +5,7 @@ Docker case executes an organizer probe and makes no cryptanalytic claim.
 """
 
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from dataclasses import replace
 import io
 import json
 import os
@@ -14,8 +15,11 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from judge.bedrock_adapter import BedrockConfig
+from judge.bedrock_adapter import BedrockClient, BedrockConfig
 from judge.lanes import INITIAL_STAGES, LANE_STAGES
+from judge.tests.helpers import fixture_review
+from judge.tests.test_bedrock_adapter import FakeTransport, StepClock, sol_response
+from judge.tests.test_bedrock_failures import http_error
 from scripts import hashsmash_pipeline as pipeline
 from scripts.stage_yukon_score import stage_score
 from tests.test_experiments import addition, program
@@ -24,7 +28,7 @@ from tests.test_paired_judges import FixtureClient, add_fatal
 from verifier.errors import VerificationError
 from verifier.frontier_tracks import catalog, frontier_tracks, planned_slots
 from verifier.intake import validate_candidate
-from verifier.io import atomic_write_json, sha256_bytes
+from verifier.io import atomic_write_json, canonical_json_bytes, sha256_bytes
 from verifier.frontier_tracks import ROOT, get_frontier_track
 
 
@@ -371,6 +375,86 @@ class FrontierPipelineTests(unittest.TestCase):
                 with patch.object(pipeline, "_provider_from_env", side_effect=AssertionError("unexpected provider")), patch("verifier.experiment_evidence.run_experiments", side_effect=AssertionError("unexpected execution")):
                     self.assertEqual(pipeline._execute("score", paths), 2)
                 self.assertFalse(paths.score.exists())
+
+    def test_bedrock_retry_config_is_bound_but_adapter_does_not_change_target_policy(self):
+        config = BedrockConfig(api_key="offline-fixture-no-credential", model="us.openai.gpt-5.6-sol")
+        original = pipeline._safe_config(config)
+        changed = pipeline._safe_config(replace(config, transient_base_retry_seconds=30,
+                                                transient_max_retry_seconds=60))
+        self.assertNotIn("api_key", original)
+        self.assertNotIn(config.api_key, json.dumps(original))
+        self.assertNotEqual(sha256_bytes(canonical_json_bytes(original)),
+                            sha256_bytes(canonical_json_bytes(changed)))
+        self.assertEqual({k for k in original if original[k] != changed[k]},
+                         {"transient_base_retry_seconds", "transient_max_retry_seconds"})
+        tracks = frontier_tracks()
+        before = [track.benchmark() for track in tracks]
+        read_bytes = Path.read_bytes
+
+        def changed_adapter(path):
+            if path == ROOT / "judge/bedrock_adapter.py":
+                return b"organizer fixture: different adapter implementation"
+            return read_bytes(path)
+
+        with patch.object(Path, "read_bytes", changed_adapter):
+            self.assertEqual([track.benchmark() for track in tracks], before)
+
+    def test_prior_bedrock_dossier_still_scores_with_current_retry_defaults(self):
+        paths = self.paths()
+        config = BedrockConfig(api_key="offline-fixture-no-credential", model="us.openai.gpt-5.6-sol")
+        # Reproduce the pre-hardening serialized config: short shared retry delays,
+        # no transient timing fields. Its historical provenance needs no new fields.
+        prior_config = pipeline._safe_config(config)
+        prior_config.pop("transient_base_retry_seconds")
+        prior_config.pop("transient_max_retry_seconds")
+        self.assertEqual(prior_config["base_retry_seconds"], 0.5)
+        self.assertEqual(prior_config["max_retry_seconds"], 8)
+        before = paths.track.benchmark()
+        with fake_provider(), patch.object(pipeline, "_safe_config", return_value=prior_config):
+            self.assertEqual(pipeline.run_all(paths), 0)
+        old_dossier = paths.dossier.read_bytes()
+        old_score = paths.score.read_bytes()
+        self.assertEqual(read_json(paths.dossier)["judge_configuration"]["judge"], prior_config)
+        self.assertNotEqual(prior_config, pipeline._safe_config(config))
+        # Current scoring authenticates the recorded settings; no new inference or
+        # reinterpretation under current client defaults is necessary.
+        with patch.object(pipeline, "_provider_from_env", side_effect=AssertionError("unexpected inference")), \
+             patch.object(pipeline, "_safe_config", side_effect=AssertionError("current defaults used")):
+            self.assertEqual(pipeline.run_score(paths), 0)
+        self.assertEqual(paths.dossier.read_bytes(), old_dossier)
+        self.assertEqual(paths.score.read_bytes(), old_score)
+        self.assertEqual(paths.track.benchmark(), before)
+        # Adding new settings to an old record without rebinding is still tampering.
+        dossier = read_json(paths.dossier)
+        dossier["judge_configuration"]["judge"]["transient_base_retry_seconds"] = 60
+        atomic_write_json(paths.dossier, dossier)
+        self.assertEqual(pipeline._execute("score", paths), 2)
+        self.assertFalse(paths.score.exists())
+
+    def test_bedrock_terminal_http_dossier_cannot_score_and_keeps_diagnostics(self):
+        paths = self.paths()
+        self.assertEqual(pipeline.run_intake(paths), 0)
+        evidence = read_json(paths.evidence)
+        outcomes = [http_error(request_id=f"aws-failed-{i}") for i in (1, 2, 3)]
+        outcomes += [sol_response(fixture_review(stage, evidence)) for stage in INITIAL_STAGES[1:]]
+        transport = FakeTransport(outcomes)
+        sleeps = []
+        def maker(config):
+            return BedrockClient(config, transport=transport, sleeper=sleeps.append,
+                                 clock=StepClock(), random_source=lambda: 0.5)
+        with fake_provider(factory=maker):
+            self.assertEqual(pipeline.run_judge(paths), 3)
+        dossier = read_json(paths.dossier)
+        errors = dossier["failure_diagnostics"]["lane_evaluability"]["errors"]
+        self.assertEqual(len(errors), 3)
+        self.assertEqual([d["request_id"] for d in errors], [f"aws-failed-{i}" for i in (1, 2, 3)])
+        self.assertEqual([d["latency_ms"] for d in errors], [10] * 3)
+        self.assertEqual(sleeps, [60, 120])
+        self.assertEqual(len(transport.calls), 6)
+        self.assertIn("aws-failed-3", self.log.getvalue())
+        self.assertEqual(pipeline._execute("score", paths), 2)
+        self.assertFalse(paths.score.exists())
+        self.assertEqual(read_json(paths.aggregate)["status"], "infra_failed")
 
     def test_wrong_lane_legacy_schema_and_undeclared_files_fail_intake(self):
         for kind in ("wrong_lane", "legacy_schema", "undeclared_manifest", "extra_file", "symlink"):
