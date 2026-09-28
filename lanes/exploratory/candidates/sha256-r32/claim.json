@@ -6,22 +6,76 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 99,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 68,
+    "preprocessing_log2": 70,
+    "success_probability": 0.9,
+    "nonuniform_advice_log2_bytes": 10
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Classical probabilistic 256-bit word-RAM attack under collision-frontier-v5. The target is complete SHA-256 with the standard IV, normal padding, feed-forward, rounds 0 through 31 on every block, and all 256 output bits.",
+    "The candidate messages are B0 || M1 and B0 || M1', each 128 bytes before their common padding block. A complete digest comparison accepts only distinct full messages with equal full digests.",
+    "Preprocessing uses the published E1120 dense solution and exhaustively enumerates all 2^64 ordered (W14,W15) pairs, retaining exactly those that satisfy the five deterministic tail-entry conditions. The online phase cycles through the complete retained set during exactly 2^94 fresh uniform first-block trials.",
+    "Worst-case charged work is below 2^99 target-compression units: less than 2^69 for complete tail enumeration, 2^40 for dense-solution construction, and at most 2^98 online. Peak memory is below 2^68 bytes, dominated by a reserved 2^64 by 8-byte tail array; the historical dense solve's charged time and peak memory are a disclosed supporting premise.",
+    "The 0.9 success claim uses two disclosed exploratory premises: first-block filter density q >= 2^-18 and complete-tail average conditional yield at least 2^-74. The cyclic schedule gives cumulative success mass above 4-2^-28 and failure below exp(-(4-2^-28)).",
+    "No full-scale search, organizer experiment, or collision certificate is claimed. The structural derivation and published pairs support characteristic consistency and nonempty tail support; they do not prove the two population probability bounds. Participant-seeded confidence intervals from the earlier 2^71.5 submission are not used."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "certificate_manifest": "certificates/manifest.json",
+  "heuristics": [
+    {
+      "id": "characteristic-transfer-32",
+      "statement": "The E1120 36-step local-collision characteristic, evaluated through rounds 0..31, contains every condition needed for full second-block equality at 32 steps and adds no new condition: its last active schedule word is W30, W31 is difference-free, and the state difference has cancelled before the feed-forward output.",
+      "role": "score-critical",
+      "scope": "Only the E1120 Tables 9-10 characteristic, its published dense solution, and C32 on the second message block from a chaining value that passes the stated first-block filter.",
+      "extrapolation": "From the published executed 36-step construction to the shorter 32-step prefix after a structural schedule and state check; no transfer to another characteristic, target, IV rule, or larger round count.",
+      "evidence_ids": [
+        "proof:107-399",
+        "proof:227-293"
+      ],
+      "limitations": "The package independently replays published instances and gives the cancellation argument, but it did not regenerate the characteristic with an independent trail-search program."
+    },
+    {
+      "id": "first-block-density",
+      "statement": "For a fresh uniform 64-byte first block B0 under C32 from the standard IV, the exact E1120 filter on E3, W5, W6, and W7 for the fixed dense solution succeeds with probability q at least 2^-18.",
+      "role": "score-critical",
+      "scope": "The online filter of proof Section 6.2 for this one published dense solution and the exact 32-round target; each trial draws fresh independent uniform algorithmic coins.",
+      "extrapolation": "E1120 reports approximately 2^-15 over 2^40 first-block trials for its executed construction. The submitted lower bound adds three bits of slack and applies the same filter to C32; an earlier exact-r32 local run reported a raw rate near 2^-14.03 but is treated only as directional evidence.",
+      "evidence_ids": [
+        "proof:175-226",
+        "proof:450-475",
+        "proof:502-546"
+      ],
+      "limitations": "The package contains no organizer-selected population experiment and no theorem proving the lower bound. The published measurement and earlier local checks are directional evidence rather than a confidence proof for all uniform first blocks."
+    },
+    {
+      "id": "average-tail-yield",
+      "statement": "Let V be the complete nonempty set of all (W14,W15) pairs satisfying the five deterministic tail-entry conditions. Conditional on first-block acceptance, the average over v in V of the probability that the remaining 57 conditions produce full second-block equality is at least 2^-74.",
+      "role": "score-critical",
+      "scope": "The complete finite V of proof Section 6.1, cycled independently of fresh uniform accepted first blocks, with the published dense solution and exact C32 verification.",
+      "extrapolation": "From E1120's 57-condition accounting, its executed 36-step collision construction, and the identical 32-step condition set. The bound adds seventeen bits of slack to the ideal 2^-57 accounting and averages over every deterministic tail entry rather than selecting a participant-measured template.",
+      "evidence_ids": [
+        "proof:175-226",
+        "proof:294-365",
+        "proof:407-449",
+        "proof:502-546"
+      ],
+      "limitations": "Neither the joint 57-condition event nor its average across V is measured in this package, and condition dependencies could reduce the average below the bound. The published successful entry proves V is nonempty, not the claimed population yield."
+    },
+    {
+      "id": "dense-preprocessing-bound",
+      "statement": "The published dense assignment is valid for the E1120 steps 0..15 system, and its historical construction costs at most 2^40 target-compression units with peak memory below 2^68 bytes.",
+      "role": "supporting",
+      "scope": "Only the historical construction and use of the fixed public dense assignment in this candidate, before the separate complete-tail enumeration phase.",
+      "extrapolation": "E1120 reports about 2^39.8 for the identical dense solve and negligible memory for the encompassing attack. The package charges 2^40, assumes the solve stays below its 2^68-byte peak, releases that work state before tail enumeration, and records the result as under 2^10 bytes of public advice.",
+      "evidence_ids": [
+        "proof:227-293",
+        "proof:407-449",
+        "proof:478-501",
+        "proof:547-568"
+      ],
+      "limitations": "Neither the historical solver runtime nor its peak memory was reproduced. The online phase dominates the time bound, but exceeding 2^68 bytes during the dense solve would violate the submitted memory claim."
+    }
+  ]
 }
