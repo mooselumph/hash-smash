@@ -6,20 +6,19 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 130,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 138,
-    "data_log2": 137,
     "preprocessing_log2": 20,
-    "success_probability": 0.6,
+    "success_probability": 0.8,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "Sample exactly q = 2^129 messages, each a single 55-byte string whose 440-bit content is an independent uniform draw; fixed-IV SHA-256 rounds 0 through 30 on the one resulting padded block with full feed-forward and the full 256-bit digest.",
+    "Each hash is exactly one target compression because a 55-byte message pads to a single 512-bit block; no second block is processed.",
+    "Detect duplicate digests with an eight-pass 32-bit-digit LSD radix sort of three-word (digest, content-hi, content-lo) records, then an adjacent-pair scan; require distinct messages and verify a returned pair by complete re-hashing.",
+    "preprocessing is inside total time; nonuniform_advice_log2_bytes = 0 reflects zero actual advice; memory_log2_bytes = 138 covers both record arrays plus the 2^32-slot count array and fixed scratch.",
+    "This is an unconditional, distribution-free analytic construction with no experiments, computed witness, hidden precomputed search, random-mapping heuristic, or claimed improvement over the nominal reference. time_log2 = 130 is a declared upper bound; the true charged total is below 2^129.5."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
   "heuristics": [],
