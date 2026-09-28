@@ -6,20 +6,19 @@
   "rounds": 31,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 128.3,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
+    "memory_log2_bytes": 136,
     "preprocessing_log2": 20,
-    "success_probability": 0.6,
+    "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Use only 64-byte messages, fixed-IV SHA-256 indices 0 through 30 on both padded blocks, full feed-forward, and the full 256-bit digest.",
-    "Draw two fresh independent uniform 256-bit RAM words for each of exactly 2^129 messages; deterministic seed expansion is not a substitute.",
-    "Use the charged three-word records and two-array bottom-up merge sort; require distinct messages and verify a returned pair by complete re-hashing.",
-    "data_log2 bounds padded input bytes including verification; preprocessing is inside total time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice.",
-    "This is an unconditional analytic construction with no experiments, computed witness, hidden precomputed search, or claimed improvement over the nominal reference."
+    "Use only 48-byte messages so FIPS-180-4 padding fits in one 512-bit block; every complete hash is exactly one sha256-r31 compression from the fixed IV with rounds 0..30, full feed-forward, and the full 256-bit digest.",
+    "Draw exactly two fresh independent uniform 256-bit RAM words per message for q=2^128 messages from the model's true random-word primitive; no seed, PRNG, or deterministic expansion substitutes for algorithmic coins.",
+    "Group digests with a two-pass stable LSD counting sort on 128-bit digits; scan adjacent records; require distinct messages; verify any returned pair by two complete re-hashes.",
+    "preprocessing_log2 bounds setup inside total charged time; nonuniform_advice_log2_bytes=0 is a one-byte upper bound with zero actual advice; memory is reported only.",
+    "Unconditional analytic construction: heuristics=[], no experiments, no computed witness, no claimed improvement over the nominal 128-bit security claim as a cryptanalytic result."
   ],
   "baseline_improved": "sha256-r31-nominal-v2",
   "heuristics": [],
