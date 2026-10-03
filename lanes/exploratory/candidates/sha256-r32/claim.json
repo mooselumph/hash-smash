@@ -6,22 +6,63 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 148,
+    "time_log2": 86,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 138,
-    "data_log2": 137,
-    "preprocessing_log2": 20,
-    "success_probability": 0.8,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 39,
+    "preprocessing_log2": 36,
+    "success_probability": 0.9,
+    "nonuniform_advice_log2_bytes": 10
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word RAM under collision-frontier-v4; fresh independent random words, not seeded PRNG expansion.",
-    "Exactly q=2^129 sampled 64-byte messages; complete SHA-256 with fixed IV, prefix rounds 0 through 31 on both padded blocks, feed-forward and all 256 digest bits.",
-    "One finite run with at most 2^148 total charged operations and 2^138 peak bytes; no restarts, nonuniform advice or precomputed collision.",
-    "data_log2 bounds bytes of complete padded hash inputs including final verification re-reads, as specified in proof.md.",
-    "Analytic resource and success bounds; no full-scale execution, cryptanalytic improvement or nominal-reference improvement is claimed."
+    "Classical probabilistic 256-bit word-RAM attack under collision-frontier-v5. The target is complete SHA-256 with the standard IV, FIPS 180-4 padding, feed-forward, rounds 0 through 31 on every block, and all 256 output bits.",
+    "The output messages are B0 || M1 and B0 || M1', each 128 bytes before their common padding block. The algorithm accepts only distinct complete messages whose full trusted target digests agree.",
+    "Preprocessing charges the paper's reported 2^34.3 starting-point search plus exact fixed-slice table and tail enumeration, sorting, and direct-index construction. Total preprocessing is below 2^36 target-compression units and peak storage is below 2^39 bytes.",
+    "The online phase runs exactly 2^82 trials, uses a fresh independently uniform B0 in every trial, and assigns exactly one of the 196,608 tails cyclically by trial number. It never treats multiple tails sharing one first-block chaining value as independent.",
+    "Each trial is charged below 13 target-compression units, including five complete compression calls and 2^14 additional word operations. Total charged work is below 13*2^82 + 2^36 < 2^85.701, so the declared bound is 2^86.",
+    "The 0.9 success claim uses two disclosed exploratory premises: first-block acceptance probability q >= 2^-31 and average conditional full-collision probability over the fixed tail set at least 2^-49. Together they give cumulative success mass greater than 4-2^-62 and success probability greater than 0.981.",
+    "No new full ordinary r32 witness or collision certificate is claimed. Exact replays, finite enumeration hashes, a legal r32 prefix, and bounded fixed-seed measurements check the construction but do not prove the two score-critical probability premises."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "certificate_manifest": "certificates/manifest.json",
+  "heuristics": [
+    {
+      "id": "fixed-table-r32-density",
+      "statement": "For a fresh uniformly random 64-byte first block under the exact C32 target, the fixed prefix table and Section 5 filter accept with probability q at least 2^-31.",
+      "role": "score-critical",
+      "scope": "The 593,920-record fixed table derived from the ePrint 2026/1080 35-step starting point, the lexicographically first valid record rule, and C32 from the standard IV.",
+      "extrapolation": "The fixed table occupies exactly 408,576 of 2^32 A(-1) keys. Conditioned uniform-state samples estimate the complete filter near 2^-28.519, while matched C32 and C35 first-block streams each produced four distinct accepted blocks in 2^28+2^30 trials. The claim adds more than two bits of slack and models reduced-round C32 chaining outputs as pseudorandom for this predicate.",
+      "evidence_ids": [
+        "proof:122-232",
+        "proof:307-361",
+        "proof:363-394"
+      ],
+      "limitations": "The fixed SplitMix64 streams establish reproducible observations, not ideal random sampling or a theorem about the C32 output distribution. A hidden structural bias correlated with this exact predicate could invalidate the lower bound."
+    },
+    {
+      "id": "fixed-slice-average-tail-yield",
+      "statement": "Conditioned on first-block acceptance, the average over the complete fixed set V of 196,608 tails of the probability of complete C32 second-block equality is at least 2^-49.",
+      "role": "score-critical",
+      "scope": "The one fixed starting point, fixed prefix table, corrected Figure 6 tail set, lexicographically first record rule, and exact C32 full-output predicate described in the proof.",
+      "extrapolation": "The source counts 45 remaining conditions for this executed 35-step characteristic. The second-block trace is already equal from 23 rounds onward, and exhaustive replay from the published chaining value reproduces the unique published tail at both C32 and C35 after correcting three relation symbols that the witness itself contradicts. The claim transfers the unchanged 45-condition count to the fixed slice and adds four bits of slack.",
+      "evidence_ids": [
+        "proof:59-91",
+        "proof:234-283",
+        "proof:346-394"
+      ],
+      "limitations": "The paper does not report this average for the fixed slice, and the bounded work did not observe the full rare event on fresh first blocks. Dependencies among remaining conditions or concentration on other starting points could make the true fixed-slice average smaller."
+    },
+    {
+      "id": "starting-solution-resource-bound",
+      "statement": "The fixed 35-step starting solution used by the construction can be obtained within the package's 2^36 preprocessing bound and below 2^39 bytes of peak memory.",
+      "role": "supporting",
+      "scope": "Only the starting-point search that produced the fixed states and words reused by this candidate; all later finite enumeration and indexing costs are separately included in the same preprocessing ceiling.",
+      "extrapolation": "ePrint 2026/1080 reports approximately 2^34.3 work for Step 1 and reports the practical computation on a 378 GB server. The package rounds the total preprocessing upward after adding conservative operation ceilings for every enumerated candidate and direct-index slot.",
+      "evidence_ids": [
+        "proof:93-120",
+        "proof:396-424",
+        "proof:426-449"
+      ],
+      "limitations": "The historical SAT search and its peak memory were not independently rerun. The server capacity is an upper-bound proxy for peak memory rather than a direct utilization measurement."
+    }
+  ]
 }
