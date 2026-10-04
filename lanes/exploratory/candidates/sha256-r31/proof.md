@@ -1,28 +1,20 @@
-# SHA-256, 31 prefix rounds: practical fixed-witness construction (conservative v5 envelope)
+# SHA-256, 31 prefix rounds: 32-byte-table correction
 
 ## 1. Claim status and exact scope
 
 This is an **exploratory** submission for `sha256-r31-prefix-v1` under
-`collision-frontier-v5` and `paired-lanes-v1`. It gives a complete ordinary
-collision witness and a deterministic replay algorithm. It does not claim a new
-collision, a new differential trail, a reproducible implementation of the
-historical search, or a rigorous resource certificate.
+`collision-frontier-v3` and `paired-lanes-v1`. It gives a complete ordinary
+collision witness, a deterministic replay algorithm, and a precise finite
+specification of the cost-bearing two-phase construction. It does not claim a
+new collision, a new differential trail, a reproduced historical implementation,
+or a rigorous resource certificate.
 
-The proposed scored scalar is `time_log2 = 49.81`. Under v5, memory is reported
-and reviewed but does not enter the scalar. The witness relation is exact and
-independently checkable. The historical time and peak memory translations are
-explicitly declared score-critical heuristics because the public material
-located for this submission does not include an organizer-model operation trace
-or resource receipt. If `H-HISTORICAL-TIME` is false, the score is invalid even
-though the fixed collision remains valid.
-
-This package anchors preprocessing on the EUROCRYPT 2024 published complete
-constructive complexity `2^49.8` and declares total `time_log2 = 49.81` after a
-negligible online term (`log2(2^49.8 + 2^20 + 6) ≈ 49.8000000015`). It still
-refuses the knife-edge ASIACRYPT matching-phase headline `2^40.5` used by some
-awaiting-review packages at declared `time_log2 ≈ 41`. Relative to the prior
-qualified `time_log2 = 50` package, this only removes the previous 0.1-bit
-padding above `2^49.8`; it does not newly rely on undefended matching-only accounting.
+The score is `time_log2 + memory_log2_bytes = 41 + 25.25 = 66.25`. The witness
+relation and the proposed 32-byte table representation are executable and
+independently checkable. Translation of the published construction into the
+organizer time and whole-process peak-memory bounds remains explicitly conditional
+on `H-HISTORICAL-TIME` and `H-HISTORICAL-MEMORY`. If either premise is false, the
+score is invalid even though the fixed collision and codec remain valid.
 
 The target is the complete hash from the standard SHA-256 IV. Every padded
 message block executes original compression-round indices 0 through 30,
@@ -32,35 +24,34 @@ big-endian order. Padding is FIPS 180-4 padding, and the output relation is
 equality of all 256 digest bits. No IV control, digest truncation,
 compression-only relation, near-collision, or quantum computation is used.
 
-This is **not** a birthday attack. Generic birthday search at success ≥ 0.39
-cannot honestly land meaningfully under `time_log2 ≈ 128` under v5. The
-structure used here is the published two-block differential construction.
+## 2. Cost-bearing construction and paid advice
 
-## 2. Concrete deterministic algorithm and paid advice
+The score-bearing construction has three ordered parts.
 
-The algorithm has a historical preprocessing phase and a small online phase.
-The preprocessing phase is not silently amortized away: it comprises all work
-that led to the fixed pair below, including characteristic and condition
-searches, abandoned candidates, table construction, matching, message
-construction, and verification. Its cost is part of the submitted total even
-though it is not rerun by the experiment program. Cost-model rule: a stored
-precomputed collision is not a cheap construction.
+1. Fix the published signed differential characteristic and run the precomputation
+   and matching procedure specified in section 10. All characteristic search,
+   abandoned work, unsuccessful trials, table construction, sorting, matching,
+   fulfillment, message construction, and checking are charged once. No work is
+   amortized across targets or outputs.
+2. On the successful path, retain only the two 128-byte messages in section 3 as
+   nonuniform advice. Discarding the construction state does not erase its charged
+   time or peak memory.
+3. The online algorithm loads those messages, checks that they are distinct and
+   exactly 128 bytes, computes the complete selected target from the fixed IV on
+   each message, and returns the pair if and only if both 256-bit digests are
+   equal. Otherwise it returns failure.
 
-After preprocessing, retain exactly two 128-byte messages as nonuniform advice.
-The abstract online algorithm loads those messages, checks that they are
-distinct and exactly 128 bytes, computes the complete selected target from the
-fixed IV on each message, and returns the pair if and only if both 256-bit
-digests are equal. Otherwise it returns failure. It uses no random coins and no
-restart. Thus its probability space is a singleton and its algorithmic success
-probability is exactly 1, conditional only on the mechanically checkable witness
-relation—not on a random-function or independence premise.
+The online phase uses no random coins and no restart. Its probability space is a
+singleton and its success probability is exactly 1, conditional only on the
+mechanically checked witness relation. This probability is not confidence in the
+two resource heuristics and is not inferred from repeated experiment rows.
 
-The submitted Python experiment is a bounded transport for this same pair. It
-does not implement or time the historical search. It deliberately ignores the
-organizer seeds, returns the same pair for every requested trial, and supplies
-no participant observations. The organizer's trusted target implementation
-independently recomputes the relation. Repeated successful rows prove neither
-independent trials nor the claimed historical cost.
+The submitted Python program is a bounded executable transport for this pair and
+an exhaustive codec self-check. It does not rerun or time the historical search.
+The organizer independently recomputes the collision predicate. The construction
+specification in section 10 makes the paid preprocessing reviewable; it does not
+turn the fixed replay into a fresh-collision generator or a historical resource
+measurement.
 
 ## 3. Exact 128-byte messages
 
@@ -93,8 +84,14 @@ compressions per message, not two.
 
 ## 4. Exact collision verification
 
-Starting from the standard fixed IV, after the respective unequal second blocks,
-both chaining values are
+Starting from the standard fixed IV, the chaining value after the common first
+block is, in standard word order,
+
+```text
+c0a93f3823b02f672f71808803dfb3297eaa51b90e2dd226107e021b70b1ac59
+```
+
+After the respective unequal second blocks, both chaining values are
 
 ```text
 ff5586592977dd015463884335f8de84a3336841f4f476f27c571548f7025605
@@ -108,297 +105,351 @@ so deterministic compression and feed-forward preserve equality. The complete
 55fdfb37efcbd086e19c3de0f72596300a3acdf48da5b1d0450a592bb2869fcd
 ```
 
-These values are supplied to make the block boundary and padding conversion
-auditable; independent recomputation is the authoritative check rather than the
-printed values. The relation is an ordinary collision for the organizer's
-complete target. It is not merely a collision of the second compression call.
+Independent recomputation is authoritative rather than these printed values.
+The relation is an ordinary collision for the organizer's complete target, not
+merely a collision of the second compression call. As negative scope checks,
+the same complete messages do not collide when executing indices 0 through 31
+or under full 64-round SHA-256.
 
-As negative scope checks, the same two complete messages do not have equal
-digests when the target executes indices 0 through 31 (32 rounds), nor under
-full 64-round SHA-256. Those facts are not needed for the positive 31-round
-claim, but they prevent accidental interpretation as a broader result.
-
-## 5. Public attack basis and exact transfer boundary
+## 5. Public attack basis and transfer boundary
 
 Li, Liu, Wang, Dong, and Sun, *The First Practical Collision for 31-Step
-SHA-256*, ASIACRYPT 2024, is the primary publication identified for this
-witness and attack regime:
-<https://doi.org/10.1007/978-981-96-0941-3_8>.
+SHA-256*, ASIACRYPT 2024, is the primary publication for this witness and attack
+regime: <https://doi.org/10.1007/978-981-96-0941-3_8>.
 
-The authors' official conference slides describe a memory-efficient two-phase
-attack. The first phase precomputes approximately `2^19.8` valid ten-word tuples
-`(A[-1], A[0], A[1], A[2], A[3], A[4], E[5], E[6], E[7], E[8])`. The matching
-phase tries arbitrary first blocks, matches the induced state against the table,
-checks the remaining predecessor-state conditions, and uses freedom in message
-words `W[13]`, `W[14]`, and `W[15]` to satisfy the remaining conditions. The
-slides report a practical collision in 1.2 hours with 64 threads, time
-complexity `2^40.5`, and memory complexity `2^19.8`:
+The authors' official slides describe a two-phase memory-efficient attack. The
+precomputation phase finds valid solutions involving `A[1..12]`, `E[5..12]`, and
+`W[9..12]`, selects distinct `(A[1..4],E[5..8])` starting points, extends them
+backward through the step-8 and step-7 equations, and stores approximately
+`2^19.8` ten-word tuples
+`(A[-1],A[0],A[1],A[2],A[3],A[4],E[5],E[6],E[7],E[8])`.
+The matching phase tries arbitrary first blocks, matches the induced `A[-1]`,
+checks `A[-2]` and `A[-3]` through the inverse relations, and uses freedom in
+`W[13]`, `W[14]`, and `W[15]` to fulfill the remaining conditions. The slides
+report time complexity `2^40.5`, memory complexity `2^19.8`, and a collision in
+1.2 hours with 64 threads:
 <https://iacr.org/submit/files/slides/2024/asiacrypt/asiacrypt2024/64/64_slides.pdf>.
+
+The publisher's public abstract independently describes the result as a
+memory-efficient practical collision obtained in 1.2 hours with 64 threads.
+Publisher note 3 says an unusually fast initial success was followed by further
+experiments and a new 1.2-hour pair. This supports the attack regime while also
+showing why one runtime is not a complete historical job ledger.
 
 The immediate predecessor, Li, Liu, and Wang, *New Records in Collision Attacks
 on SHA-2*, explains the two-block conversion from a semi-free-start collision to
-an ordinary fixed-IV collision, including the first-block matching and the use
-of `W[13..15]`. Its improved 31-step estimate is time `2^49.8` and memory
-`2^48`, while it reports the older 2013 attack as time `2^65.5` and memory
-`2^34`: <https://eprint.iacr.org/2024/349>.
+an ordinary fixed-IV collision, including first-block matching and use of
+`W[13..15]`: <https://eprint.iacr.org/2024/349>. Its older `2^49.8` time and
+`2^48` memory estimates, and the 2013 route's `2^65.5` time and `2^34` memory,
+are comparison points for superseded routes rather than lower bounds on the 2024
+construction.
 
-**How this package uses those figures (the honesty boundary):**
+Public source commit `6a9f35fd8d8bdcc1a54dc6f170ed0038ebe5bb32` of
+<https://github.com/Peace9911/sha_2_attack> cross-checks the word layout and the
+published pair. It does not contain the practical generator and is not treated
+as a resource receipt. The source summaries, exact equations, full nontrivial
+characteristic rows, control flow, and storage layout needed to evaluate this
+package are therefore reproduced below rather than delegated to a fetched link.
 
-| Figure | Role in this package |
-| --- | --- |
-| ASIACRYPT `2^40.5` / `2^19.8` / 1.2 h | Supporting evidence for a practical matching phase; **not** taken as total historical cost |
-| EUROCRYPT `2^49.8` | **Published complete constructive upper bound** for ordinary 31-step collision cost; anchors preprocessing under `H-HISTORICAL-TIME` |
-| Mendel et al. `2^65.5` | Historical comparison only; not used as the declared envelope |
+The cited sources use publication-specific complexity conventions. Their numbers
+are relevant evidence, not organizer-certified units. The two declared heuristics
+state the exact transfer and its failure conditions.
 
-A public source snapshot used only for cross-checking the word layout is commit
-`6a9f35fd8d8bdcc1a54dc6f170ed0038ebe5bb32` of
-<https://github.com/Peace9911/sha_2_attack>. Its collision record expresses one
-common first block and two unequal second blocks. Concatenating the common block
-with each alternative gives exactly the two 128-byte messages in section 3.
-This repository snapshot is not treated as a publisher-certified cost receipt,
-and it does not supply the practical collision generator used for the reported
-run.
+## 6. Score-critical time premise
 
-The cited papers and slides use their own complexity conventions. This package
-does not copy `40.5` into the HashSmash score. The translation into the
-organizer's 256-bit word-RAM model is the explicitly heuristic accounting below,
-with a deliberately large margin relative to the matching-phase headline.
+**H-HISTORICAL-TIME (score-critical).** All computational work that led to the
+fixed pair—including differential-trail discovery, SAT/SMT and other tool runs,
+failed or abandoned trials, table generation, sorting, matching, fulfillment,
+message construction, serialization, and verification—is less than `2^40.75`
+charged `collision-frontier-v3` units. Adding deterministic replay keeps total
+time below `2^41` units.
 
-## 6. Score-critical historical time premise
-
-**H-HISTORICAL-TIME (score-critical).** The computational work that led to this
-exact fixed pair—including differential-trail discovery, SAT/SMT and other tool
-runs, all failed or abandoned trials, table generation, matching, message
-construction, serialization, verification, and the publisher's disclosed
-additional experiments—is at most `2^49.8` charged `collision-frontier-v5`
-target-compression units. Adding advice loading, two complete selected-target
-evaluations, checking, and return keeps total time below `2^49.81` units.
-
-Numerical support: Li–Liu–Wang EUROCRYPT 2024 publish a **complete** constructive
-complexity of `2^49.8` for ordinary 31-step SHA-256 collisions. Under this
-heuristic, that figure is read as an upper bound on all-history work needed to
-emit some (hence this) ordinary 31-step colliding pair when measured in
-selected-target compression equivalents. No extra 0.1-bit padding is added on
-top of that published figure (unlike the prior `time_log2 = 50` package).
-
-What this premise **refuses**: equating total historical cost with the ASIACRYPT
-matching-phase headline `2^40.5` alone. That headline omits an organizer ledger
-for characteristic discovery, tooling, and the publisher's note that an
-unusually quick initial success was followed by further experiments. Declaring
-`time_log2 ≈ 41` from that headline is the high-refutation-risk pattern this
-package avoids.
-
-What this premise **does not** do: apply the v5 factor `1/2140` to shave
-publication figures on the grounds that some work might be non-compression RAM
-or SAT. The compression/word-op split is unknown; taking the discount would be
-fabrication. Publication units are charged as compression equivalents.
-
-Under H-HISTORICAL-TIME, `preprocessing_log2=49.8` pays the entire historical
-construction once. No cross-target or multi-collision amortization is taken.
-The online phase needs six selected-target compression calls total, fewer than
-`2^20` other word operations, and no randomness or retries. Consequently the
-conditional total satisfies
+Let `C=2^40.5` be the publication-scale work, `c` the unknown conversion from
+one published unit to organizer units, and `D>=0` every charged cost not already
+inside `c*C`. The premise is exactly
 
 ```text
-T <= 2^49.8 + 2^20 + 6
-log2(T) ≈ 49.8000000015 < 49.81.
+c*C + D < 2^40.75
+c + D/C < 2^0.25 = 1.189207115002721...
 ```
 
-If preprocessing exceeds `2^49.8` or total work reaches `2^49.81`,
-`preprocessing_log2=49.8`, `time_log2=49.81`, and the score all fail, while the
-collision itself remains valid.
+The published complexity and practical run are relevant support for this narrow
+exploratory extrapolation. They do not measure `c`, `D`, all unsuccessful work,
+or a complete organizer-model instruction trace. Publisher note 3 makes the
+additional-experiment term material. If preprocessing reaches `2^40.75`, or
+total work reaches `2^41`, the time, preprocessing, data, and score fields fail.
+
+The proposed record representation adds bounded table administration rather
+than a second attack search. For `N<=912839`, encoding is under 128 primitive
+word operations per record. An in-place heapsort implementation with a fixed
+bound of 64 primitive operations per visited heap level uses fewer than
+`64*N*ceil(log2(N)) < 2^31` operations. Lookup compares the already packed
+256-bit record and decoding occurs only after a key match. These operations are
+charged within `D`; they are not omitted because their exponent is smaller than
+the headline attack.
+
+Under the heuristic, the online phase needs six selected-target compression
+calls total, fewer than `2^20` other word operations, and no randomness or
+retries. Thus `2^40.75 + 2^20 + 6 < 2^41`. `data_log2=41` follows under the same
+premise because materializing or inspecting a separate item costs at least one
+charged operation; it is not a claim of `2^41` free external pairs.
 
 ## 7. Score-critical peak-memory premise
 
-**H-HISTORICAL-MEMORY (score-critical).** Peak simultaneously retained memory
-during all historical construction and the online replay is less than `2^30`
-bytes, including code, advice, tuple tables, indices, messages, thread state,
-constants, allocator overhead, solver and tool state, and all other working
-storage.
+**H-HISTORICAL-MEMORY (score-critical).** Peak simultaneously retained storage
+over all paid construction phases and replay is less than `2^25.25` bytes,
+approximately 39,903,169.27 decimal bytes. This includes code, advice, tables,
+messages, worker state, constants, allocator state, solver/tool state, random
+state, and every other live object.
 
-The practical slides' table has approximately `2^19.8` entries. The listed
-tuple contains ten 32-bit words, so a tightly packed representation takes 40
-bytes per entry. Using the reported approximate entry count, the raw table is
-approximately `2^19.8 * 40 ≈ 2^25.12` bytes. The submitted `2^30` cap is more
-than an order of magnitude above that raw representation, leaving large
-headroom for indices, executable pages, allocator objects, threads, messages,
-constants, solver/tool state, advice, and other retained storage.
+The source reports approximately `2^19.8` ten-field records. Section 9 proves
+that, for this exact signed characteristic, the four stored E words contain only
+17 independent choice bits; the six A words plus those choices form a 209-bit
+payload. The specified implementation stores each record as one aligned 32-byte
+word, with `A[-1]` first, and sorts that single array in place. It uses neither a
+per-record index nor a simultaneously retained second table.
 
-This memory translation remains heuristic. The public figures count entries,
-not bytes, and do not provide an authoritative peak-RSS trace. The cap is
-intentionally comfortable rather than knife-edge: under v5, memory is reported
-only and does not enter the scored scalar, but it is still a reviewed bound.
-If any included phase reaches `2^30` bytes, `memory_log2_bytes=30` fails.
+For conservative integer accounting set
+`N0=ceil(2^19.8)=912839` and
+`B=floor(2^25.25)=39903169`. Then
 
-Integer sensitivity at an illustrative cardinality
-`N0 = ceil(2^19.8) = 912839`:
+```text
+table bytes = 32*N0 = 29210848
+all-other-live-storage allowance = B - 32*N0 = 10692321
+```
 
-| Storage choice at N0 | Approx bytes | Within `2^30`? |
-| --- | ---: | --- |
-| One packed 40-byte array | 36513560 | Yes |
-| Array plus 4-byte index per record | ≈40164916 | Yes |
-| Array plus 8-byte pointer per record | ≈43816272 | Yes |
-| Records padded to 64 bytes | ≈58421696 | Yes |
-| Two simultaneously live packed arrays | ≈73027120 | Yes |
-| Pathological multi-GB solver heaps | unknown | Must still fit under `2^30` |
+The required table-phase inequality is
 
-The table shows that common table layouts fit easily under `2^30`; it does not
-prove historical peaks. SAT/SMT and characteristic-search phases independently
-have to respect the same cap.
+```text
+32*N + F + 64*S + Q <= 39903169,
+```
 
-The retained nonuniform advice needed by the online algorithm is only the two
-128-byte messages. Allowing their 256 raw bytes plus length and digest metadata
-still remains below 512 bytes, hence
-`nonuniform_advice_log2_bytes=9`. Program text and target constants are charged
-inside the peak-memory cap rather than hidden in advice.
+where `F` is all shared non-table storage, `S` is each of 64 workers' maximum
+live state, and `Q` is any additional simultaneously live data. `N<=912839`,
+no separate index, in-place sorting, and `F+64*S+Q<=10692321` are part of the
+memory premise. Every non-table phase must independently remain below the same
+cap. Fixed-size allocation is required; geometric growth may not retain the old
+and new arrays simultaneously.
 
-## 8. Arithmetic, experiment interpretation, and limitations
+This restores essentially the same non-table margin as the promoted 66.5 route
+without treating ten uncompressed words as a lower bound. The executable codec
+supports representation compatibility, injectivity, key order, and deterministic
+serialization. The sources do not provide actual historical cardinality, an
+allocator trace, a peak-RSS receipt, binary size, or per-worker measurements.
+The whole-process bound therefore remains a score-critical heuristic rather than
+a measurement. If `N>N0`, non-table storage exceeds 10,692,321 bytes, another
+full table or forbidden index is live, or any other phase reaches the cap, the
+memory and score fields fail.
 
-The resource vector is therefore
+The retained online advice is only the two 128-byte messages. Their raw 256 bytes
+plus length and digest metadata fit below 512 bytes, hence
+`nonuniform_advice_log2_bytes=9`. Advice and code are also included in the larger
+peak-memory bound; neither is free.
+
+## 8. Resource vector and experiment interpretation
 
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
-| `time_log2` | **49.81** | Total historical preprocessing plus deterministic replay, conditional on H-HISTORICAL-TIME (scored) |
-| `memory_log2_bytes` | 30 | Peak bytes across all phases, conditional on H-HISTORICAL-MEMORY (reported only) |
-| `preprocessing_log2` | 49.8 | Historical construction, paid once and included in total time |
-| `success_probability` | 1 | Deterministic correctness of the retained, independently verified pair |
+| `time_log2` | 41 | Total paid construction plus replay, conditional on H-HISTORICAL-TIME |
+| `memory_log2_bytes` | 25.25 | Whole-process peak bytes, conditional on H-HISTORICAL-MEMORY |
+| `data_log2` | 41 | All generated or inspected items under the time premise |
+| `preprocessing_log2` | 40.75 | Construction paid once and included in total time |
+| `success_probability` | 1 | Deterministic correctness of the retained verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
 
-Deprecated `data_log2` is omitted. Under v5 the scored scalar is exactly
-`time_log2 = 49.81`. The advice exponent is not added again because advice is
-already included in peak memory. Preprocessing is not added again because it is
-already included in total time. There is no success amplification because the
-deterministic pair succeeds on every online execution.
+The vector is `(41,25.25,41,40.75,1,9)` and the scalar is exactly 66.25.
+Preprocessing is not added twice because it is included in total time. Advice is
+not added twice because it is included in peak memory.
 
-Experiment `published-r31-witness-replay` tests only this statement: the two
-submitted distinct byte strings collide under the organizer's complete
-`sha256-r31-prefix-v1` implementation. Organizer evidence consists of isolated
-source evaluation, independently recomputed digests, repeated-pair flags, and
-an explicit label that attack-cost inference is unavailable. All requested rows
-transport the same pair; the duplicate successful rows are reproducibility
-checks for transport and target verification, not independent samples from the
-historical attack. They provide no evidence for historical time, memory,
-preprocessing, generator reproducibility, historical success rate, or either
-score-critical heuristic.
+Experiment `published-r31-witness-replay` has two separate roles. Its trusted
+organizer event is only that the two submitted distinct byte strings collide
+under the complete selected target. Before returning the pair, each fresh
+isolated process also exhausts all 131072 assignments of the 17 stored E choice
+bits for one mixed/boundary six-A fixture, requires exact 32-byte round trips,
+and requires the committed serialization digest from section 9. The source is
+immutable evidence of the check, while emitted numeric observations remain
+participant supplied.
 
-The certificate manifest is empty. Correctness evidence is the experiment
-replay plus the hex messages in section 3, not a `hash-collision-witness-v2`
-certificate file.
+All 256 rows transport the same pair. Duplicate successes establish neither
+independent attack trials nor historical time, memory, data, success rate, or
+generator reproducibility. The codec self-check establishes a finite
+representation property, not a peak-memory measurement. Organizer execution
+therefore checks the exact facts it can check and leaves the two declared
+resource extrapolations conditional.
 
-The witness establishes a real 31-round-prefix collision independently of the
-cost claims. The publication and slides provide relevant evidence that a
-practical attack was performed and describe its high-level construction. The
-absence of a full generator, immutable build recipe, raw attempt ledger, and
-organizer-model resource receipt blocks any claim that this package has
-reproduced or rigorously certified the reported attack cost. Exploratory
-qualification therefore depends on whether the disclosed conservative premises
-and primary evidence make both heuristics plausible and not refuted. This
-package makes no novelty, full-SHA-256, 32-round, security-lower-bound, or
-rigorous-lane claim.
+## 9. Lossless 209-bit tuple representation
 
-## 9. Source-by-source evidence map
-
-| Source location | Relevant observation | Limit on its use |
-| --- | --- | --- |
-| Authors' ASIACRYPT slides, construction pages | Starting points, inverse-round relations, stored states and first-block matching provide a concrete construction outline | They do not disclose an allocator or a complete operation ledger |
-| Slides, complexity slide | Approximately `2^19.8` ten-word table entries, complexity `2^40.5`, and a 1.2-hour run using 64 threads | Entries are not peak bytes; runtime is not organizer RAM units; matching headline is not all-history cost |
-| Slides, message-pair slide | The public two-block message pair | Establishes a concrete target for independent digest recomputation |
-| Publisher abstract and notes | Runtime corroborated; an unusually fast initial success was followed by further experiments and another pair | The number and total cost of those experiments are not given |
-| EUROCRYPT 2024 / ePrint 2024/349 | Complete constructive estimate time `2^49.8`, memory `2^48` for ordinary 31-step SHA-256 | Uses its own units; anchors the conservative envelope, not a measured organizer ledger |
-
-The public publisher page is
-<https://link.springer.com/chapter/10.1007/978-981-96-0941-3_8>.
-The slides URL is given in section 5; a locally inspected copy of the 17-page
-slide PDF has SHA-256
-`6a7247c13503511934c60ea38869d13318d35c6c3c10376ff2c8523e77014e29`.
-The publisher's public abstract and notes were inspected; access to the full
-subscription chapter is not claimed. No source file is redistributed here.
-The source summaries and arithmetic needed for this assessment are included
-in this proof, so following external links is not necessary to read the claim.
-
-The additional reported experiments are relevant contrary pressure on any
-narrow all-history time budget near `2^40.5`. They are one reason this package
-uses the larger EUROCRYPT envelope instead. Nor does the witness's deterministic
-replay success establish a success distribution for the original search.
-
-## 10. Time conversion sensitivity under the EUROCRYPT 2^49.8 bound
-
-Let `C_ec = 2^49.8` denote the EUROCRYPT complete constructive figure, read
-under this package as a compression-equivalent upper bound on preprocessing.
-Define `c` as the conversion from one unit of that reported work into charged
-organizer compression units, and `D >= 0` as all charged work omitted by that
-accounting beyond what `C_ec` already covers. H-HISTORICAL-TIME requires
+The stored tuple is
+`(A[-1],A[0],A[1],A[2],A[3],A[4],E[5],E[6],E[7],E[8])`.
+A condition character `0`, `1`, `n`, `u`, or `=` denotes respectively the lane
+pairs `(0,0)`, `(1,1)`, `(0,1)`, `(1,0)`, or either equal pair, most-significant
+bit first. All six stored A words are equal between lanes. The four E conditions
+are
 
 ```text
-T_pre = c * C_ec + D <= 2^49.8
-c + D/C_ec <= 1
+E5  000111010001111110nu=11111unnnu1
+E6  101011=11==0n0==u11110==1110011n
+E7  un0u1100n=01u11111001u1=n110u10n
+E8  1u01un0u0=1=1=11n=0=u0=001001u0=
 ```
 
-| Assumed conversion c | Remaining budget for extra D |
-| --- | --- |
-| 1.0 | D must be 0 (published figure used as a hard preprocessing cap) |
-| < 1.0 | Positive D budget opens (if publication units overcount organizer units) |
-| > 1.0 | Cap fails for every nonnegative D |
+Only `=` positions require stored choice bits. With bit positions numbered from
+the least-significant bit, the exact encoding data are
 
-These rows are sensitivity calculations, not estimates of c or D. Relative to
-the prior `time_log2 = 50` package, the 0.1-bit padding above `2^49.8` is
-removed; the premise is therefore tighter and still ~9 bits above the
-ASIACRYPT matching headline. This analysis supplies failure thresholds, not a
-new measured historical time result.
+| Word | Choice positions | Base with choices zero | Partner XOR delta | Choices |
+| --- | --- | --- | --- | ---: |
+| E5 | 11 | `1d1f97e3` | `0000303e` | 1 |
+| E6 | 8,9,16,17,21,22,25 | `ad80f8e6` | `00088001` | 7 |
+| E7 | 8,22 | `9c1fce6c` | `d0880489` | 2 |
+| E8 | 0,9,12,14,18,20,22 | `d92b084c` | `4d008804` | 7 |
 
-For the online phase retain the deliberately generous bound
-`T_online < 2^20 + 6`. Conditional on the preprocessing premise,
-`T_pre + T_online <= 2^49.8 + 2^20 + 6` and
-`log2(2^49.8 + 2^20 + 6) ≈ 49.8000000015 < 49.81`.
-Preprocessing is included once in total time.
+For positions `p[0]<...<p[k-1]`, define
+`rank(E)=sum(((E>>p[j])&1)<<j)` and
+`expand(r)=base OR sum(((r>>j)&1)<<p[j])`.
+The shifted bits are disjoint. Expansion recovers the original E word and
+`E'=E XOR delta` recovers its partner. The payload is therefore
+`6*32+1+7+2+7=209` bits.
 
-## 11. What is proved versus what is conditional
+The implementation uses one canonical 256-bit record serialized as 32
+big-endian bytes:
 
-**Proved / mechanically checkable (independent of heuristics):**
+```text
+A[-1]:32 | A[0]:32 | A[1]:32 | A[2]:32 | A[3]:32 | A[4]:32 |
+rank(E5):1 | rank(E6):7 | rank(E7):2 | rank(E8):7 | zero:47
+```
 
-- The two 128-byte messages are distinct.
-- Under `sha256-r31-prefix-v1`, both digests equal `55fdfb37…`.
-- The same messages do not collide at 32 rounds or full 64-round SHA-256.
-- Online success probability is 1 on the singleton probability space.
+Equivalently,
 
-**Conditional on score-critical heuristics:**
+```text
+R = (A[-1]<<224) | (A[0]<<192) | (A[1]<<160) | (A[2]<<128)
+  | (A[3]<<96) | (A[4]<<64)
+  | (r5<<63) | (r6<<56) | (r7<<54) | (r8<<47).
+```
 
-- `time_log2 = 49.81` and `preprocessing_log2 = 49.8` require `H-HISTORICAL-TIME`.
-- `memory_log2_bytes = 30` requires `H-HISTORICAL-MEMORY`.
+The bottom 47 bits must be zero. The disjoint fixed-width slices prove
+injectivity. Deleting fixed positions preserves numeric order within each E
+word, so unsigned comparison of `R` preserves lexicographic order of the ten
+unprimed fields. Equal unprimed tuples have equal primed tuples; duplicates stay
+as separate records. In-place sorting needs no index and comparisons need no E
+expansion. The matching key is exactly `R>>224`.
 
-**Explicit non-claims:**
+At `N0=912839`, the 32-byte array uses 29,210,848 bytes and saves 7,302,712
+bytes versus a 40-byte array. A 32-byte array plus four-byte indices would use
+32,862,204 bytes and is unnecessary. Two live 32-byte arrays would use
+58,421,696 bytes and violate the claimed cap.
 
-- No new cryptanalysis or new differential characteristic.
-- No reproduced practical generator with an organizer-unit ledger.
-- No claim that `2^40.5` is a safe total-history bound.
-- No birthday improvement; no 32-round or full-SHA-256 result.
-- No rigorous-lane qualification; no human acceptance; no security lower bound.
-- `baseline_improved = sha256-r31-nominal-v2` is the required nominal reference
-  identifier, not an assertion of proved improvement over that nominal.
+The deterministic executable check uses A fixture
+`12345678,9abcdef0,00000000,ffffffff,80000000,01020304` and enumerates E ranks
+with E5 changing fastest, then E6, E7, and E8. It hashes each 32-byte record as
+64 lowercase hexadecimal characters plus LF. All 131072 round trips must pass,
+and the concatenated SHA-256 must equal
+`1bb33a58e7b07affd6a400dbcbad59a624fcd50c8081a131b6937106fe3b688c`.
+This finite fixture check is supplemented by the algebraic injectivity proof for
+arbitrary A words.
 
-## 12. Comparison to other packages on this track
+## 10. Precise finite preprocessing, matching, and stopping procedure
 
-| Route | Typical declared `time_log2` | Notes |
+All arithmetic below is modulo `2^32`. Define
+`Ch(x,y,z)=(x&y) XOR ((NOT x)&z)` and
+`Maj(x,y,z)=(x&y) XOR (x&z) XOR (y&z)`.
+`Sigma0` uses rotations 2, 13, and 22; `Sigma1` uses 6, 11, and 25. For each lane
+and step `i`,
+
+```text
+E[i] = A[i-4] + E[i-4] + Sigma1(E[i-1])
+       + Ch(E[i-1],E[i-2],E[i-3]) + K[i] + W[i]
+A[i] = E[i] - A[i-4] + Sigma0(A[i-1])
+       + Maj(A[i-1],A[i-2],A[i-3]).
+```
+
+The full characteristic equals `=` for every A, E, or W row not listed here.
+These are all nontrivial rows from the published characteristic:
+
+| Family | Step | MSB-first condition |
 | --- | ---: | --- |
-| Generic birthday under v5 | ≈128.2–136 | No differential structure |
-| Knife-edge fixed witness using only ASIACRYPT `2^40.5` | ≈41 | High refutation risk on discovery ledger |
-| **This package** | **49.81** | Fixed witness; EUROCRYPT `2^49.8` preprocessing bound + online; empty certs + replay experiment |
+| A | 5 | `===================n=unnnnnnn=n=` |
+| A | 6 | `========n======================u` |
+| A | 7 | `===u===n==n========n=========n=u` |
+| A | 8 | `=============================n==` |
+| A | 10 | `================u============u==` |
+| E | 3 | `==========================10====` |
+| E | 4 | `============0===0=========01===0` |
+| E | 5 | `000111010001111110nu=11111unnnu1` |
+| E | 6 | `101011=11==0n0==u11110==1110011n` |
+| E | 7 | `un0u1100n=01u11111001u1=n110u10n` |
+| E | 8 | `1u01un0u0=1=1=11n=0=u0=001001u0=` |
+| E | 9 | `01100001110=0=010===00=11101u0=1` |
+| E | 10 | `=1n1uuuuu0100=1un0=10unnnnnnn010` |
+| E | 11 | `=01u1010uu1==11100===1000001n=0=` |
+| E | 12 | `==110001=11====1n====0011110n=0=` |
+| E | 13 | `===0====01======1===============` |
+| E | 14 | `================u===========0u==` |
+| E | 15 | `================0============1==` |
+| E | 16 | `================1============1==` |
+| W | 5 | `================nuuu=======0=uu=` |
+| W | 6 | `==========u=====u===u======n===u` |
+| W | 7 | `=u=u=======n=====n=nu=n=====nun=` |
+| W | 8 | `=u=nn==========u===u===u==1=====` |
+| W | 9 | `================u==========1=u==` |
+| W | 16 | `=============unnnunnnnnnnnnnnn==` |
+| W | 18 | `==============1=n=0==========n==` |
 
-## 13. Result of this revision
+`Enumerate(c)` means enumerate every lane pair permitted by condition word `c`.
+Within a word the least-significant `=` position changes fastest. Across a tuple,
+the last listed word changes fastest. A run may rotate any finite rank domain by
+a uniformly sampled offset and then visit `(offset+j) mod domain_size`; domains
+wider than 256 bits concatenate charged independent 256-bit words. This changes
+order, not coverage. A practical implementation may use equivalent carry-aware
+or SAT/SMT enumeration, but it must emit the same solution relation and charge
+all solver work and random draws. The finite score-bearing procedure is:
 
-The exact witness remains independently verifiable via organizer experiment
-replay. The proposed `time_log2 = 49.81` remains conditional on
-`H-HISTORICAL-TIME`. Memory `30` remains conditional on `H-HISTORICAL-MEMORY`
-and is unscored under v5.
+1. **Starting points.** Enumerate condition-compatible
+   `(A[1..4],E[5..12])`. Derive `A[5..12]` with the A equation and derive
+   `W[9..12]` by rearranging the E equation. Reject at the first violated A, E,
+   or W condition. Project surviving rows to the distinct eight-word key
+   `(A[1..4],E[5..8])`; retain each key once and do not store an extension.
+2. **Backward extension.** For each starting point enumerate the solution
+   relation `(W8,E4)` for
+   `E8=A4+E4+Sigma1(E7)+Ch(E7,E6,E5)+K8+W8`, derive
+   `A0=E4+Sigma0(A3)+Maj(A3,A2,A1)-A4`, and filter both words. Then enumerate
+   `(E3,W7)` for
+   `E7=A3+E3+Sigma1(E6)+Ch(E6,E5,E4)+K7+W7`, derive
+   `A[-1]=E3+Sigma0(A2)+Maj(A2,A1,A0)-A3`, and filter both words.
+3. **Table.** Pack every accepted derivation path as the section-9 record;
+   preserve multiplicity. Stop accepting records at `N0=912839`. Sort the one
+   fixed-size array in place by unsigned `R`. No index or second table is built.
+4. **First-block matching.** Enumerate 512-bit first data blocks in unsigned
+   big-endian order, compress each from the standard IV for 31 steps, and use its
+   feed-forward output as the common input to the second block. Binary-search the
+   table for all records whose `A[-1]` equals the induced state word.
+5. **Reconstruction checks.** For every matching record and both lanes, use the
+   inverse A equations with stored `A[0..4]` to derive `E[0..4]`; use inverse E
+   equations to derive `W[0..8]`. Reject on any characteristic failure, including
+   the checks corresponding to `A[-2]` and `A[-3]`. Re-enumerate the stored
+   starting point and select its first valid extension to recover `A[5..12]`,
+   `E[9..12]`, and `W[9..12]`; this recomputation is charged and needs no
+   per-record extension pointer.
+6. **Fulfillment and final check.** Enumerate common `W[13]`, then `W[14]`, then
+   `W[15]`, with `W[15]` changing fastest. Advance both lanes, expand the standard
+   SHA-256 schedule, check the nontrivial `W[16]` and `W[18]` rows and every A/E
+   condition through step 30, add the common input state, and retain only distinct
+   second-block pairs with equal eight-word outputs. Prepend the tested first block,
+   apply FIPS padding, and independently verify the complete selected-target
+   collision. Stop at the first verified pair.
 
-This revision adopts the review-passing fixed-witness presentation style
-(empty certificate manifest, deterministic `experiments/replay.py`, named
-`H-HISTORICAL-TIME` / `H-HISTORICAL-MEMORY`, source-by-source evidence map,
-proved-vs-conditional separation, explicit limitations) while tightening from the prior qualified 50 to 49.81 by removing only the
-0.1-bit pad above EUROCRYPT `2^49.8`, rather than fabricating a knife-edge near 41.
+Every rejected branch, solver call, generated record, first block, fulfillment
+trial, comparison, and verification is charged. The preprocessor returns failure
+without unpaid restart if it reaches `2^40.75` charged operations or would cross
+the `2^25.25`-byte memory cap. After the table reaches `N0`, no more records are
+accepted; matching and fulfillment continue until the first verified pair or the
+operation cap. The successful paid history retains the section-3 pair; the online
+replay then has singleton probability 1. The public report supports a successful
+realization of this construction pattern and its headline cost, while the exact
+conversion, actual record count, and whole-process peak remain the two declared
+exploratory heuristics.
 
-No fresh historical peak trace, complete historical attempt ledger, or
-calibrated organizer conversion is supplied. Accordingly this is an exploratory
-proposal for assessment of the explicitly bounded premises. An AI
-`plausible_not_refuted` outcome, if reached, is distinct from mathematical proof
-or human acceptance under manual promotion.
+This package is ready for exploratory review. It claims precise specification,
+not a reproduced generator or a rigorous cost certificate. The fixed witness,
+codec result, construction definition, and conditional resource assertions are
+kept separate so failure of either resource premise cannot be mistaken for
+failure of the collision relation.
