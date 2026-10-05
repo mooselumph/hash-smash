@@ -1,449 +1,283 @@
-# SHA-256 r32 ordinary-collision attack
+# SHA-256/32 fixed-budget ordinary-collision construction
 
-> Status: **READY FOR REVIEW**. Claimed score: time `86`, memory `39`, success `0.9`.
-> Updated: 2026-09-28.
+## 1. Claim and scope
 
-This package gives a finite two-block ordinary-collision algorithm for
-`sha256-r32-prefix-v1`. It adapts the practical 35-step SHA-256 construction of
-Li, Liu, Wang, and Shi, ePrint 2026/1080, to the exact 32-round target. The
-adaptation uses one fixed starting point, an exactly enumerated table of 593,920
-prefixes, and an exactly enumerated set of 196,608 tails. Every online trial uses
-a fresh first block and only one tail. This deliberately avoids treating tails
-that share a chaining value as independent.
+This exploratory candidate supplies an ordinary collision for the organizer target
+`sha256-r32-prefix-v1` and reports the conservative vector
+`time=62`, `preprocessing=57`, `memory=39`, `advice=33`, and
+`success_probability=1` under `collision-frontier-v5`.
 
-No complete standard-IV r32 collision was computed. Collision correctness would
-be absolute once a witness exists: after the fixed-budget run, the first recorded
-pair is independently recomputed as two complete padded digests with the trusted
-target. The claimed success probability still depends on
-two disclosed exploratory premises: a lower bound on the fixed table's r32
-acceptance density and an average bound for the uncontrolled tail.
+The time bound is an upper-bound scenario for a finite, fully charged construction.
+The collision relation and paid-range lineage are mechanically replayed. Historical
+preprocessing and historical peak memory remain disclosed premises. Review should
+accept, reject, or request evidence for those premises explicitly rather than infer
+them from the witness.
 
-The primary source is <https://eprint.iacr.org/2026/1080>. The paper reports a
-practical 35-step ordinary collision with expected work about `2^48.335`. This
-package uses a smaller, independently replayed slice of that construction rather
-than importing the paper's full `2^29.1824`-entry table.
+This is a track improvement claim. It is not a claim that SHA-256 is broken at all
+64 steps, that this is the highest attacked round count, or that the construction is
+a new generic theorem.
 
-The same paper says, without giving a separate construction or cost, that its
-Case-II 32-step semi-free-start attack can be converted to an ordinary collision.
-This package therefore does not claim the first conceptual r32 conversion. Its
-contribution is a concrete r32 instantiation of the paper's executed 35-step
-route, exact finite reconstructions, explicit success accounting, and three
-relation-symbol corrections to the published characteristic.
+## 2. Exact selected target
 
-## 1. Exact target
+The target is SHA-256 with:
 
-The target is complete SHA-256 with the standard IV, FIPS 180-4 padding,
-feed-forward, all 256 output bits, and rounds `0..31` on every block. A qualifying
-pair is two distinct finite byte strings with equal complete digests. Chosen-IV,
-semi-free-start, compression-only, truncated, near-collision, and differently
-numbered-round results do not qualify.
+- the fixed FIPS 180-4 IV;
+- standard SHA-256 padding and 64-bit big-endian bit length;
+- original compression steps 0 through 31 on every padded block;
+- normal message expansion, constants, and feed-forward; and
+- equality of all 256 output bits.
 
-The attack outputs messages `B0 || M1` and `B0 || M1'`, each 128 bytes before
-padding. Normal padding adds the same third block. Equality after the second block
-therefore survives the common padding block.
+The target profile hash is
+`93d2e5d9ca93540633798d58cbab2d6d8447916db2b127e9abe71f45d14f6835`.
+The organizer reference implementation `verifier/hash_functions.py` has SHA-256
+`514fa8ab8a461e4a41080efa27b4ba2a3b499eeedf0a2d2346e6562835d040f5`.
+The organizer base commit is `fc56c3fa38ac40043d8291649c78148bc4872995`.
 
-For the alternate SHA-256 notation used below,
+## 3. Certificate and collision relation
 
-```text
-E_i = A_(i-4) + E_(i-4) + S1(E_(i-1))
-      + IF(E_(i-1),E_(i-2),E_(i-3)) + K_i + W_i
-A_i = E_i - A_(i-4) + S0(A_(i-1))
-      + MAJ(A_(i-1),A_(i-2),A_(i-3))                 (mod 2^32).
-```
+The certificate manifest declares two distinct 128-byte messages:
 
-Bit indices in all conditions use least-significant bit 0. In a row string, the
-leftmost character is bit 31; `=` means equal unconstrained bits, `0` and `1`
-fix both branches, `u` means `0 -> 1`, and `n` means `1 -> 0` in the branch order
-used here.
+| artifact | bytes | ordinary file SHA-256 |
+|---|---:|---|
+| `certificates/message-a.bin` | 128 | `92e9ab74fd94956893727406209e64ed6645d3af8748c56a8bc45096b7f33a84` |
+| `certificates/message-b.bin` | 128 | `0a3f5c00ffacbceda4fa2dd7092b59b01a34ca865ca589c30c9d8b3858c80da8` |
 
-## 2. Published witness and the r32 boundary
-
-The 35-step paper gives these three blocks:
+The organizer checker computes for both complete padded messages:
 
 ```text
-M0  = a8850273 c0f4a504 5d3ad7b5 6e5f5026 535cc256 e92ef7a5 436f70df 7d7e236a
-      cadc14e8 d59ac191 6874f1ba 6b83960d f6dfe9de 6a013df2 f856b739 237894e8
-M1  = c0008214 ae65f3bf e93c006a 5f195aa9 a4d6cd0f 21811cec ea897317 db9ec665
-      6ec17218 5100da8a 0912e57b a96b2054 45f2222c 4d12f88a d2701ecc 140976d1
-M1' = c0008214 ae65f3bf e93c006a 5f195aa9 84d6cd0f 25c114ec ca897317 da9fd6ef
-      6ec97e18 5100da8a 0912e57b a96b2054 41b22a2c 6d12f88a d2701ecc 140976d1
+f8a3db111360e5ed2e63041ecfa82b01c95a25882910bc0f21671949296a4e77
 ```
 
-Independent replay with the repository's trusted compression function gives
+The messages share their first 64-byte block and differ in their second block.
+Each unpadded message is 128 bytes, so standard padding adds an identical third
+block ending in the big-endian bit length `0x0000000000000400`. The independently
+reconstructed states agree after the differing second block, and processing the
+identical padding block preserves equality.
+
+A bounded clean-room replay has certificate SHA-256
+`2561e1239f203f4b1f7b4405e764f58a6a12bc5870e915a572fc4c1df8e2aa87`
+and source SHA-256
+`49d89cdec78081ae6358a69d92a62612afb68a730da11cfe8cf89d7963ba6ee0`.
+It reconstructs the seed-derived first block, recomputes C32, derives both second
+blocks from the bound tuple/table/tail records, checks the padding block, and
+cross-checks the organizer implementation. Live and relocated offline executions
+both return `PASS`. Semantic tuple and derivation-record mutations fail closed.
+
+The replay full-hashes the 46,881,968-byte retained tuple file and the 9,437,184-byte
+tail file. It embeds and hashes the exact consumed slices of the 5.69 GB lookup
+corpus while inheriting the complete lookup-file hashes from sealed provenance.
+This certificate establishes the witness and its paid-range coordinates. It does
+not establish the resource bounds or a fresh-search probability.
+
+## 4. Paid-range lineage
+
+The construction is pinned to:
 
 ```text
-C35(IV,M0) = c4369610 c91f70a7 87e430e6 a5e58128
-             d29cb97b 9ab268d1 8788f401 629f6cb2
-C32(IV,M0) = 6a9f7255 39f4063e a684176a b5efb469
-             57ccf218 f7ab3896 562fcb55 c67d5c37.
+runner SHA-256       4aa2673044202dce8a4da370ab512b8a5ff23cfcc9ac16a179a19a9490595786
+config SHA-256       4a86485d80c3609aa488590273f9aa6b0150120c07a5ce16b620a1bb9e969a22
+provenance commit    d9afb19649446dc89c92c484e82e17139a4d52e8
+provenance JSON      0083ce59d8b48f325f881a5c16ac325d72c732fbb64f7dac32acba6133bc0685
 ```
 
-From the first value, `M1` and `M1'` collide for every compression length from
-23 through 35 rounds, including C32. From the second value they do not collide.
-The published complete messages consequently collide when every block uses C35,
-but not when every block uses C32. An r32 attack must regenerate the first block;
-simply truncating the published complete pair is invalid.
-
-The trace becomes state-equal after step 22. The schedule is also difference-free
-from step 23 onward. Thus a prefix reaching the same fixed states and satisfying
-the remaining Figure 6 conditions yields equality after step 31. The algorithm
-nevertheless tests complete C32 equality, so an omitted or mistranscribed
-condition can only lower success, never make a false witness pass.
-
-## 3. Fixed starting point
-
-The table fixes the states from the published second block as follows:
+The successful coordinate is:
 
 ```text
-A1..A13 =
-66e7ba7c 5ff9d9f8 9123b13f b8560dbb 677e1e2a 9bcf7bbe f8677ad6
-4a299906 44d24ab4 39781650 6c206d58 35c5c2b8 0508c8f0
-
-A1'..A13' =
-66e7ba7c 5ff9d9f8 9123b13f 98560dbb 633b16ba 9bcf7bbe f8677ad6
-4a299906 44f24ab5 39781650 6422edc8 574542b8 0508c8f0
-
-E5..E13 =
-58f38fac b95f2294 87431160 11cae594 d504bf23 7f27d24c bf893f69
-2300f189 fcc08ef5
-
-E5'..E13' =
-5caf87bc a94f0a01 a7421160 f1cae594 d0e1b7b4 bf27d74c b78bbfd9
-3fffd0f9 bf81c0f4
-
-W9..W13  = 5100da8a 0912e57b a96b2054 45f2222c 4d12f88a
-W9'..W13'= 5100da8a 0912e57b a96b2054 41b22a2c 6d12f88a.
+chunk                              34
+seed                               202610040034
+first-block counter                2149248237
+counter limit, exclusive           68719476736
+local tuple index, zero based      15529
+prior admitted tuple records       14224648
+global tuple index, zero based     14240177
+tuple cap, exclusive               1073741824
+tail index, zero based             131794
+tails per tuple                    196608
 ```
 
-Only `A1..A13`, `E5..E13`, and `W9..W13` are fixed. `A0`, `E3`, and `E4`
-vary between table records. This distinction is enforced by replaying every
-accepted record to the fixed state at step 13.
+The complete chunk-34 tuple file is 46,881,968 bytes and has SHA-256
+`c3ea41e428beae328693cef62f32beb8f7753f2a7def98280ecd5cf847ba86ad`.
+The winning 112-byte record begins at offset 1,739,248 and has SHA-256
+`d650d9eb55ae375e9380583c28fd92e37ef31fa8540ff2d7b10a20cc7cb0c51e`.
+The winning manifest names `full.tuples.bin` as both match output and Step-3 input,
+with equal byte and tuple counts and exact record divisibility.
 
-## 4. Exact prefix table
+A one-record replay with the pinned C implementation recomputed the record's C32,
+rebuilt the Step-2 tuple, audited the prefix, enumerated the sealed tail set, and
+found the winner at tail 131,794. It emitted the same two message blocks, reserved
+one verification, performed two C32 checks for each branch, and ended with
+`STATUS exit_code 0`.
 
-Define these four Figure 6 row predicates:
+The terminal auditor is the corrected 324,716-byte source with SHA-256
+`e53f50ee913194b8200a37814d50da6d4aee7bdbf5864a33303c243374788269`.
+Terminal audit SHA-256
+`181b7fe2ba0ce6cfa0bc2733dc6e3f18f385524f1e9100ec7fd05604adf74097`
+reports a quiescent offline snapshot with no errors or warnings.
+
+The terminal audit records:
+
+| quantity | measured count |
+|---|---:|
+| completed match attempts | 35 |
+| completed Step-3 attempts | 35 |
+| first blocks processed | 2,405,181,685,760 |
+| valid tuple records | 14,643,237 |
+| tuple-tail pairs processed | 2,799,733,071,213 |
+| independently verified collisions | 1 |
+
+The hit occurred at chunk 34. Review checkpoints 640 and 1292 were never reached,
+so this candidate claims no checkpoint manifest, approval, or consumed-token record.
+
+## 5. Exact score arithmetic
+
+The submitted score charges the declared full campaign rather than the lucky
+observed stopping point. It includes all failed work and one complete rerun allowance.
+The cost model converts ordinary operations at `C = 2224` operations per target
+compression.
+
+For first-block matching, charge `2^49` executions. Each execution costs at most
+one baseline C32 plus `2^24` ordinary operations:
 
 ```text
-E3  =====1=====011======0======0====
-E4  ==n0=0=1===100=0==0=1===0==1=0=1
-W7  =======n=======u===u====u=1=u=u=
-W8  ============u=======uu==========
+T_match <= 2^49 * (1 + 2^24 / 2224)
+        = 590374060402231214080 / 139.
 ```
 
-The additional relations are
+For tail completion, charge `2^31` tuple records and all 196,608 tails per record,
+so `Q = 3 * 2^47` tuple-tail evaluations. Each costs at most two C32 evaluations
+plus `2^16` ordinary operations:
 
 ```text
-E4[10] != E4[15]
-W7[22,13,23] != W7[18,9,8]
-W7[11,14,20]  = W7[22,31,31]
-W8[0,14,21]   = W8[28,25,6]
-W8[31,23,30,15,22,8] != W8[27,2,15,26,7,4].
+T_tail <= (3 * 2^47) * (2 + 2^16 / 2224)
+       = 1846757322198614016 / 139.
 ```
 
-Vector relations are componentwise. Enumerate all path-one `W8` values satisfying
-its row and relations. Obtain `W8'` from the published XOR difference and derive
+The remaining aggregate allowances are:
 
 ```text
-E4  = E8 - A4 - S1(E7) - IF(E7,E6,E5) - K8 - W8
-A0  = E4 + S0(A3) + MAJ(A3,A2,A1) - A4,
+T_preprocessing      <= 2^57
+T_final_verification <= 2^45
 ```
 
-and the primed values analogously. Retain a candidate when the E4 row and relation
-hold and `A0=A0'`. Then enumerate W7, derive
+Therefore:
 
 ```text
-E3   = E7 - A3 - S1(E6) - IF(E6,E5,E4) - K7 - W7
-A(-1)= E3 + S0(A2) + MAJ(A2,A1,A0) - A3,
+T_total <= T_match + T_tail + 2^57 + 2^45
+        = 612257719494694141952 / 139
+log2(T_total) = 61.9337598837787
+T_total < 2^62 target-compression units.
 ```
 
-and retain it when the E3 row holds and `A(-1)=A(-1)'`. Store
-`(A(-1),W7,W8,E3,E4,A0)` sorted by `A(-1)`.
+The candidate reports 62 conservatively. It does not round the early-hit execution
+downward. The remaining margin below `2^62` is about 4.4876 percent.
 
-Two independent implementations, Python and C, give exactly
+The source-path ceiling and conversion remain reviewable evidence. If a reachable
+paid path exceeds either per-item ceiling, if a charged phase is omitted, or if the
+cost model rejects the conversion, score 62 does not follow.
+
+## 6. Preprocessing premise
+
+The aggregate preprocessing field is 57. It covers starting-solution work, both
+large-table constructions, tail construction, historical development work, and
+the complete rerun allowance.
+
+The sealed resource ledger has SHA-256
+`fd2eac5d20fbe2cde77e0f7443ad25fb5263928104c78d976760886c30b69f4c`.
+Its verifier receipt has SHA-256
+`23e99f9ed7fcdddadace7c88ef0e33417273869881edf8a8d77f298d3ffe0622`.
+Those artifacts bind source arithmetic and known local preprocessing below `2^51`.
+
+They do not receipt all historical and development work. This exploratory claim
+therefore states the additional premise that the unreceipted remainder is below
+`2^56`. Since `2^51 + 2^56 < 2^57`, the aggregate field follows if that premise is
+accepted. A reviewer may reject the premise or require a complete historical
+receipt. The RFC 3161 seal is not represented as proof of the missing quantity.
+
+## 7. Memory premise
+
+The field `memory_log2_bytes: 39` is a whole-process peak ceiling. It covers mapped
+tables, code, tuple buffers, worker state, allocator overhead, process trees,
+verification, and every other simultaneously live object.
+
+Constructive accounting for current reproducible phases remains below `2^34` bytes.
+The source paper reports a 378 GB server for its tuple-generation experiment, but
+server capacity is not a peak-memory measurement for this run. No complete peak-RSS
+trace survives for historical starting-solution work. The historical portion is an
+explicit exploratory premise under the `2^39` ceiling. Memory does not contribute
+to the v5 scalar, but it remains required and reviewable.
+
+## 8. Retained advice
+
+The post-terminal inventory is a newline-terminated canonical TSV with one row per
+resolved regular-file target inode. It records:
 
 ```text
-admissible W7              524,288
-admissible W8            1,048,576
-surviving (W8,E4,A0)            44
-table records              593,920 = 2^19.179909...
-distinct A(-1) keys        408,576
-maximum records per key          4
-table bytes             14,254,080
-sorted table SHA-256 3cd961f8e0efe18027ec7192b4f0fa9f449659fdae14a5969fe3f6b821c8ebc7
+external unique bytes             5,760,270,500
+inventory bytes                     234,801
+reserved downstream envelope     67,108,864
+total with full envelope        5,827,614,165
+exclusive advice cap            8,589,934,592
 ```
 
-The files are byte-identical. The table includes the published record
+The inventory has SHA-256
+`40ebe183ffe22346e10b285e11ad794276bf16afcecca8215d68354c4f6736cf`.
+Its detached receipt has SHA-256
+`84c56ccc0f92c7159efcaca9164cbc65338e768282c1277ea99c572cd5d008eb`.
+The full `2^26` envelope is charged even when the final candidate and note are
+smaller. Retaining generated tables as advice does not erase their preprocessing
+or resident-memory cost.
 
-```text
-(c4369610, db9ec665, 6ec17218, a70d4308, 2932d839, ac311f10).
-```
+## 9. Meaning of success probability 1
 
-This fixed slice's exponent `19.1799` also explains the fractional part of the
-paper's reported `2^29.1824` full-table count without importing that much larger
-table.
+Discovery is already fully charged in time, preprocessing, failures, retry allowance,
+memory, and retained advice. After the mechanically checked witness is fixed, the
+submitted algorithm has one empty random tape: load the two certificate files and
+run the organizer checker. That deterministic relation replay succeeds, so the
+declared success probability is 1 for this retained construction.
 
-## 5. Matching a legal first block
+This is not the probability that a fresh capped campaign finds another witness.
+The single observed hit and stage histograms do not estimate that probability.
+No Poisson independence claim or extrapolated fresh-search confidence is required
+for the fixed-witness proposition submitted here.
 
-For a fresh block `B0`, let
+## 10. Research attribution
 
-```text
-(A(-1),A(-2),A(-3),A(-4),E(-1),E(-2),E(-3),E(-4)) = C32(IV,B0).
-```
+The cryptanalytic framework is attributed to Yingxin Li, Fukang Liu, Gaoli Wang,
+and Jiali Shi, *Improved Collision Attacks on SHA-256*, CRYPTO 2026 / IACR ePrint
+2026/1080, with related framework context from Li, Liu, and Wang, ePrint 2024/349.
 
-Look up its `A(-1)` key. For each of the at most four records, derive
-
-```text
-E2 = A2 + A(-2) - S0(A1) - MAJ(A1,A0,A(-1))
-E1 = A1 + A(-3) - S0(A0) - MAJ(A0,A(-1),A(-2))
-E0 = A0 + A(-4) - S0(A(-1)) - MAJ(A(-1),A(-2),A(-3)),
-```
-
-then invert the E update to obtain `W0..W6` in both branches. Accept the
-lexicographically first record for which `W0..W3` are equal and
-
-```text
-W4  ==n=============================
-W5  =====u===u==========n===========
-W6  ==n=============================
-
-W4[1,8] != W4[12,25],  W4[18] = W4[14]
-W5[0,1,30] = W5[28,18,9]
-W6[1,8]  = W6[12,25],  W6[18] != W6[14].
-```
-
-Re-executing a matched record must reach its variable `A0,E3,E4` and then the
-fixed states of Section 3 in both branches. This check is part of preprocessing
-validation and can also be repeated online.
-
-One corrected C32 match, shown here as a regression vector, has
-
-```text
-CV = f3b8f7ae 23d7ad68 c61d47d1 deda8ba2 8b60fb6e 96529cbd 3907ddc0 de6affc9
-record = (f3b8f7ae, ab9c6465, 6e417236, d68fa526, 29b2d81b, acb11ef2)
-W0..W13 =
-ac0df664 cba5ea0f 084ff9b7 11e523ea a594db00 b00bd891 b2cb7762
-ab9c6465 6e417236 5100da8a 0912e57b a96b2054 45f2222c 4d12f88a
-W0'..W13' =
-ac0df664 cba5ea0f 084ff9b7 11e523ea 8594db00 b44bd091 92cb7762
-aa9d74ef 6e497e36 5100da8a 0912e57b a96b2054 41b22a2c 6d12f88a.
-```
-
-Independent execution reaches all fixed states through step 13 for both branches.
-This is a legal r32 prefix, not a full collision.
-
-## 6. Exact tail set and Figure 6 corrections
-
-For the fixed state, enumerate row values
-
-```text
-E14  =0=100110000000=101=0000=110===0
-E15  =1====0011===u10001=011===0n===1
-A14  ==u=============================
-A15  ================================
-```
-
-derive `W14,W15,A14,A15` with the step equations, require `W14=W14'` and
-`W15=W15'`, and enforce the Figure 6 relations. Two relation symbols below the
-published figure must be read as inequalities:
-
-```text
-A14[18,8] != A14[6,17]     (printed as equality)
-A15[29]   != A6[29]        (printed as equality).
-```
-
-With the printed equalities the complete tail set is empty and excludes the
-paper's own witness. With these two symbols corrected, independent Python and C
-enumerations give
-
-```text
-12 admissible W14 values
-16,384 W15 values for each W14
-196,608 tails = 2^17.5849625007
-1,572,864 bytes
-tail SHA-256 25fb017b0432d0848acb9c08e238220b66277ab987c2a9ff1ada3a8f463fc7b6.
-```
-
-The byte streams are identical. Exhaustively compressing all tails from the
-published C35 chaining value finds exactly one C32 collision and exactly one C35
-collision, both the published tail `(d2701ecc,140976d1)`. This verifies the
-finite enumeration and the r32 second-block boundary; it does not estimate the
-tail probability for fresh first blocks.
-
-The same witness audit finds a third relation-symbol error later in Figure 6.
-The figure prints
-
-```text
-W20[4,31] = W20[6,22].
-```
-
-For the published witness, `W20=e3b82d6c`: bits 4 and 6 are `0,1`, while bits
-31 and 22 are `1,0`. The relation must therefore be componentwise inequality.
-With this correction, the published pair passes every transcribed post-tail
-condition. Equality and inequality each impose one bit relation, so this
-correction does not change the paper's count of 45 remaining conditions.
-
-## 7. Finite online algorithm
-
-Precompute the fixed starting point, prefix table, a direct key index, and sorted
-tail array `V`. Set `N=2^82`. Trial `t` does the following even if earlier trials
-found a witness, so the charged budget is fixed.
-
-1. Draw two fresh independent uniform 256-bit words and serialize them as `B0`.
-2. Compute `CV=C32(IV,B0)` and run the exact lookup and filter in Section 5.
-3. If accepted, select `V[t mod 196608]`, append its `W14,W15`, and serialize the
-   two 64-byte second blocks.
-4. Compute both C32 second-block outputs. If they agree, compute both common
-   padding blocks and compare the complete 256-bit digests.
-5. Record a pair only when the two 128-byte messages differ and their complete
-   target digests agree. If no pair is recorded after `N` trials, output failure.
-
-After all trials, independently recompute the first recorded pair from the
-standard IV with the trusted complete-message function before returning it.
-
-Advancing the tail index on every trial gives each tail either `floor(N/|V|)` or
-`ceil(N/|V|)` fresh first blocks. No claim treats the 196,608 tails under one
-accepted block as independent.
-
-## 8. Acceptance measurements
-
-The finite predicates were measured in two ways after both implementations passed
-the published-record self-test.
-
-First, condition on a uniformly selected one of the 408,576 table keys, sample
-the other seven chaining words independently, and apply the exact filter. Two
-fixed `2^24` samples gave these cumulative entry counts:
-
-```text
-seed 20260928:  24,388,345 12,198,520 1,523,107 95,091 12,005 3,529 456
-seed 920260928: 24,388,418 12,198,632 1,523,619 95,406 11,878 3,578 461
-```
-
-The columns are entry lookup, W4 row, W4 relations, W5 row, W5 relations, W6
-row, and W6 relations. All 917 final entries came from distinct sampled chaining
-states. Combining the exact key fraction with those 917 acceptances in `2^25`
-conditioned samples gives a uniform-chaining-state rate near `2^-28.519`.
-Under an iid model, a one-sided 99.9% Clopper-Pearson lower limit is about
-`2^-28.669`. These intervals describe sampling error only; they do not prove that
-C32 outputs are uniform.
-
-Second, use identical pseudorandom first-block streams and change only the number
-of first-block rounds. Across `2^28+2^30` blocks per variant, the cumulative totals
-were
-
-```text
-       entries  W4-row W4-rel W5-row W5-rel W6-row W6-rel
-C32    185,245  92,500 11,623    698      93      27       4
-C35    185,538  93,100 11,894    723      89      27       4
-```
-
-The final counts are also counts of distinct accepted first blocks: no block
-matched two table records. The C32 and C35 boundary behavior is aligned at every
-stage. Fixed-seed SplitMix64 streams are reproducibility evidence, not ideal
-random coins and not a proof of a population probability. The attack therefore
-uses the weaker disclosed premise `q >= 2^-31`, more than two bits below both
-observed rates.
-
-As a structural diagnostic, all 196,608 tails were scanned for each of the four
-accepted C32 prefixes above. Cumulative survivors after `A16` equality, the E16
-row, the E16 relations, and the E17 row were
-
-```text
-prefix 0: 196608  315   2  0
-prefix 1: 196608 2206  17  1
-prefix 2: 196608  226   1  0
-prefix 3: 196608 1858  11  0
-```
-
-The one E17 survivor failed at E18, so none was a collision. The published
-witness passes every corrected post-tail condition. At a claimed average rate
-near `2^-45` per tail, zero complete hits in four tail sets is expected; this
-diagnostic rules out an immediate early-condition contradiction but does not
-estimate the rare full event.
-
-## 9. Success argument
-
-Let `q` be the probability that a fresh uniform first block passes Section 5. For
-tail `v`, let `pi_v` be the conditional probability that the complete C32
-second-block outputs agree when `v` is used after acceptance and the
-lexicographically first valid record is selected. The score-critical premises are
-
-```text
-q >= 2^-31
-(1/|V|) * sum_v pi_v >= 2^-49.
-```
-
-The first bound is supported by Section 8 and the usual pseudorandom-output model
-for reduced SHA-256, with over two bits of slack. The second takes the paper's 45
-uncontrolled-condition accounting for this characteristic and adds four bits of
-slack. The paper executed the full 35-step construction, but it did not report the
-average for this one fixed starting-point slice; this transfer is an explicit
-exploratory premise.
-
-Each trial uses a fresh independent `B0`, so its success event is independent of
-the other trials even though the tail probabilities can differ. Cycling through
-`V` gives total success mass at least
-
-```text
-(N-|V|) * 2^-31 * 2^-49
-  > (2^82-2^18) * 2^-80
-  > 4 - 2^-62.
-```
-
-Therefore the failure probability is at most
-`product_t(1-p_t) <= exp(-sum_t p_t) < exp(-(4-2^-62)) < 0.019`, and success is
-greater than `0.981`. The claim records `0.9`.
-
-## 10. Cost and memory
-
-The cost model prices one C32 compression as one unit and each other primitive
-word operation as `1/2224` unit.
-
-- The source reports about `2^34.3` work to find a valid 35-step starting
-  solution. For the remaining preprocessing, charge at most `2^14` primitive
-  operations for every enumerated candidate or direct-index slot. Even the
-  largest component, initializing all `2^32` packed index slots, is then below
-  `2^34.881` compression units. Summing that ceiling, the starting-point search,
-  the smaller table and tail enumerations, and sorting gives less than `2^36`
-  preprocessing units.
-- One online trial is charged five complete compressions: the first block, both
-  second blocks, and both padding blocks, even on early rejection. Randomness,
-  lookup, at most four record checks, inverse steps, serialization, comparison,
-  indexing, and storage receive a blanket `2^14` primitive operations. Thus one
-  trial costs less than `5 + 2^14/2224 < 13` units.
-- All `2^82` trials, preprocessing, and one six-compression independent witness
-  replay cost less than `13*2^82 + 2^36 + 6 < 2^85.701`; the declared
-  `time_log2` is `86`.
-
-The direct index uses `2^34` bytes if each of its `2^32` packed slots occupies
-four bytes. The compact prefix table is below `2^24` bytes and the tail array
-below `2^21` bytes. The online phase, including code and buffers, stays below
-`2^35` bytes. The paper reports its historical computation on a server with
-378 GB of memory; the claim conservatively assumes the charged starting-solution
-phase peaks below `2^39` bytes. Preprocessing phases are sequential, so the
-declared peak is `memory_log2_bytes=39`. The fixed public constants occupy less
-than `2^10` bytes of nonuniform advice, but their discovery work is still charged.
+The published work supplies the two-block attack structure and differential route.
+This package contributes the project-specific SHA-256/32 implementation, sealed
+finite campaign, exact witness, paid-range reconstruction, and HashSmash cost
+accounting. It does not claim authorship of the published cryptanalytic method.
 
 ## 11. Evidence boundary
 
-Exact, independently reproduced facts are:
+Mechanically established here:
 
-- the target definition and complete-message check;
-- the published C35 collision and the invalidity of naively reusing its first
-  block at C32;
-- the C32 second-block collision from the published chaining value;
-- the 593,920-record prefix table, its 408,576 keys and maximum multiplicity 4;
-- the 196,608-tail set, three corrected Figure 6 relation symbols, and the unique
-  published hit;
-- legal r32 prefixes that reach the fixed step-13 states in both branches; and
-- the deterministic resource arithmetic once its premises are granted.
+1. Candidate schema and package safety through organizer intake.
+2. Two distinct complete messages and their exact C32 digest.
+3. Target configuration and organizer implementation hashes.
+4. Winner coordinates inside the paid tuple and tail ranges.
+5. Terminal campaign counts, quiescence, and corrected auditor identity.
+6. Exact v5 score arithmetic conditional on the declared inputs.
+7. Advice arithmetic below `2^33` including the full downstream reserve.
 
-The three unresolved premises are the historical starting-solution resource
-bound contained within the `2^36` preprocessing charge, the population bound
-`q>=2^-31`, and the average full-tail yield
-`2^-49`. The first is a published resource transfer; the second is measured but
-still relies on C32 output pseudorandomness; the third is a four-bit-slack transfer
-from the paper's 45-condition executed attack. None is presented as a theorem.
+Disclosed for exploratory review:
 
-There is no full ordinary r32 witness or collision certificate. A witness would
-settle correctness absolutely by two independent digest implementations, but one
-witness would not by itself prove the stated expected cost or success probability.
+1. Unreceipted historical and development preprocessing is below `2^56`.
+2. Historical whole-process peak memory is below `2^39` bytes.
+3. The static per-item source ceilings cover every reachable paid path.
+
+Not claimed:
+
+1. A fresh-search success probability.
+2. A 35-step complete-message collision from these two messages.
+3. A full 64-step SHA-256 collision.
+4. Production-Yukon acceptance or promotion before official readback.
+
+## References
+
+1. NIST, FIPS PUB 180-4, *Secure Hash Standard*.
+2. Yingxin Li, Fukang Liu, Gaoli Wang, and Jiali Shi, IACR ePrint 2026/1080.
+3. Yingxin Li, Fukang Liu, and Gaoli Wang, IACR ePrint 2024/349.

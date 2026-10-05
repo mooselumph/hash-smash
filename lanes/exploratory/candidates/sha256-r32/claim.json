@@ -6,63 +6,73 @@
   "rounds": 32,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 86,
+    "time_log2": 62,
     "time_unit": "target-compressions",
     "memory_log2_bytes": 39,
-    "preprocessing_log2": 36,
-    "success_probability": 0.9,
-    "nonuniform_advice_log2_bytes": 10
+    "preprocessing_log2": 57,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 33
   },
   "restrictions": [
-    "Classical probabilistic 256-bit word-RAM attack under collision-frontier-v5. The target is complete SHA-256 with the standard IV, FIPS 180-4 padding, feed-forward, rounds 0 through 31 on every block, and all 256 output bits.",
-    "The output messages are B0 || M1 and B0 || M1', each 128 bytes before their common padding block. The algorithm accepts only distinct complete messages whose full trusted target digests agree.",
-    "Preprocessing charges the paper's reported 2^34.3 starting-point search plus exact fixed-slice table and tail enumeration, sorting, and direct-index construction. Total preprocessing is below 2^36 target-compression units and peak storage is below 2^39 bytes.",
-    "The online phase runs exactly 2^82 trials, uses a fresh independently uniform B0 in every trial, and assigns exactly one of the 196,608 tails cyclically by trial number. It never treats multiple tails sharing one first-block chaining value as independent.",
-    "Each trial is charged below 13 target-compression units, including five complete compression calls and 2^14 additional word operations. Total charged work is below 13*2^82 + 2^36 < 2^85.701, so the declared bound is 2^86.",
-    "The 0.9 success claim uses two disclosed exploratory premises: first-block acceptance probability q >= 2^-31 and average conditional full-collision probability over the fixed tail set at least 2^-49. Together they give cumulative success mass greater than 4-2^-62 and success probability greater than 0.981.",
-    "No new full ordinary r32 witness or collision certificate is claimed. Exact replays, finite enumeration hashes, a legal r32 prefix, and bounded fixed-seed measurements check the construction but do not prove the two score-critical probability premises."
+    "The selected target is complete-message SHA-256 with the fixed FIPS 180-4 IV, standard padding, feed-forward, original compression steps 0 through 31 on every padded block, and equality of all 256 output bits.",
+    "The certificate contains two distinct 128-byte messages. Organizer-owned verifier/hash_functions.py recomputes their common digest f8a3db111360e5ed2e63041ecfa82b01c95a25882910bc0f21671949296a4e77 under sha256-r32-prefix-v1.",
+    "The paid deterministic construction is pinned to runner 4aa2673044202dce8a4da370ab512b8a5ff23cfcc9ac16a179a19a9490595786, config 4a86485d80c3609aa488590273f9aa6b0150120c07a5ce16b620a1bb9e969a22, provenance commit d9afb19649446dc89c92c484e82e17139a4d52e8, and organizer base fc56c3fa38ac40043d8291649c78148bc4872995.",
+    "The winner is bound to chunk 34, seed 202610040034, counter 2149248237, local tuple 15529, global admitted tuple index 14240177 below 2^30, and tail 131794 below 196608. The complete tuple file has SHA-256 c3ea41e428beae328693cef62f32beb8f7753f2a7def98280ecd5cf847ba86ad.",
+    "The terminal audit 181b7fe2ba0ce6cfa0bc2733dc6e3f18f385524f1e9100ec7fd05604adf74097 uses corrected auditor e53f50ee913194b8200a37814d50da6d4aee7bdbf5864a33303c243374788269 and reports a quiescent run with no errors or warnings.",
+    "The score charges 2^49 first-block executions, 3*2^47 tuple-tail evaluations, aggregate preprocessing 2^57, aggregate final verification 2^45, all failures, and one complete rerun allowance. At C=2224 the exact total is 612257719494694141952/139 target-compression units, log2 61.9337598837787, conservatively reported as 62.",
+    "Aggregate preprocessing below 2^57 is an explicitly disclosed exploratory premise: sealed receipts bound known local preprocessing below 2^51, while unreceipted historical and development work is assumed below 2^56. A reviewer may require a complete historical receipt.",
+    "Memory below 2^39 bytes is an explicitly disclosed exploratory premise. Current reproducible phases are constructively below 2^34 bytes; no complete peak-RSS receipt exists for historical starting-solution work. Host capacity is not presented as a measurement.",
+    "The post-terminal inventory binds 5760270500 unique retained bytes plus a 234801-byte inventory and a full 2^26-byte downstream envelope, totaling 5827614165 bytes below 2^33. Final candidate and note bytes must fit inside that reserved envelope.",
+    "success_probability 1 describes coinless replay of this fixed, mechanically checked witness after all discovery work is charged. It is not a fresh-search forecast, empirical success-rate estimate, or confidence level.",
+    "The construction instantiates the two-block framework of Yingxin Li, Fukang Liu, Gaoli Wang, and Jiali Shi (CRYPTO 2026, ePrint 2026/1080). The implementation, exact r32 witness, paid-range run, and HashSmash accounting are project-specific; no broader round-record claim is made.",
+    "The hit occurred at chunk 34, so review checkpoints 640 and 1292 were not reached and no checkpoint approval or consumption artifacts are claimed."
   ],
   "baseline_improved": "sha256-r32-nominal-v2",
   "certificate_manifest": "certificates/manifest.json",
   "heuristics": [
     {
-      "id": "fixed-table-r32-density",
-      "statement": "For a fresh uniformly random 64-byte first block under the exact C32 target, the fixed prefix table and Section 5 filter accept with probability q at least 2^-31.",
+      "id": "online-operation-ceilings",
+      "statement": "The fully charged construction consumes fewer than 2^62 collision-frontier-v5 target-compression units.",
       "role": "score-critical",
-      "scope": "The 593,920-record fixed table derived from the ePrint 2026/1080 35-step starting point, the lexicographically first valid record rule, and C32 from the standard IV.",
-      "extrapolation": "The fixed table occupies exactly 408,576 of 2^32 A(-1) keys. Conditioned uniform-state samples estimate the complete filter near 2^-28.519, while matched C32 and C35 first-block streams each produced four distinct accepted blocks in 2^28+2^30 trials. The claim adds more than two bits of slack and models reduced-round C32 chaining outputs as pseudorandom for this predicate.",
+      "scope": "The pinned r3 runner, fixed campaign caps, all failed work, one complete rerun allowance, preprocessing, and verification.",
+      "extrapolation": "Static source-path ceilings and operation receipts are converted at C=2224; their exact sum is 612257719494694141952/139, log2 61.9337598837787.",
       "evidence_ids": [
-        "proof:122-232",
-        "proof:307-361",
-        "proof:363-394"
+        "proof:131-176"
       ],
-      "limitations": "The fixed SplitMix64 streams establish reproducible observations, not ideal random sampling or a theorem about the C32 output distribution. A hidden structural bias correlated with this exact predicate could invalidate the lower bound."
+      "limitations": "Any omitted paid path, larger reachable per-item path, or rejected conversion invalidates score 62."
     },
     {
-      "id": "fixed-slice-average-tail-yield",
-      "statement": "Conditioned on first-block acceptance, the average over the complete fixed set V of 196,608 tails of the probability of complete C32 second-block equality is at least 2^-49.",
+      "id": "historical-preprocessing-margin",
+      "statement": "Aggregate preprocessing is below 2^57 target-compression units.",
       "role": "score-critical",
-      "scope": "The one fixed starting point, fixed prefix table, corrected Figure 6 tail set, lexicographically first record rule, and exact C32 full-output predicate described in the proof.",
-      "extrapolation": "The source counts 45 remaining conditions for this executed 35-step characteristic. The second-block trace is already equal from 23 rounds onward, and exhaustive replay from the published chaining value reproduces the unique published tail at both C32 and C35 after correcting three relation symbols that the witness itself contradicts. The claim transfers the unchanged 45-condition count to the fixed slice and adds four bits of slack.",
+      "scope": "Starting-solution work, both table constructions, development work, and the complete rerun allowance.",
+      "extrapolation": "Receipted local preprocessing is below 2^51; unreceipted historical and development work is assumed below 2^56, leaving their sum below 2^57.",
       "evidence_ids": [
-        "proof:59-91",
-        "proof:234-283",
-        "proof:346-394"
+        "proof:178-194"
       ],
-      "limitations": "The paper does not report this average for the fixed slice, and the bounded work did not observe the full rare event on fresh first blocks. Dependencies among remaining conditions or concentration on other starting points could make the true fixed-slice average smaller."
+      "limitations": "The historical term is a disclosed premise, not mechanically proved. Exploratory review may reject it or request a complete receipt."
     },
     {
-      "id": "starting-solution-resource-bound",
-      "statement": "The fixed 35-step starting solution used by the construction can be obtained within the package's 2^36 preprocessing bound and below 2^39 bytes of peak memory.",
+      "id": "whole-process-memory",
+      "statement": "Every paid phase remains below 2^39 simultaneously live bytes.",
       "role": "supporting",
-      "scope": "Only the starting-point search that produced the fixed states and words reused by this candidate; all later finite enumeration and indexing costs are separately included in the same preprocessing ceiling.",
-      "extrapolation": "ePrint 2026/1080 reports approximately 2^34.3 work for Step 1 and reports the practical computation on a 378 GB server. The package rounds the total preprocessing upward after adding conservative operation ceilings for every enumerated candidate and direct-index slot.",
+      "scope": "Code, mapped tables, tuple buffers, allocator overhead, process trees, verifier state, and historical construction phases.",
+      "extrapolation": "Current reproducible phases have constructive bounds below 2^34; the historical portion is covered by the stated 2^39 ceiling.",
       "evidence_ids": [
-        "proof:93-120",
-        "proof:396-424",
-        "proof:426-449"
+        "proof:196-207"
       ],
-      "limitations": "The historical SAT search and its peak memory were not independently rerun. The server capacity is an upper-bound proxy for peak memory rather than a direct utilization measurement."
+      "limitations": "No complete historical peak-RSS trace exists. Machine capacity and serialized files are context, not peak-memory measurements."
+    },
+    {
+      "id": "deterministic-fixed-witness",
+      "statement": "The submitted algorithm succeeds with probability 1 on its sole empty random tape after retaining the fully charged verified witness.",
+      "role": "score-critical",
+      "scope": "Deterministic replay of the two certificate files under the selected complete-message target.",
+      "extrapolation": "The organizer certificate checker recomputes both digests and rejects equal messages or a target mismatch.",
+      "evidence_ids": [
+        "proof:36-70"
+      ],
+      "limitations": "This says nothing about the chance that a fresh capped search finds a witness and must not be read as a statistical estimate."
     }
   ]
 }
