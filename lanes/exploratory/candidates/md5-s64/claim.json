@@ -6,21 +6,59 @@
   "rounds": 64,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 82,
+    "time_log2": 62,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 73,
-    "data_log2": 66,
-    "preprocessing_log2": 72,
-    "success_probability": 0.5,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 30,
+    "data_log2": 55,
+    "preprocessing_log2": 62,
+    "success_probability": 1,
+    "nonuniform_advice_log2_bytes": 9
   },
   "restrictions": [
-    "Exactly 2^65 independent uniform 256-bit model words, each encoded as a fixed-length 32-byte message; no seeded expansion or restart.",
-    "Complete fixed-IV MD5 with all steps 0 through 63, RFC 1321 padding, feed-forward and all 128 digest bits.",
-    "Two flat two-word-record arrays and iterative merge sort; all initialization, failed samples, verification, code and retained randomness are charged.",
-    "The baseline_improved value identifies the required nominal reference and does not assert improvement over an established attack."
+    "The online algorithm only loads and verifies one pinned pair of distinct 128-byte messages. It has no fresh generator and makes no claim about historical wall time, fresh success frequency, or peak RSS.",
+    "Complete standard-IV MD5 with RFC 1321 padding, all steps 0 through 63 on every padded block, feed-forward after each compression, and all 128 digest bits.",
+    "All historical construction work, failed internal attempts represented by the published average, conversion to v3 word-RAM operations, verification, code, tables, messages, and retained advice are charged through the stated resource envelope and explicit heuristics.",
+    "The returned pair is nonuniform advice produced before online replay. Its construction is charged as preprocessing; repeated experiment rows are transport replays, not independent samples.",
+    "The baseline_improved value identifies the required nominal reference and does not assert an established attack baseline, novelty, rigorous qualification, or human acceptance."
   ],
   "baseline_improved": "md5-s64-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-HISTORICAL-WORK",
+      "statement": "All work that produced the retained pair, including differential-path preparation, the birthday search, near-collision construction, failed attempts represented by the published average, assembly, and verification, fits below 2^62 v3 charged units, and fewer than 2^55 construction items were processed.",
+      "role": "score-critical",
+      "scope": "Only the historical construction of the exact retained Table 6-7 pair and the submitted time_log2, preprocessing_log2, and data_log2 fields. The deterministic online replay and exact digest equality do not depend on this premise.",
+      "extrapolation": "The primary construction reports approximately 2^53.2 MD5 compression calls for the dominant useful birthday search and approximately 2^40.8 for the near-collision phase. The submitted 2^62 envelope adds a factor of approximately 2^8.8 for model conversion, unitemized word operations, failed internal work represented by the average, message assembly, and verification; the 2^55 data envelope exceeds 2^53.2 by more than a factor of three.",
+      "evidence_ids": [
+        "proof:64-189"
+      ],
+      "limitations": "There is no fresh executable generator, complete historical job ledger, instruction trace, or accounting of every unsuccessful development run. Compression-equivalent estimates are not definitionally identical to v3 units. If total historical work reached 2^62 units or construction items reached 2^55, the claim and score would fail. The fixed-witness experiment provides no cost evidence. Exploratory premise only."
+    },
+    {
+      "id": "H-HISTORICAL-MEMORY",
+      "statement": "Peak simultaneous algorithm memory during construction of the retained pair was below 2^30 bytes, including tables, code, constants, differential-path data, buffers, working state, allocator effects, and retained output.",
+      "role": "score-critical",
+      "scope": "Only the peak-memory field for one implementation of the published construction of the retained pair. It is not a claim about aggregate installed RAM across parallel machines or about the replay container's configured limit.",
+      "extrapolation": "The primary construction reports 400 MB of storage for the dominant birthday phase. The 2^30-byte envelope leaves more than 673 million decimal bytes beyond that figure for all other simultaneously live algorithm state.",
+      "evidence_ids": [
+        "proof:139-204"
+      ],
+      "limitations": "The reported storage is not accompanied here by a peak-RSS trace, allocation ledger, or proof that every concurrently live buffer was included. If simultaneous algorithm state reached 2^30 bytes, the memory field and scalar score would fail. The fixed-witness experiment measures no construction memory. Exploratory premise only."
+    },
+    {
+      "id": "H-METHOD-TRANSFER",
+      "statement": "The published single-block chosen-prefix workflow and its reported resource regime apply to the exact 128-byte Table 6-7 pair retained by this candidate, rather than to an unrelated MD5 variant or collision class.",
+      "role": "supporting",
+      "scope": "Binding of the retained messages and summarized construction to complete, standard-IV, 64-step MD5 and to the cited single-block chosen-prefix example. It does not establish historical resource use.",
+      "extrapolation": "The publication identifies the messages, shared digest, construction, and followed differential path in the same section. The organizer independently recomputes a full collision on the exact bytes in a pinned target implementation and isolated replay.",
+      "evidence_ids": [
+        "proof:64-100",
+        "proof:206-220",
+        "experiment:published-single-block-cpc-replay"
+      ],
+      "limitations": "Fixed-witness agreement establishes target compatibility and collision existence, not replay of the historical generator, historical cost, or fresh success probability. The proof summarizes rather than reimplements the full differential-path search. Exploratory premise only."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }
