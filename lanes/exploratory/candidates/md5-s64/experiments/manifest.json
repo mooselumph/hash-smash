@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "published-single-block-cpc-replay",
+      "kind": "python-message-pairs-v1",
+      "scope": "Deterministic replay of one published pair of distinct 128-byte messages against complete md5-s64-prefix-v1. The same pair is returned in every organizer trial; duplicate rows are expected and are not independent generator samples.",
+      "hypothesis": "The two pinned Table 6-7 messages have the same complete 128-bit MD5 digest under the selected standard-IV, 64-step target.",
+      "program": "experiments/replay.py",
+      "event": {
+        "kind": "full-collision"
+      }
+    }
+  ]
+}
