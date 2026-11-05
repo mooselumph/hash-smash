@@ -6,23 +6,49 @@
   "rounds": 2,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 140,
+    "time_log2": 101,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 137,
-    "data_log2": 130,
-    "preprocessing_log2": 128,
-    "success_probability": 0.5,
-    "nonuniform_advice_log2_bytes": 0
+    "memory_log2_bytes": 44,
+    "preprocessing_log2": 97,
+    "success_probability": 0.39,
+    "nonuniform_advice_log2_bytes": 7
   },
   "restrictions": [
-    "Messages are exactly 64 bytes, encoded from two independent uniform 256-bit words.",
-    "One batch of 2^129 samples; all repeated messages are retained and charged; no restart.",
-    "Unkeyed BLAKE3-256; 2 prefix rounds, one 64-byte root block with flags11, length64, counter0.",
-    "Classical 256-bit word RAM with independent uniform random words, fully charged iterative merge sort and two retained record arrays.",
-    "Analytical generic construction; no full-scale execution, precomputed collision, or empirical heuristic is claimed.",
-    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 140 after applying collision-frontier-v5 operation weights with C=430."
+    "Ordinary complete-message collision, standard unkeyed BLAKE3-256 with two prefix rounds in every chunk/parent/root compression.",
+    "One batch of2^93 independent trials, each using two fresh ideal uniform256-bit words for seven outer words, a19-bit class member and a21-bit cube member; all failures and discarded random bits charged.",
+    "Last chunks have55/63 bytes at counter1<=t<2^32 and flags3, after1024t common zero bytes; full256-bit last CV equality is checked and both complete hashes verified before return.",
+    "Uses the old Apache-2.0 promoted production advice/constructor at commit55dfae1cfb429015a293db48c7c9f88f566641e2, not its later amended constants. Full provenance in proof.",
+    "No filters, context walks, solver, probabilistic work meter or partial-output collision is accepted. Per trial at most2 selected compressions and2^16 ordinary primitives.",
+    "Success is conditional on H-rate; total resources include the generous disclosed historical-advice premise H-history. Neither is asserted proved or measured by the local root-mask diagnostic."
   ],
   "baseline_improved": "blake3-r2-nominal-v2",
-  "heuristics": [],
-  "certificate_manifest": "certificates/manifest.json"
+  "heuristics": [
+    {
+      "id": "H-rate",
+      "statement": "For exactly the pinned old advice and independent-coordinate trial law of proof Section 4, probability of t!=0 and complete 256-bit last-chunk CV equality is at least 2^-94. This is a score-critical full-target rare-event premise, not an assertion that internal words are independent.",
+      "role": "score-critical",
+      "scope": "Seven independent uniform 32-bit outer words, uniform full 2^19 class member, independent uniform full 2^21 cube member; fixed blake3-r2 profile, old constants, flags 3 and constructor-solved counter. No filter or context reuse.",
+      "extrapolation": "Source-reported product-model listed-event rate1032*2^-101, source-reported 8-bit complete toy collisions and 32-bit partial-event measurements are carried only to a weaker threshold of 16/129 of the model rate. The joint target event and invalid-counter collision mass are not directly measured.",
+      "evidence_ids": [
+        "proof:243-274",
+        "proof:437-479",
+        "experiment:independent-counter-diagnostic"
+      ],
+      "limitations": "Unproved at 32 bits. Local organizer checks only root-instance masked digests, not full counter collisions; reported counter observations are untrusted. Toy/model/partial evidence may not transfer to the joint event. If false,0.39 success is not established."
+    },
+    {
+      "id": "H-history",
+      "statement": "All completed historical work obtaining the exact inherited advice, including failed searches, model choice and recounts, used at most2^96 target-equivalent computation and at most2^43 simultaneous bytes. This score-critical accounting premise is deliberately much weaker than the source-reported caps.",
+      "role": "score-critical",
+      "scope": "The fixed73-byte old production advice record identified in proof and source promoted commit55dfae1cfb429015a293db48c7c9f88f566641e2; no new advice search or changed constants.",
+      "extrapolation": "Source-reported 116-run SEL history and capped envelope below 2^63 ordinary operations, with reported storage below 2^29 bytes, support a very generous2^96-unit/2^43-byte bound. No wall-time conversion or fresh replay is asserted.",
+      "evidence_ids": [
+        "proof:275-300",
+        "proof:480-617"
+      ],
+      "limitations": "Historical SAT generator and recount sources are omitted from this package; raw logs lack primitive operation counters. This is not a mechanically verified completed-work bound. If false severely enough, total resource claims can fail."
+    }
+  ],
+  "certificate_manifest": "certificates/manifest.json",
+  "experiment_manifest": "experiments/manifest.json"
 }

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "experiments": [
+    {
+      "id": "independent-counter-diagnostic",
+      "kind": "python-message-pairs-v1",
+      "scope": "A fresh seven-word outer input,19-bit class member and21-bit cube member per organizer seed. The counter constructor and direct compressions are source-inspected participant code; output pairs are the separately rebuilt root instance.",
+      "hypothesis": "Returned55/63-byte complete root digests agree on words0,2,5,7. Counter-half/beta observations are untrusted finite checks. This experiment does not establish the rare full-collision rate or a global attack cost.",
+      "program": "experiments/independent_counter.py",
+      "event": {
+        "kind": "digest-xor-mask",
+        "mask_hex": "ffffffff00000000ffffffff0000000000000000ffffffff00000000ffffffff",
+        "expected_hex": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  ]
+}
