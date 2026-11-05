@@ -6,21 +6,20 @@
   "rounds": 2,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 140,
+    "time_log2": 128.3181,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 137,
-    "data_log2": 130,
-    "preprocessing_log2": 128,
-    "success_probability": 0.5,
+    "memory_log2_bytes": 136,
+    "preprocessing_log2": 126,
+    "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Messages are exactly 64 bytes, encoded from two independent uniform 256-bit words.",
-    "One batch of 2^129 samples; all repeated messages are retained and charged; no restart.",
-    "Unkeyed BLAKE3-256; 2 prefix rounds, one 64-byte root block with flags11, length64, counter0.",
-    "Classical 256-bit word RAM with independent uniform random words, fully charged iterative merge sort and two retained record arrays.",
-    "Analytical generic construction; no full-scale execution, precomputed collision, or empirical heuristic is claimed.",
-    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 140 after applying collision-frontier-v5 operation weights with C=430."
+    "Exactly36-byte messages LE32(u)||LE4(v); actual prefixes u are independent ideal uniform256-bit words and suffix v cycles deterministically over all2^32 values.",
+    "K=2^32, B=2^128, m=ceil((1243/1250)*B/K), n=mK; one fixed batch, no restart.",
+    "Three-word records store digest,prefix,next; suffix is recovered exactly from record address only at terminal handling.",
+    "Complete unkeyed BLAKE3-256 prefix rounds0..1; one root compression length36 flags11 counter0.",
+    "Distribution-free finite stratified success proof uses an auxiliary iid coupling and explicit occupancy/repeated-input bounds; actual messages are not claimed iid on the full domain.",
+    "All work and failed outcomes charged under collision-frontier-v5 C=430; no heuristic, precomputed collision, PRNG or full-scale execution claim."
   ],
   "baseline_improved": "blake3-r2-nominal-v2",
   "heuristics": [],
