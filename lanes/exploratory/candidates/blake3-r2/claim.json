@@ -6,21 +6,19 @@
   "rounds": 2,
   "lane": "exploratory",
   "claim": {
-    "time_log2": 140,
+    "time_log2": 128.279818,
     "time_unit": "target-compressions",
-    "memory_log2_bytes": 137,
-    "data_log2": 130,
-    "preprocessing_log2": 128,
-    "success_probability": 0.5,
+    "memory_log2_bytes": 136,
+    "preprocessing_log2": 126,
+    "success_probability": 0.39,
     "nonuniform_advice_log2_bytes": 0
   },
   "restrictions": [
-    "Messages are exactly 64 bytes, encoded from two independent uniform 256-bit words.",
-    "One batch of 2^129 samples; all repeated messages are retained and charged; no restart.",
-    "Unkeyed BLAKE3-256; 2 prefix rounds, one 64-byte root block with flags11, length64, counter0.",
-    "Classical 256-bit word RAM with independent uniform random words, fully charged iterative merge sort and two retained record arrays.",
-    "Analytical generic construction; no full-scale execution, precomputed collision, or empirical heuristic is claimed.",
-    "The nominal reference identifier does not assert an improvement; the conservative scalar bound is 140 after applying collision-frontier-v5 operation weights with C=430."
+    "Messages are exactly36 bytes: an independent uniform256-bit prefix and a countdown-derived32-bit suffix.",
+    "Suffix strata each have exactly m samples, with cyclic order reversed relative to the inherited construction.",
+    "One complete two-round BLAKE3 root compression per sample, length36, flags11, counter0.",
+    "Classical256-bit word RAM; no full-scale execution, heuristic, precomputed collision or empirical success claim.",
+    "Worst-case H<=n+2, W<=(88+2/65536)n+(7+5/65536)B+274878300160, C=430; all unroll factors65536, finite code charged; no restart."
   ],
   "baseline_improved": "blake3-r2-nominal-v2",
   "heuristics": [],
