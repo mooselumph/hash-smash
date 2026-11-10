@@ -1,20 +1,20 @@
-# SHA-256, 31 prefix rounds: 32-byte-table correction
+# SHA-256, 31 prefix rounds: tighter total-time bound with the same preprocessing premise
 
 ## 1. Claim status and exact scope
 
 This is an **exploratory** submission for `sha256-r31-prefix-v1` under
-`collision-frontier-v3` and `paired-lanes-v1`. It gives a complete ordinary
+`collision-frontier-v5` and `paired-lanes-v1`. It gives a complete ordinary
 collision witness, a deterministic replay algorithm, and a precise finite
 specification of the cost-bearing two-phase construction. It does not claim a
 new collision, a new differential trail, a reproduced historical implementation,
 or a rigorous resource certificate.
 
-The score is `time_log2 + memory_log2_bytes = 41 + 25.25 = 66.25`. The witness
+The score is `time_log2 = 40.751`; memory is reported separately under v5. The witness
 relation and the proposed 32-byte table representation are executable and
 independently checkable. Translation of the published construction into the
 organizer time and whole-process peak-memory bounds remains explicitly conditional
-on `H-HISTORICAL-TIME` and `H-HISTORICAL-MEMORY`. If either premise is false, the
-score is invalid even though the fixed collision and codec remain valid.
+on `H-HISTORICAL-TIME` and `H-HISTORICAL-MEMORY`. If the time premise is false, the
+score is invalid; a false memory premise invalidates the resource package.
 
 The target is the complete hash from the standard SHA-256 IV. Every padded
 message block executes original compression-round indices 0 through 30,
@@ -161,8 +161,8 @@ state the exact transfer and its failure conditions.
 fixed pair—including differential-trail discovery, SAT/SMT and other tool runs,
 failed or abandoned trials, table generation, sorting, matching, fulfillment,
 message construction, serialization, and verification—is less than `2^40.75`
-charged `collision-frontier-v3` units. Adding deterministic replay keeps total
-time below `2^41` units.
+charged `collision-frontier-v5` units. Adding deterministic replay keeps total
+time below `2^40.751` units.
 
 Let `C=2^40.5` be the publication-scale work, `c` the unknown conversion from
 one published unit to organizer units, and `D>=0` every charged cost not already
@@ -177,7 +177,7 @@ The published complexity and practical run are relevant support for this narrow
 exploratory extrapolation. They do not measure `c`, `D`, all unsuccessful work,
 or a complete organizer-model instruction trace. Publisher note 3 makes the
 additional-experiment term material. If preprocessing reaches `2^40.75`, or
-total work reaches `2^41`, the time, preprocessing, data, and score fields fail.
+total work reaches `2^40.751`, the time, preprocessing, and score fields fail.
 
 The proposed record representation adds bounded table administration rather
 than a second attack search. For `N<=912839`, encoding is under 128 primitive
@@ -190,9 +190,9 @@ the headline attack.
 
 Under the heuristic, the online phase needs six selected-target compression
 calls total, fewer than `2^20` other word operations, and no randomness or
-retries. Thus `2^40.75 + 2^20 + 6 < 2^41`. `data_log2=41` follows under the same
-premise because materializing or inspecting a separate item costs at least one
-charged operation; it is not a claim of `2^41` free external pairs.
+retries. Thus `2^40.75 + (2^20)/2140 + 6 < 2^40.751`. The logarithm of this
+upper envelope is approximately 40.750000000387. The 0.001-bit slack exceeds
+the replay allowance; historical preprocessing uncertainty is unchanged.
 
 ## 7. Score-critical peak-memory premise
 
@@ -250,9 +250,9 @@ peak-memory bound; neither is free.
 
 | Field | Submitted bound | Meaning |
 | --- | ---: | --- |
-| `time_log2` | 41 | Total paid construction plus replay, conditional on H-HISTORICAL-TIME |
+| `time_log2` | 40.751 | Total paid construction plus replay, conditional on H-HISTORICAL-TIME |
 | `memory_log2_bytes` | 25.25 | Whole-process peak bytes, conditional on H-HISTORICAL-MEMORY |
-| `data_log2` | 41 | All generated or inspected items under the time premise |
+| `data_log2` | omitted | Legacy metadata has no scoring role under v5 |
 | `preprocessing_log2` | 40.75 | Construction paid once and included in total time |
 | `success_probability` | 1 | Deterministic correctness of the retained verified pair |
 | `nonuniform_advice_log2_bytes` | 9 | Fewer than 512 bytes of pair and metadata |
